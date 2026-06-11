@@ -1,0 +1,184 @@
+.header {
+    position: relative;
+    top: 0; left: 0;
+    width: 100%; height: 60px;
+    padding: 0 24px;
+    box-sizing: border-box;
+    background: var(--menuBgCol);
+    display: grid;
+    grid-template-columns: 14% auto auto 1fr auto auto auto;
+    align-items: center;
+    gap: 20px;
+    z-index: 2;
+}
+
+#headerLogo {
+    grid-column: 1;
+    position: relative;
+    left: 16px; top: 0;
+    width: 100%; height: 60px;
+    display: flex; align-items: center; cursor: pointer;
+}
+
+#headerLogo h1 {font-size: 36px; margin-left: 12px;}
+
+.header button, .header a {
+    text-decoration: none; background: none; border: none;
+    margin: 0; padding: 0;
+    display: flex; align-items: center;
+    cursor: pointer;
+}
+
+.header button svg, .header a svg {
+    width: 24px; height: 24px;
+    color: var(--text);
+}
+
+.header button:hover svg, .header a:hover svg {
+    fill: var(--hoverCol); color: var(--hoverCol);
+    transition: .3s ease;
+}
+
+#headerFileSearch {
+    grid-column: 2;
+    display: flex; align-items: center;
+    border: 2px solid var(--text);
+    padding: 8px 14px;
+    border-radius: 12px;
+    justify-self: start;
+    width: 300px;
+    transition: all .3s ease;
+    box-sizing: border-box;
+}
+
+#headerFileSearch svg {
+    width: 22px; height: 22px;
+    rotate: 90deg;
+    transition: .3s ease;
+}
+
+#headerFileSearch input {
+    width: 100%;
+    background: none; border: none;
+    font-size: 16px;
+    margin-left: 8px;
+    color: var(--text);
+    transition: .3s ease;
+}
+
+#headerFileSearch input:focus {outline: none;}
+
+#headerFileSearch input:focus svg {
+    fill: var(--hoverCol);
+}
+
+#headerFileSearch:focus-within {
+    border-color: var(--hoverCol);
+    box-shadow: var(--boxShadowCol) 0px 6px 12px;
+    width: 375px;
+}
+
+#fileSearchFilters {
+    grid-column: 3;
+    display: flex; flex-direction: row; align-items: center;
+    gap: 24px; padding-inline: 16px;
+    border-radius: 999px;
+    height: 36px;
+    border: 2px solid var(--text);
+}
+#fileSearchFilters input {
+    border: 1px solid var(--boxShadowCol);
+}
+#fileSearchFilters input:focus {outline: none;}
+
+#filtersIcon, select[name="extensionFilter"] {cursor: pointer;}
+
+.parameterSearch {
+    display: flex; flex-direction: row; align-items: center;
+    gap: 8px;
+}
+
+.parameterSearch h2 {
+    font-size: 16px;
+    margin: 0;
+    color: var(--text);
+    white-space: nowrap;
+}
+
+#boundedInputs {
+    display: flex; flex-direction: row; align-items: center;
+    gap: 6px;
+}
+
+#boundedInputs h3 {
+    font-size: 14px;
+    margin: 0;
+    color: var(--text);
+    white-space: nowrap;
+}
+
+.parameterSearch input, .parameterSearch select {
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--text);
+    background: none; color: var(--text);
+    font-size: 12px;
+    height: 28px;
+    box-sizing: border-box;
+}
+
+input[type="number"], select[name="extensionFilter"] {
+    width: 60px;
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+}
+
+.headerOptions {
+    grid-column: 5;
+    display: flex; align-items: center;
+    gap: 16px;
+}
+
+#headerVerticalLine {
+    grid-column: 6;
+    display: block;
+    width: 2px; height: 32px;
+    background: var(--text);
+}
+
+#accountSettingsToggle {
+    grid-column: 7;
+    display: flex; flex-direction: row; align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--text);
+    transition: .3s ease;
+}
+
+#accountSettingsToggle:hover {
+    border-color: var(--hoverCol);
+    color: var(--hoverCol);
+}
+
+#filterBar {
+    width: 2px; height: 20px;
+    background-color: var(--text);
+}
+
+img {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+}
+
+#logoImg {
+    width: 42px; height: 42px;
+    border-radius: 0;
+}
+
+.page {
+    position: fixed;
+    left: 14%;
+    width: 86%; height: 100%;
+    z-index: 2;
+}

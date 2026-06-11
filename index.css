@@ -1,0 +1,28 @@
+:root {
+    color-scheme: light dark;
+
+    --bgCol: light-dark(#fff, #352F44);
+    --menuBgCol: light-dark(#ebe6e69d, #655d7a94);
+
+    --text: light-dark(#000000, #ffffff);
+
+    --hoverCol: light-dark(#3cbff3, #3cf38f);
+    --boxShadowCol: light-dark(rgba(15, 15, 15, 0.2), rgba(240, 240, 240, 0.2));
+    --boxBgCol: light-dark(rgba(36, 36, 36, 0.05), rgba(219, 219, 219, 0.05));
+}
+
+:root[data-theme="light"] {color-scheme: light;}
+:root[data-theme="dark"] {color-scheme: dark;}
+
+* {margin: 0; padding: 0;}
+
+body {
+    background: var(--bgCol);
+    color: var(--text);
+}
+
+a {text-decoration: none;}
+
+svg {fill: var(--text);}
+
+.menu {background: var(--menuBgCol);}

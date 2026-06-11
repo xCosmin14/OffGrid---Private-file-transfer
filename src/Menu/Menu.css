@@ -1,0 +1,37 @@
+.menu {
+    position: fixed; top: 0; left: 0;
+    width: 14%; height: 100%;
+    display: flex; flex-direction: column; align-items: left;
+    z-index: 1;
+}
+
+.menu-item {
+    width: 200px;
+    margin-left: 24px; margin-bottom: 12px;
+    display: flex; flex-direction: row; align-items: center;
+    gap: 12px; scale: 1.1;
+    padding-inline: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: .3s ease;
+}
+.menu-item:first-of-type {margin-top: 64px;}
+.menu-item:hover {
+    background: var(--boxBgCol);
+    color: var(--hoverCol);
+}
+.menu-item:hover svg {fill: var(--hoverCol);}
+
+.menu-item svg {width: 32px; height: 32px;}
+
+.menu-item a {
+    font-size: 20px; font-weight: 600;
+    transition: .3s ease;
+}
+.menu-item a:hover {color: var(--hoverCol);}
+
+#transparentSVG svg {fill: none;}
+#bigSVG svg {scale: .9;}
+.menu span {width: 2px; height: 24px;}
+
+a {text-decoration: none; color: var(--text);}
