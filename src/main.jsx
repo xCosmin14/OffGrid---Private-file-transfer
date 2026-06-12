@@ -9,6 +9,7 @@ import Menu from './Menu/Menu.jsx'
 import Account from "./Account/Account.jsx"
 import Register from "./Account/Register.jsx"
 import Login from "./Account/Login.jsx"
+import ForgotPassword from "./Account/ForgotPassword.jsx"
 import Settings from "./Settings/Settings.jsx"
 import Notifications from "./Notifications/Notifications.jsx"
 
@@ -30,6 +31,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/" element = {getUID() === null ? <Login /> : <MyFiles />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/passwordreset" element = {<ForgotPassword />}></Route>
         <Route path="/account" element = {getUID() === null ? <Login /> : <Account />} />
         <Route path="/settings" element={getUID() === null ? <Login /> : <Settings />} />
         <Route path="/notifications" element={getUID() === null ? <Login /> : <Notifications />} />
