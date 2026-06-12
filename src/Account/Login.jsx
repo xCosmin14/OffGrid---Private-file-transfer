@@ -12,12 +12,25 @@ import "./Account.css"
 
 export default function Login() {
     const [showPass, setShowPass] = useState(false)
+    const [showError, setShowError] = useState(0) //coduri de eroare în caz de: email nu există, parola greșită
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(e.currentTarget); 
+        formData.set("loginEmail", formData.get("loginEmail").replace(/['`"/{};?,#$%^&*()]+/g, ''))
+        formData.set("loginPassword", formData.get("loginPassword").replace(/['`"<>]+/g, ''))
+
+        var formularFinal = {}
+        formData.forEach((valoare, cheie) => formularFinal[cheie] = valoare)
+        formularFinal = JSON.stringify(formularFinal)
+    }
     
     useTitle("OffGrid - Login")
 
     return (
         <div className="page centered">
-            <form method="post" className="accountForm">
+            <form method="post" className="accountForm" onSubmit={handleSubmit}>
                 <h1>Welcome back!</h1>
 
                 <div id="accountFormField">
@@ -33,7 +46,7 @@ export default function Login() {
                 </div>
 
                 <div id="accountFormField">
-                    <input type={showPass ? "text" : "password"} name="registerPassword" placeholder="Password" required/>
+                    <input type={showPass ? "text" : "password"} name="loginPassword" placeholder="Password" required/>
                     
                     <button type="button" id="toggleViewPassword" onClick={() => setShowPass(p => !p)}>
                         {showPass ? <EyeHide /> : <EyeShow />}

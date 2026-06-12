@@ -22,7 +22,7 @@
 }
 .menu-item:hover svg {fill: var(--hoverCol);}
 
-.menu-item svg {width: 32px; height: 32px;}
+.menu-item svg {width: 24px; height: 24px;}
 
 .menu-item a {
     font-size: 20px; font-weight: 600;

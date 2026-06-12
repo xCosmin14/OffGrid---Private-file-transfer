@@ -15,12 +15,41 @@ import "./Account.css"
 export default function Register() {
     const [showPass, setShowPass] = useState(false)
     const [showConfirm, setShowConfirm] = useState(false)
+    const [showError, setShowError] = useState(0) //coduri de eroare dacă contul există deja sau invite code invalid
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(e.currentTarget); 
+        formData.set("username", formData.get("username").replace(/['`"/{};?,#$%^&*()]+/g, ''))
+        formData.set("firstName", formData.get("firstName").replace(/['`"/{};?,#$%^&*()]+/g, ''))
+        formData.set("lastName", formData.get("lastName").replace(/['`"/{};?,#$%^&*()]+/g, ''))
+        formData.set("registerEmail", formData.get("registerEmail").replace(/['`"/{};?,#$%^&*()]+/g, ''))
+        formData.set("registerPassword", formData.get("registerPassword").replace(/['`"<>]+/g, ''))
+        formData.set("confirmPassword", formData.get("confirmPassword").replace(/['`"<>]+/g, ''))
+        formData.set("inviteCode", formData.get("inviteCode").replace(/['`"<>]+/g, ''))
+        
+        var formularFinal = {}
+        formData.forEach((valoare, cheie) => formularFinal[cheie] = valoare)
+        
+        if (formData.get("registerPassword") !== formData.get("confirmPassword")) {
+            setShowError(1)
+            return
+        }
+        setShowError(0)
+
+        formularFinal = JSON.stringify(formularFinal)
+
+        return
+
+        //la final verificare dacă username-ul / mailul e luat și invite code-ul e bun
+    }
 
     useTitle("OffGrid - Register")
 
     return (
         <div className="page centered">
-            <form method="post" className="accountForm">
+            <form method="post" className="accountForm" onSubmit={handleSubmit}>
                 <h1>Create an account</h1>
 
                 <div id="accountFormField">
@@ -68,9 +97,14 @@ export default function Register() {
                 </div>
 
                 <div id="accountFormField">
-                    <input type={showPass ? "text" : "password"} name="registerPassword" placeholder="Password" required/>
+                    <input type={showPass ? "text" : "password"} name="registerPassword" 
+                        placeholder="Password (8-20 characters)" 
+                        required minLength="8" maxLength="20"
+                    />
                     
-                    <button type="button" id="toggleViewPassword" onClick={() => setShowPass(p => !p)}>
+                    <button type="button" id="toggleViewPassword" minLength="8" maxLength="20"
+                        onClick={() => setShowPass(p => !p)}
+                    >
                         {showPass ? <EyeHide /> : <EyeShow />}
                     </button>
                     
@@ -78,7 +112,9 @@ export default function Register() {
                 </div>
 
                 <div id="accountFormField">
-                    <input type={showConfirm ? "text" : "password"} name="confirmPassword" placeholder="Confirm password" required/>
+                    <input type={showConfirm ? "text" : "password"} name="confirmPassword" placeholder="Confirm password" 
+                        required onChange={() => setShowError(0)}
+                        />
                     
                     <button type="button" id="toggleViewPassword" onClick={() => setShowConfirm(p => !p)}>
                         {showConfirm ? <EyeHide /> : <EyeShow />}
@@ -89,7 +125,7 @@ export default function Register() {
 
                 <div id="accountFormField">
                     <input type="text" name="inviteCode" placeholder="Invite code"
-                        pattern="[a-zA-Z0-9!#$%^?]" required
+                        pattern="[a-zA-Z0-9!#$%^?]+" required
                         onBeforeInput={(e) => {
                             if (!/[a-zA-Z0-9!#$%^?]/.test(e.data)) {
                                 e.preventDefault()
@@ -100,6 +136,8 @@ export default function Register() {
                 </div>
 
                 <button type="submit">Register</button>
+
+                {showError === 1 && <h3 style={{color: "red"}}>Passwords do not match</h3>}
 
                 <Link to="/passwordreset">Forgot your password?</Link>
                 <Link to="/login">Log into your account</Link>
