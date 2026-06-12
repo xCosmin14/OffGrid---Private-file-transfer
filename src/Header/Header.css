@@ -89,7 +89,10 @@
 #fileSearchFilters input {
     border: 1px solid var(--boxShadowCol);
 }
-#fileSearchFilters input:focus {outline: none;}
+#fileSearchFilters input:focus, #fileSearchFilters select:focus {
+    outline: none; 
+    border-color: var(--hoverCol);
+}
 
 #filtersIcon, select[name="extensionFilter"] {cursor: pointer;}
 

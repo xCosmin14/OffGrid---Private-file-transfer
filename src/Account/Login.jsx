@@ -12,7 +12,7 @@ import "./Account.css"
 
 export default function Login() {
     const [showPass, setShowPass] = useState(false)
-    const [showError, setShowError] = useState(0) //coduri de eroare în caz de: email nu există, parola greșită
+    const [showError, setShowError] = useState(0) //1 - email nu există   2 - parolă greșită pentru emailul scris
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -54,6 +54,9 @@ export default function Login() {
                     
                     <Password />
                 </div>
+
+                {showError === 1 && <h3 style={{color: "red"}}>Email does not exist</h3>}
+                {showError === 2 && <h3 style={{color: "red"}}>Wrong password</h3>}
 
                 <button type="submit">Login</button>
 

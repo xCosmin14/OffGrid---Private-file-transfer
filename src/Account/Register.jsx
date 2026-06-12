@@ -15,7 +15,7 @@ import "./Account.css"
 export default function Register() {
     const [showPass, setShowPass] = useState(false)
     const [showConfirm, setShowConfirm] = useState(false)
-    const [showError, setShowError] = useState(0) //coduri de eroare dacă contul există deja sau invite code invalid
+    const [showError, setShowError] = useState(0) //2 - username luat   3 - email luat   4 - invite code invalid
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -39,10 +39,8 @@ export default function Register() {
         setShowError(0)
 
         formularFinal = JSON.stringify(formularFinal)
-
+        //verificare dacă username-ul / mailul e luat și invite code-ul e bun
         return
-
-        //la final verificare dacă username-ul / mailul e luat și invite code-ul e bun
     }
 
     useTitle("OffGrid - Register")
@@ -138,6 +136,9 @@ export default function Register() {
                 <button type="submit">Register</button>
 
                 {showError === 1 && <h3 style={{color: "red"}}>Passwords do not match</h3>}
+                {showError === 2 && <h3 style={{color: "red"}}>Username already exists</h3>}
+                {showError === 3 && <h3 style={{color: "red"}}>This email address is taken</h3>}
+                {showError === 4 && <h3 style={{color: "red"}}>Invalid invite code</h3>}
 
                 <Link to="/passwordreset">Forgot your password?</Link>
                 <Link to="/login">Log into your account</Link>
