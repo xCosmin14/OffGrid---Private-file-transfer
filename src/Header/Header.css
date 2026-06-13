@@ -150,6 +150,7 @@ input[type="number"], select[name="extensionFilter"] {
 }
 
 #accountSettingsToggle {
+    width: 200px;
     grid-column: 7;
     display: flex; flex-direction: row; align-items: center;
     gap: 6px;

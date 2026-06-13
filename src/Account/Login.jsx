@@ -24,6 +24,11 @@ export default function Login() {
         var formularFinal = {}
         formData.forEach((valoare, cheie) => formularFinal[cheie] = valoare)
         formularFinal = JSON.stringify(formularFinal)
+
+        //logica de redirectionare pagina si logare efectiva
+        localStorage.setItem("UID", 1)
+        window.location.replace("/")
+        //
     }
     
     useTitle("OffGrid - Login")

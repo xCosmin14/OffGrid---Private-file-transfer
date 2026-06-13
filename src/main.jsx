@@ -11,7 +11,6 @@ import Register from "./Account/Register.jsx"
 import Login from "./Account/Login.jsx"
 import ForgotPassword from "./Account/ForgotPassword.jsx"
 import Settings from "./Settings/Settings.jsx"
-import Notifications from "./Notifications/Notifications.jsx"
 
 import MyFiles from "./MyFiles/MyFiles.jsx"
 import SharedFiles from "./MyFiles/SharedFiles.jsx"
@@ -34,7 +33,6 @@ createRoot(document.getElementById('root')).render(
         <Route path="/passwordreset" element = {<ForgotPassword />}></Route>
         <Route path="/account" element = {getUID() === null ? <Login /> : <Account />} />
         <Route path="/settings" element={getUID() === null ? <Login /> : <Settings />} />
-        <Route path="/notifications" element={getUID() === null ? <Login /> : <Notifications />} />
 
         <Route path="/myfiles/shared" element={getUID() === null ? <Login /> : <SharedFiles />} />
         <Route path="/myfiles/favorites" element={getUID() === null ? <Login /> : <Favorites />} />

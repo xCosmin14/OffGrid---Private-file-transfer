@@ -1,4 +1,4 @@
-import {Link} from 'react-router-dom'
+import { useLocation, Link } from 'react-router-dom'
 
 import Documents from "../assets/SVG/FileIcons/Documents.svg?react"
 import Folder from "../assets/SVG/FileIcons/Folder.svg?react"
@@ -12,48 +12,50 @@ import Trash from "../assets/SVG/FileIcons/Trash.svg?react"
 import "./Menu.css"
 
 export default function Menu() {
+    const { pathname } = useLocation()
+
     return (
         <div className="menu">
             <span></span>
 
-            <div className="menu-item">
+            <div className={`menu-item ${pathname === "/" ? "active" : ""}`}>
                 <MyFiles />
                 <Link to="/">My Files</Link>
             </div>
 
-            <div className="menu-item" id="transparentSVG">
+            <div className={`menu-item ${pathname === "/myfiles/shared" ? "active" : ""}`} id="transparentSVG">
                 <UserFiles />
                 <Link to="/myfiles/shared">Shared files</Link>
             </div>
 
-            <div className="menu-item" id="transparentSVG">
+            <div className={`menu-item ${pathname === "/myfiles/favorites" ? "active" : ""}`} id="transparentSVG">
                 <StarFull />
                 <Link to="/myfiles/favorites">Favorites</Link>
             </div>
 
             <span></span>
 
-            <div className="menu-item" id="transparentSVG">
+            <div className={`menu-item ${pathname === "/myfiles/documents" ? "active" : ""}`} id="transparentSVG">
                 <Documents />
                 <Link to="/myfiles/documents">Documents</Link>
             </div>
 
-            <div className="menu-item" id="transparentSVG">
+            <div className={`menu-item ${pathname === "/myfiles/music" ? "active" : ""}`} id="transparentSVG">
                 <MusicLibrary />
                 <Link to="/myfiles/music">Music</Link>
             </div>
 
-            <div className="menu-item" id="transparentSVG">
+            <div className={`menu-item ${pathname === "/myfiles/photos" ? "active" : ""}`} id="transparentSVG">
                 <PhotoAlbum />
                 <Link to="/myfiles/photos">Photos</Link>
             </div>
 
             <span></span>
 
-            <div className="menu-item" id="bigSVG">
+            <div className={`menu-item ${pathname === "/myfiles/trash" ? "active" : ""}`} id="bigSVG">
                 <Trash />
                 <Link to="/myfiles/trash">Trash</Link>
             </div>
         </div>
-    );
+    )
 }

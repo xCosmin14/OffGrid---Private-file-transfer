@@ -7,20 +7,23 @@
 
 .menu-item {
     width: 200px;
-    margin-left: 24px; margin-bottom: 12px;
+    margin-left: 24px;
+    margin-bottom: 12px;
     display: flex; flex-direction: row; align-items: center;
-    gap: 12px; scale: 1.1;
+    gap: 12px;
+    scale: 1.1;
     padding-inline: 12px;
     border-radius: 8px;
     cursor: pointer;
     transition: .3s ease;
 }
 .menu-item:first-of-type {margin-top: 64px;}
-.menu-item:hover {
+
+.menu-item:hover, .menu-item.active {
     background: var(--boxBgCol);
     color: var(--hoverCol);
 }
-.menu-item:hover svg {fill: var(--hoverCol);}
+.menu-item:hover svg, .menu-item.active svg {fill: var(--hoverCol);}
 
 .menu-item svg {width: 24px; height: 24px;}
 
@@ -28,7 +31,7 @@
     font-size: 20px; font-weight: 600;
     transition: .3s ease;
 }
-.menu-item a:hover {color: var(--hoverCol);}
+.menu-item:hover a, .menu-item.active a {color: var(--hoverCol);}
 
 #transparentSVG svg {fill: none;}
 #bigSVG svg {scale: .9;}

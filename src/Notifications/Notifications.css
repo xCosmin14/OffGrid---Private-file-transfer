@@ -1,0 +1,36 @@
+#notificationsCenter {
+    width: 330px; height: 500px;
+    display: flex; flex-direction: column;
+    padding: 20px;
+    position: fixed; top: 60px; right: 220px;
+    border-left: 2px solid var(--menuBgCol);
+    border-right: 2px solid var(--menuBgCol);
+    border-bottom: 2px solid var(--menuBgCol);
+    overflow-y: hidden;
+    background: var(--boxBgCol);
+    backdrop-filter: blur(5px);
+}
+
+#notificationsHeader {
+    display: flex; flex-direction: row; 
+    align-items: center; justify-content: space-between;
+}
+#notificationsHeader button {
+    margin-top: 7px;
+    padding: 2px; padding-inline: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+#notificationsHeader button:hover {
+    border: 1px solid var(--boxShadowCol);
+    box-shadow: var(--boxShadowCol) 0px 6px 12px;
+}
+
+#notificationsHeader svg {fill: var(--hoverCol);}
+
+#notificationsList {
+    width: 100%; height: 450px;
+    margin-top: 15px;
+    border: 1px solid yellow;
+}

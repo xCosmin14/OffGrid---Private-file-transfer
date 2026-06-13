@@ -3,6 +3,7 @@ import { useState, useEffect } from "react"
 import { Link } from 'react-router-dom';
 
 import Filters from "./Filters.jsx"
+import Notifications from "../Notifications/Notifications.jsx"
 
 import Logo from "../assets/Logo.png"
 
@@ -22,6 +23,7 @@ export default function Header() {
   })
 
   const [filtersOpen, setFiltersOpen] = useState(0)
+  const [notificationsOpen, setNotificationsOpen] = useState(0)
 
   const handleToggleTheme = () => {
     setTheme((prevTheme) => (prevTheme === "dark" ? "light" : "dark"))
@@ -29,12 +31,10 @@ export default function Header() {
 
   const openFilters = () => {
     setFiltersOpen(1 - filtersOpen)
-    if (filtersOpen === 0) {
+    if (filtersOpen === 0) 
       document.getElementById("filtersIcon").style.rotate = "-90deg"
-    } else {
+    else 
       document.getElementById("filtersIcon").style.rotate = "90deg"
-    }
-    console.log(filtersOpen)
   }
 
   useEffect(() => {
@@ -62,7 +62,11 @@ export default function Header() {
         </Link>
 
         <Link to="/notifications">
-          <Notification />
+          <Notification 
+            onClick={() => setNotificationsOpen(1 - notificationsOpen)} 
+            id="notifButton" 
+            style={notificationsOpen ? {color: "var(--hoverCol)"} : {color: "var(--text)"}} 
+          />
         </Link>
 
         <button id="theme-toggle" onClick={handleToggleTheme}>
@@ -76,6 +80,8 @@ export default function Header() {
         <img src={MockUserImg}/>
         <h3>{getUID() === null ? "Anonim" : "Nume Prenume" /*afisarea numelui utilizatorului mai incolo*/}</h3> 
       </Link>
+
+      {notificationsOpen && <Notifications />}
     </div>
   );
 }
