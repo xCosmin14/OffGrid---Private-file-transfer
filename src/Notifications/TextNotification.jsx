@@ -23,11 +23,6 @@ export default function TextNotification(props) {
                     </h4>
                     <h6>6.6.2026</h6>
                 </div>
-
-                <div id="buttons">
-                    <button>Accept</button>
-                    <button>Delete</button>
-                </div>
             </div>
         </div>
     )

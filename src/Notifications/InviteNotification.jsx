@@ -20,7 +20,7 @@ export default function ActionNotification(props) {
                     <h6>6.6.2026</h6>
                 </div>
 
-                <NotifFilePreview type="folder"/>
+                <NotifFilePreview fileType="folder" />
 
                 <div id="buttons">
                     <button>Accept</button>

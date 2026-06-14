@@ -21,12 +21,7 @@ export default function FilePreviewNotification(props) {
                     <h6>6.6.2026</h6>
                 </div>
 
-                <NotifFilePreview type="folder"/>
-
-                <div id="buttons">
-                    <button>Accept</button>
-                    <button>Delete</button>
-                </div>
+                <NotifFilePreview fileType={props.fileType} />
             </div>
         </div>
     )

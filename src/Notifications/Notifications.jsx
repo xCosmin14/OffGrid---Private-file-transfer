@@ -58,7 +58,17 @@ export default function Notifications() {
                 />
 
                 <FilePreviewNotification id="previewNotification" className="notification"
-                    actionType="" fileType="" senderId="" sendDate="" fileID="" folderID="" folderName=""
+                    actionType="0" fileType="folder" senderId="" sendDate="" fileID="" folderID="" folderName=""
+                    //fileType se completeaza cu extensia, actionType="0 - a incarcat un fisier in folder comun, 1 - ti-a trimis un fisier/folder"
+                />
+
+                <FilePreviewNotification id="previewNotification" className="notification"
+                    actionType="1" fileType="pdf" senderId="" sendDate="" fileID="" folderID="" folderName=""
+                    //fileType se completeaza cu extensia, actionType="0 - a incarcat un fisier in folder comun, 1 - ti-a trimis un fisier/folder"
+                />
+
+                <FilePreviewNotification id="previewNotification" className="notification"
+                    actionType="1" fileType="apk" senderId="" sendDate="" fileID="" folderID="" folderName=""
                     //fileType se completeaza cu extensia, actionType="0 - a incarcat un fisier in folder comun, 1 - ti-a trimis un fisier/folder"
                 />
 
