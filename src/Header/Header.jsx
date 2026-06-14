@@ -61,7 +61,7 @@ export default function Header() {
           <Settings />
         </Link>
 
-        <Link to="/notifications">
+        <Link>
           <Notification 
             onClick={() => setNotificationsOpen(1 - notificationsOpen)} 
             id="notifButton" 

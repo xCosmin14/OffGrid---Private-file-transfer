@@ -7,7 +7,7 @@
     --text: light-dark(#231e3d, #ffffff);
 
     --hoverCol: light-dark(#3cbff3, #3cf38f);
-    --boxShadowCol: light-dark(rgba(55, 35, 130, 0.1), rgba(240, 240, 240, 0.2));
+    --boxShadowCol: light-dark(rgba(46, 45, 45, 0.2), rgba(240, 240, 240, 0.2));
     --boxBgCol: light-dark(rgba(255, 255, 255, 0.85), rgba(219, 219, 219, 0.05));
 }
 
