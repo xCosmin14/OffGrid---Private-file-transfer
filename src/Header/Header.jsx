@@ -81,7 +81,7 @@ export default function Header() {
         <h3>{getUID() === null ? "Anonim" : "Nume Prenume" /*afisarea numelui utilizatorului mai incolo*/}</h3> 
       </Link>
 
-      {notificationsOpen && <Notifications />}
+      {notificationsOpen ? <Notifications /> : null}
     </div>
   );
 }
