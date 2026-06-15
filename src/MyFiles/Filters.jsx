@@ -1,4 +1,9 @@
+import { useLocation } from "react-router-dom"
+import "../Header/Header.css"
+
 export default function Filters() {
+    const { pathname } = useLocation()
+
     return (
         <div id="fileSearchFilters">
             <div className="parameterSearch">
@@ -38,6 +43,15 @@ export default function Filters() {
                     {/* SE VOR CITI TOATE FIȘIERELE ȘI SE VOR OBȚINE EXTENSIILE */}
                 </select>
             </div>
+
+            {
+                (pathname.includes("shared") || pathname.includes("favorites") || pathname.includes("trash")) &&
+                <div className="parameterSearch">
+                    <h2>Extension:</h2>
+
+                    <input type="text" name="sentBy" placeholder="Sent by"/>
+                </div>
+            }
         </div>
     )
 }

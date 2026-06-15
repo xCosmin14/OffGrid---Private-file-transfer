@@ -1,5 +1,7 @@
 import {useTitle} from "../UseTitle.js"
 
+import Filters from "./Filters.jsx"
+
 import "./MyFiles.css";
 
 export default function Trash() {
@@ -7,7 +9,7 @@ export default function Trash() {
 
     return (
         <div className="page">
-
+            <Filters />
         </div>
     );
 }

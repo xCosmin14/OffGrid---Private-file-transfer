@@ -1,3 +1,5 @@
+import Filters from "../MyFiles/Filters.jsx"
+
 import "./Documents.css"
 
 export default function Documents() {
@@ -5,7 +7,7 @@ export default function Documents() {
 
   return (
     <div className="page">
-        
+        <Filters />
     </div>
   )
 }

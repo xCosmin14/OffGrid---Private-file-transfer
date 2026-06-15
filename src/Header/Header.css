@@ -83,7 +83,7 @@
     display: flex; flex-direction: row; align-items: center;
     gap: 24px; padding-inline: 16px;
     border-radius: 999px;
-    height: 36px;
+    width: fit-content; height: 36px;
     border: 2px solid var(--text);
 }
 #fileSearchFilters input {
@@ -95,6 +95,7 @@
 }
 
 #filtersIcon, select[name="extensionFilter"] {cursor: pointer;}
+#filtersIcon {fill: none; color: var(--text);}
 
 .parameterSearch {
     display: flex; flex-direction: row; align-items: center;

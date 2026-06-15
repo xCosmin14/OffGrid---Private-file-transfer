@@ -1,5 +1,7 @@
 import {useTitle} from "../UseTitle.js"
 
+import Filters from "./Filters.jsx"
+
 import "./MyFiles.css";
 
 export default function SharedFiles() {
@@ -7,7 +9,7 @@ export default function SharedFiles() {
 
     return (
         <div className="page">
-
+            <Filters />
         </div>
     );
 }

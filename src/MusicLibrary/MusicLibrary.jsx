@@ -1,5 +1,7 @@
 import {useTitle} from "../UseTitle.js"
 
+import Filters from "../MyFiles/Filters.jsx"
+
 import "./MusicLibrary.css";
 
 export default function MusicLibrary() {
@@ -7,7 +9,7 @@ export default function MusicLibrary() {
 
     return (
         <div className="page">
-
+            <Filters />
         </div>
     );
 }

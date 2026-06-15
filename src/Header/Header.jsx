@@ -2,7 +2,6 @@ import { useState, useEffect } from "react"
 
 import { Link } from 'react-router-dom';
 
-import Filters from "./Filters.jsx"
 import Notifications from "../Notifications/Notifications.jsx"
 
 import Logo from "../assets/Logo.png"
@@ -22,20 +21,11 @@ export default function Header() {
     return localStorage.getItem("theme") || "light"
   })
 
-  const [filtersOpen, setFiltersOpen] = useState(0)
   const [notificationsOpen, setNotificationsOpen] = useState(0)
 
   const handleToggleTheme = () => {
     setTheme((prevTheme) => (prevTheme === "dark" ? "light" : "dark"))
   };
-
-  const openFilters = () => {
-    setFiltersOpen(1 - filtersOpen)
-    if (filtersOpen === 0) 
-      document.getElementById("filtersIcon").style.rotate = "-90deg"
-    else 
-      document.getElementById("filtersIcon").style.rotate = "90deg"
-  }
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme)
@@ -51,10 +41,8 @@ export default function Header() {
 
       <div id="headerFileSearch">
         <input type="text" placeholder="Search files and folders..." />
-        <Search onClick={() => openFilters()} id="filtersIcon"/>
+        <Search id="filtersIcon"/>
       </div>
-
-      {filtersOpen ? <Filters /> : null}
 
       <div className="headerOptions">
         <Link to="/settings">
