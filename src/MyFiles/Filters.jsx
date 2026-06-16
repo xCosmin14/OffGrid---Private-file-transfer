@@ -47,9 +47,9 @@ export default function Filters() {
             {
                 (pathname.includes("shared") || pathname.includes("favorites") || pathname.includes("trash")) &&
                 <div className="parameterSearch">
-                    <h2>Extension:</h2>
+                    <h2>Sent by:</h2>
 
-                    <input type="text" name="sentBy" placeholder="Sent by"/>
+                    <input type="text" name="sentBy" placeholder="User name"/>
                 </div>
             }
         </div>

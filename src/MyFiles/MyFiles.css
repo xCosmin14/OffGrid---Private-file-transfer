@@ -1,0 +1,17 @@
+#addContainer {
+    position: relative; top: 10px; left: 10px;
+}
+
+#addFileBtn {
+    width: 36px; height: 36px;
+    color: var(--text);
+    cursor: pointer;
+    border: 2px solid var(--text);
+    border-radius: 50%;
+    transition: .3s ease;
+}
+
+#addFileBtn:hover {
+    color: var(--hoverCol);
+    border: 2px solid var(--hoverCol);
+}
