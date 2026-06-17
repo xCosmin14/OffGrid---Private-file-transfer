@@ -1,69 +1,63 @@
-#addContainer {
-    position: relative; top: 10px; left: 10px;
+#currentPathDisplay {
+    display: flex; flex-direction: row; align-items: center;
+    position: relative; left: 49px; top: 70px;
     width: fit-content;
+    font-size: 22px;
+    cursor: pointer;
+    z-index: 2;
 }
 
-#addFileBtn {
-    width: 36px; height: 36px;
-    color: var(--text);
-    cursor: pointer;
-    border: 2px solid var(--text);
-    border-radius: 50%;
+#currentPathDisplay h2 {
+    width: fit-content; padding-inline: 15px;
+    border-radius: 999px;
     transition: .3s ease;
 }
+#currentPathDisplay h2:hover {background: var(--boxBgCol);}
 
-#addFileBtn:hover {
-    color: var(--hoverCol);
-    border: 2px solid var(--hoverCol);
+#arrowRight {
+    width: 36px; height: 36px;
+    fill: none; opacity: .5;
+    margin-top: 6px;
 }
-#addFileBtn.active {
-    color: var(--hoverCol);
-    border: 2px solid var(--hoverCol);
+#arrowDown {
+    width: 24px; height: 24px;
+    margin-top: 8px;
 }
 
-#fileUploadMenu {
-    width: fit-content; height: 200px;
-    display: flex; flex-direction: column;
-    justify-content: space-evenly;
+#pathDropdownMenu {
+    position: absolute;
+    top: 110%; left: 15px;
+    height: 230px;
+    width: max-content;
     background: var(--menuBgCol);
+    border-radius: 8px; 
     padding-inline: 10px;
     padding-top: 15px; padding-bottom: 15px;
-    border-radius: 8px;
-    box-shadow: var(--boxShadowCol) 0px 6px 12px;
+    display: flex; flex-direction: column; justify-content: space-evenly;
+    box-shadow: 0px 6px 12px var(--boxShadowCol);
+    z-index: 10;
+    backdrop-filter: blur(5px);
 }
 
-#fileUploadMenu .uploadOption {
+.pathMenuOption {
     display: flex; flex-direction: row; 
     align-items: center; 
     cursor: pointer;
+    font-weight: 500;
     transition: .3s;
 }
 
-.uploadOption input {
-    opacity: 0;
-    position: absolute; left: 0; width: 200px; height: 20px;
-    z-index: 0;
-    cursor: pointer;
-}
+.pathMenuOption:hover {color: var(--hoverCol);}
 
-#fileUploadMenu .uploadOption h3 {margin-left: 10px;}
+.pathMenuOption h5 {margin-left: 10px;}
 
-#fileUploadMenu .uploadOption:hover {color: var(--hoverCol);}
-
-#fileUploadMenu svg {
+.pathMenuOption svg {
     width: 24px; height: 24px;
-    fill: none;
 }
 
-#newFolderSVG {position: relative; width: 24px; height: 24px;}
-
-#newFolderSVG svg {
-    position: absolute;
+.fileSizeChart {
+    position: relative; top: 100px; left: 64px;
+    width: calc(100% - 128px); height: 16px;
+    background: var(--boxShadowCol);
+    border-radius: 999px;
 }
-#newFolderSVG svg:first-child {
-    width: 16px; height: 16px;
-    right: 0; top: 6px;
-}
-#bigger {scale: 2;}
-
-hr {color: var(--boxShadowCol);}

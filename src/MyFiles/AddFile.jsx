@@ -6,7 +6,7 @@ import UploadFile from "../assets/SVG/FileIcons/UploadFile.svg?react"
 import TextFile from "../assets/SVG/FileIcons/TextFile.svg?react"
 import ArrowUp from "../assets/SVG/ArrowUp.svg?react"
 
-import "./MyFiles.css"
+import "./AddFile.css"
 
 export default function AddFile(props) {
     const [show, setShow] = useState(false)

@@ -34,7 +34,6 @@
 .menu-item:hover a, .menu-item.active a {color: var(--hoverCol);}
 
 #transparentSVG svg {fill: none;}
-#bigSVG svg {scale: .9;}
 .menu span {width: 2px; height: 24px;}
 
 a {text-decoration: none; color: var(--text);}
