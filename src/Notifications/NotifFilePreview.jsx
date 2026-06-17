@@ -5,7 +5,7 @@ import Folder from "../assets/SVG/FileIcons/UserFiles.svg?react"
 import "./Notifications.css"
 
 export default function NotifFilePreview(props) {
-    console.log(props.fileType)
+
     return (
         <div id="notifFilePreview">
             {

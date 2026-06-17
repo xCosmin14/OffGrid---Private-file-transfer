@@ -79,7 +79,7 @@
 }
 
 #fileSearchFilters {
-    position: relative; left: 64px; top: -34px;
+    position: absolute; left: 64px; top: 9px;
     grid-column: 3; 
     display: flex; flex-direction: row; align-items: center;
     gap: 24px; padding-inline: 16px;

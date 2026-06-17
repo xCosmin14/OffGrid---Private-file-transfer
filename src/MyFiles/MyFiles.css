@@ -1,5 +1,6 @@
 #addContainer {
     position: relative; top: 10px; left: 10px;
+    width: fit-content;
 }
 
 #addFileBtn {
@@ -15,3 +16,54 @@
     color: var(--hoverCol);
     border: 2px solid var(--hoverCol);
 }
+#addFileBtn.active {
+    color: var(--hoverCol);
+    border: 2px solid var(--hoverCol);
+}
+
+#fileUploadMenu {
+    width: fit-content; height: 200px;
+    display: flex; flex-direction: column;
+    justify-content: space-evenly;
+    background: var(--menuBgCol);
+    padding-inline: 10px;
+    padding-top: 15px; padding-bottom: 15px;
+    border-radius: 8px;
+    box-shadow: var(--boxShadowCol) 0px 6px 12px;
+}
+
+#fileUploadMenu .uploadOption {
+    display: flex; flex-direction: row; 
+    align-items: center; 
+    cursor: pointer;
+    transition: .3s;
+}
+
+.uploadOption input {
+    opacity: 0;
+    position: absolute; left: 0; width: 200px; height: 20px;
+    z-index: 0;
+    cursor: pointer;
+}
+
+#fileUploadMenu .uploadOption h3 {margin-left: 10px;}
+
+#fileUploadMenu .uploadOption:hover {color: var(--hoverCol);}
+
+#fileUploadMenu svg {
+    width: 24px; height: 24px;
+    fill: none;
+}
+
+#newFolderSVG {position: relative; width: 24px; height: 24px;}
+
+#newFolderSVG svg {
+    position: absolute;
+}
+#newFolderSVG svg:first-child {
+    width: 16px; height: 16px;
+    right: 0; top: 6px;
+}
+#bigger {scale: 2;}
+
+hr {color: var(--boxShadowCol);}
