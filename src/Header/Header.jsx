@@ -10,7 +10,6 @@ import Sun from "../assets/SVG/Sun.svg?react"
 import Moon from "../assets/SVG/Moon.svg?react"
 import Notification from "../assets/SVG/Notification.svg?react"
 import Search from "../assets/SVG/Search.svg?react"
-import Settings from "../assets/SVG/Settings.svg?react"
 
 import MockUserImg from "../assets/MockUserImg.jpg"
 
@@ -45,10 +44,6 @@ export default function Header() {
       </div>
 
       <div className="headerOptions">
-        <Link to="/settings">
-          <Settings />
-        </Link>
-
         <Link>
           <Notification 
             onClick={() => setNotificationsOpen(1 - notificationsOpen)} 
@@ -64,7 +59,7 @@ export default function Header() {
 
       <span id="headerVerticalLine"></span>
 
-      <Link to={getUID() === null ? "/login" : "/account"} id="accountSettingsToggle">
+      <Link to={getUID() === null ? "/login" : "/settings"} id="accountSettingsToggle">
         <img src={MockUserImg}/>
         <h3>{getUID() === null ? "Anonim" : "Nume Prenume" /*afisarea numelui utilizatorului mai incolo*/}</h3> 
       </Link>

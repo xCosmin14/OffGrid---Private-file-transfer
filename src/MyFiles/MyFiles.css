@@ -1,6 +1,6 @@
 #currentPathDisplay {
     display: flex; flex-direction: row; align-items: center;
-    position: relative; left: 49px; top: 70px;
+    position: relative; left: 40px; top: 70px;
     width: fit-content;
     font-size: 22px;
     cursor: pointer;

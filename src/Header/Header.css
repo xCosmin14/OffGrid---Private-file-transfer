@@ -6,7 +6,7 @@
     box-sizing: border-box;
     background: var(--menuBgCol);
     display: grid;
-    grid-template-columns: 14% auto auto 1fr auto auto auto;
+    grid-template-columns: 190px auto auto 1fr auto auto auto;
     align-items: center;
     gap: 20px;
     z-index: 2;
@@ -15,12 +15,12 @@
 #headerLogo {
     grid-column: 1;
     position: relative;
-    left: 16px; top: 0;
+    left: 0; top: 0;
     width: 100%; height: 60px;
     display: flex; align-items: center; cursor: pointer;
 }
 
-#headerLogo h1 {font-size: 36px; margin-left: 12px;}
+#headerLogo h1 {font-size: 34px; margin-left: 12px;}
 
 .header button, .header a {
     text-decoration: none; background: none; border: none;
@@ -180,10 +180,4 @@ img {
 #logoImg {
     width: 42px; height: 42px;
     border-radius: 0;
-}
-
-.page {
-    position: fixed;
-    left: 14%;
-    width: 86%; height: 100%;
 }

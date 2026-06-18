@@ -1,5 +1,5 @@
 #addContainer {
-    position: fixed; top: 70px; left: calc(14% + 10px);
+    position: fixed; top: 70px; left: 230px;
     width: fit-content;
     z-index: 5;
 }

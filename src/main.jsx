@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
 import Header from './Header/Header.jsx'
 import Menu from './Menu/Menu.jsx'
 
-import Account from "./Account/Account.jsx"
 import Register from "./Account/Register.jsx"
 import Login from "./Account/Login.jsx"
 import ForgotPassword from "./Account/ForgotPassword.jsx"
@@ -31,7 +30,6 @@ createRoot(document.getElementById('root')).render(
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/passwordreset" element = {<ForgotPassword />}></Route>
-        <Route path="/account" element = {getUID() === null ? <Login /> : <Account />} />
         <Route path="/settings" element={getUID() === null ? <Login /> : <Settings />} />
 
         <Route path="/myfiles/shared" element={getUID() === null ? <Login /> : <SharedFiles />} />
