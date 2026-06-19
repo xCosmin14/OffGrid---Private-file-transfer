@@ -5,56 +5,72 @@
     padding: 0 24px;
     box-sizing: border-box;
     background: var(--menuBgCol);
-    display: grid;
-    grid-template-columns: 190px auto auto 1fr auto auto auto;
+    display: flex;
+    flex-direction: row;
     align-items: center;
-    gap: 20px;
-    z-index: 2;
+    justify-content: space-between;
+    gap: 16px;
+    z-index: 5;
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+#hamburger {
+    width: 32px; height: 32px;
+    cursor: pointer;
+    margin-left: -10px;
 }
 
 #headerLogo {
-    grid-column: 1;
-    position: relative;
-    left: 0; top: 0;
-    width: 100%; height: 60px;
-    display: flex; align-items: center; cursor: pointer;
-}
-
-#headerLogo h1 {font-size: 34px; margin-left: 12px;}
-
-.header button, .header a {
-    text-decoration: none; background: none; border: none;
-    margin: 0; padding: 0;
-    display: flex; align-items: center;
+    display: flex; align-items: center; 
     cursor: pointer;
-}
-
-.header button svg, .header a svg {
-    width: 24px; height: 24px;
+    text-decoration: none;
     color: var(--text);
 }
 
-.header button:hover svg, .header a:hover svg {
-    fill: var(--hoverCol); color: var(--hoverCol);
-    transition: .3s ease;
+#headerLogo h1 {
+    font-size: 34px; 
+    margin-left: 12px;
+}
+
+#logoImg {
+    width: 42px; height: 42px;
+    border-radius: 0;
+}
+
+.headerRight {
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
 
 #headerFileSearch {
-    grid-column: 2;
     display: flex; align-items: center;
     border: 2px solid var(--text);
     padding: 8px 14px;
     border-radius: 12px;
-    justify-self: start;
-    width: 300px;
+    width: 300px; 
+    margin-left: 10px;
     transition: all .3s ease;
     box-sizing: border-box;
+}
+
+#headerFileSearch:focus-within {
+    border-color: var(--hoverCol);
+    box-shadow: var(--boxShadowCol) 0px 6px 12px;
+    width: 375px;
 }
 
 #headerFileSearch svg {
     width: 22px; height: 22px;
     rotate: 90deg;
     transition: .3s ease;
+    fill: none;
+    color: var(--text);
 }
 
 #headerFileSearch input {
@@ -68,35 +84,82 @@
 
 #headerFileSearch input:focus {outline: none;}
 
-#headerFileSearch input:focus svg {
-    fill: var(--hoverCol);
+#headerFileSearch input:focus + svg {
+    color: var(--hoverCol);
 }
 
-#headerFileSearch:focus-within {
-    border-color: var(--hoverCol);
-    box-shadow: var(--boxShadowCol) 0px 6px 12px;
-    width: 375px;
+.header button, .header a {
+    text-decoration: none; background: none; border: none;
+    margin: 0; padding: 0;
+    display: flex; align-items: center;
+    cursor: pointer;
+}
+
+.header button svg, .header a svg {
+    width: 24px; height: 24px;
+    color: var(--text);
+    transition: .3s ease;
+}
+
+.header button:hover svg, .header a:hover svg {
+    fill: var(--hoverCol); color: var(--hoverCol);
+}
+
+.headerOptions {
+    display: flex; align-items: center;
+    gap: 16px;
+}
+
+#headerVerticalLine {
+    display: block;
+    width: 2px; height: 32px;
+    background: var(--text);
+}
+
+#accountSettingsToggle {
+    display: flex; flex-direction: row; align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--text);
+    transition: .3s ease;
+}
+
+#accountSettingsToggle img {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+}
+
+#accountSettingsToggle:hover {
+    color: var(--hoverCol);
 }
 
 #fileSearchFilters {
-    position: absolute; left: 64px; top: 9px;
-    grid-column: 3; 
-    display: flex; flex-direction: row; align-items: center;
+    position: absolute;  
+    left: 64px; top: 10px;
+    display: flex; flex-direction: row; align-items: center; flex-wrap: wrap;
     gap: 24px; padding-inline: 16px;
     border-radius: 999px;
-    width: fit-content; height: 36px;
+    width: fit-content; min-height: 36px;
     border: 2px solid var(--text);
+    background: var(--menuBgCol);
+    z-index: 4;
 }
-#fileSearchFilters input {
+
+#fileSearchFilters input, #fileSearchFilters select {
     border: 1px solid var(--boxShadowCol);
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: none; color: var(--text);
+    font-size: 12px;
+    height: 28px;
+    box-sizing: border-box;
 }
+
 #fileSearchFilters input:focus, #fileSearchFilters select:focus {
     outline: none; 
     border-color: var(--hoverCol);
 }
-
-#filtersIcon, select[name="extensionFilter"] {cursor: pointer;}
-#filtersIcon {fill: none; color: var(--text);}
 
 .parameterSearch {
     display: flex; flex-direction: row; align-items: center;
@@ -122,49 +185,10 @@
     white-space: nowrap;
 }
 
-.parameterSearch input, .parameterSearch select {
-    padding: 4px 8px;
-    border-radius: 6px;
-    border: 1px solid var(--text);
-    background: none; color: var(--text);
-    font-size: 12px;
-    height: 28px;
-    box-sizing: border-box;
-}
-
 input[type="number"], select[name="extensionFilter"] {
     width: 60px;
     -webkit-appearance: none;
     -moz-appearance: textfield;
-}
-
-.headerOptions {
-    grid-column: 5;
-    display: flex; align-items: center;
-    gap: 16px;
-}
-
-#headerVerticalLine {
-    grid-column: 6;
-    display: block;
-    width: 2px; height: 32px;
-    background: var(--text);
-}
-
-#accountSettingsToggle {
-    width: 200px;
-    grid-column: 7;
-    display: flex; flex-direction: row; align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    text-decoration: none;
-    color: var(--text);
-    transition: .3s ease;
-}
-
-#accountSettingsToggle:hover {
-    border-color: var(--hoverCol);
-    color: var(--hoverCol);
 }
 
 #filterBar {
@@ -172,12 +196,16 @@ input[type="number"], select[name="extensionFilter"] {
     background-color: var(--text);
 }
 
-img {
-    width: 32px; height: 32px;
-    border-radius: 50%;
-}
+@media screen and (max-width: 500px) {
+    .header {padding: 0 16px;}
 
-#logoImg {
-    width: 42px; height: 42px;
-    border-radius: 0;
+    .headerLeft {gap: 12px;}
+
+    #headerFileSearch {
+        width: 230px;
+        padding: 6px 10px;
+        margin-left: 0;
+    }
+    
+    #headerFileSearch:focus-within {width: 250px;}
 }

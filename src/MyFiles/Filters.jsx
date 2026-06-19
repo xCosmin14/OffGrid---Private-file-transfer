@@ -1,4 +1,7 @@
 import { useLocation } from "react-router-dom"
+
+import isMobile from "../IsMobile.js"
+
 import "../Header/Header.css"
 
 export default function Filters() {
@@ -18,7 +21,7 @@ export default function Filters() {
                 </div>
             </div>
 
-            <div id="filterBar"></div>
+            {isMobile() == 0 && <div id="filterBar"></div>}
 
             <div className="parameterSearch">
                 <h2>Size (MB)</h2>
@@ -32,7 +35,7 @@ export default function Filters() {
                 </div>
             </div>
 
-            <div id="filterBar"></div>
+            {isMobile() == 0 && <div id="filterBar"></div>}
 
             <div className="parameterSearch">
                 <h2>Extension:</h2>

@@ -1,5 +1,9 @@
 import { useLocation, Link } from 'react-router-dom'
 
+import isMobile from '../IsMobile.js'
+
+import MockUserImg from "../assets/MockUserImg.jpg"
+
 import Documents from "../assets/SVG/FileIcons/Documents.svg?react"
 import Folder from "../assets/SVG/FileIcons/Folder.svg?react"
 import MusicLibrary from "../assets/SVG/FileIcons/MusicLibrary.svg?react"
@@ -16,7 +20,12 @@ export default function Menu() {
 
     return (
         <div className="menu">
-            <span></span>
+            {isMobile() == 1 && (
+                <Link to={getUID() === null ? "/login" : "/settings"} id="accountSettingsToggle">
+                    <img src={MockUserImg} alt="User Avatar" />
+                    <h2>Nume Prenume</h2>
+                </Link>
+            )}
 
             <div className={`menu-item ${pathname === "/" ? "active" : ""}`}>
                 <MyFiles />

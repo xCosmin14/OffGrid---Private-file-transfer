@@ -76,6 +76,11 @@
 }
 #plainText h4 {font-weight: 600;}
 
+.notification img {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+}
+
 #highlight {color: var(--hoverCol); font-weight: bold;}
 
 #notifBody #buttons {
@@ -118,4 +123,12 @@
 #notifFilePreview h4 {
     margin-left: 10px; margin-top: -3px;
     transition: .3s ease;
+}
+
+@media screen and (max-width: 500px) {
+    #notificationsCenter {
+        width: 100%; height: calc(100% - 60px);
+        position: fixed; top: 60px; right: 0;
+        z-index: 0;
+    }
 }

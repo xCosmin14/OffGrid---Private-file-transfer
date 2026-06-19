@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client'
 
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
 
+import isMobile from "./IsMobile.js"
+
 import Header from './Header/Header.jsx'
 import Menu from './Menu/Menu.jsx'
 
@@ -23,7 +25,7 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
       <Header />
-      <Menu />
+      {isMobile() == 0 && <Menu />}
 
       <Routes>
         <Route path="/" element = {getUID() === null ? <Login /> : <MyFiles />} />

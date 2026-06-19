@@ -1,6 +1,6 @@
 #currentPathDisplay {
     display: flex; flex-direction: row; align-items: center;
-    position: relative; left: 40px; top: 70px;
+    position: relative; left: 40px; top: 50px;
     width: fit-content;
     font-size: 22px;
     cursor: pointer;
@@ -56,8 +56,38 @@
 }
 
 .fileSizeChart {
-    position: relative; top: 100px; left: 64px;
+    position: relative; top: 60px; left: 64px;
     width: calc(100% - 128px); height: 16px;
     background: var(--boxShadowCol);
     border-radius: 999px;
+}
+
+@media screen and (max-width: 500px) {
+    #fileSearchFilters {
+        left: 10px; top: 150px;
+        border-radius: 12px;
+        padding-block: 8px;
+    }
+
+    #currentPathDisplay {
+        position: relative; left: 3px; top: -10px;
+    }
+
+    #currentPathDisplay h2 {
+        font-size: 20px;
+        padding-inline: 0;
+    }
+
+    #arrowRight {width: 24px; height: 24px;}
+    #arrowDown {
+        width: 18px; height: 18px;
+        margin-top: 4px;
+    }
+
+    .fileSizeChart {
+        top: -5px; left: 13px;
+        width: calc(100% - 23px); height: 16px;
+        background: var(--boxShadowCol);
+        border-radius: 999px;
+    }
 }
