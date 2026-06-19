@@ -54,7 +54,7 @@ export default function Notifications() {
                 />
 
                 <InviteNotification id="InviteNotification" className="notification"
-                    senderId="" sendDate="" folderID="" folderName=""
+                    senderId="" sendDate="" folderID="" 
                 />
 
                 <FilePreviewNotification id="previewNotification" className="notification"

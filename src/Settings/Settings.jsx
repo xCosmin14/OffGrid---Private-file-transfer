@@ -48,6 +48,17 @@ export default function Settings() {
         if (file) setAvatar(URL.createObjectURL(file))
     }
 
+    const logOut = () => {
+        let response = fetch("http://localhost:18080/log_out", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        })
+        localStorage.setItem("isLogged", "false  ")
+        location.reload()
+        return
+    }
+
     const colorOptions = [
         { key: "bgCol", label: "Page background", cssVar: "--bgCol" },
         { key: "menuBgCol", label: "Menu background", cssVar: "--menuBgCol" },
@@ -62,118 +73,126 @@ export default function Settings() {
             <h2>Settings</h2>
 
             <div className="settingsGrid">
-                <div className="settingsCard">
-                    <h3>Aspect and colors</h3>
+                {/* Am adăugat clasa flex-column pentru a împinge conținutul */}
+                <div className="settingsCard flex-column">
+                    <div>
+                        <h3>Aspect and colors</h3>
 
-                    <div className="colorPickersHeader">
-                        <span className="emptySpace"></span>
+                        <div className="colorPickersHeader">
+                            <span className="emptySpace"></span>
 
-                        <div className="modeLabels">
-                            <span>Light</span>
-                            <span>Dark</span>
+                            <div className="modeLabels">
+                                <span>Light</span>
+                                <span>Dark</span>
+                            </div>
+                        </div>
+
+                        <div className="colorPickersList">
+                            {colorOptions.map(option => (
+                                <div className="colorRow" key={option.key}>
+                                    <div className="colorInfo">
+                                        <label>{option.label}</label>
+                                        <span>{option.cssVar}</span>
+                                    </div>
+
+                                    <div className="colorPickers">
+                                        <input 
+                                            type="color" 
+                                            value={colors.light[option.key]} 
+                                            onChange={(e) => handleColorChange("light", option.key, e.target.value)} 
+                                            title="Light Mode"
+                                        />
+
+                                        <input 
+                                            type="color" 
+                                            value={colors.dark[option.key]} 
+                                            onChange={(e) => handleColorChange("dark", option.key, e.target.value)} 
+                                            title="Dark Mode"
+                                        />
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
 
-                    <div className="colorPickersList">
-                        {colorOptions.map(option => (
-                            <div className="colorRow" key={option.key}>
-                                <div className="colorInfo">
-                                    <label>{option.label}</label>
-                                    <span>{option.cssVar}</span>
-                                </div>
-
-                                <div className="colorPickers">
-                                    <input 
-                                        type="color" 
-                                        value={colors.light[option.key]} 
-                                        onChange={(e) => handleColorChange("light", option.key, e.target.value)} 
-                                        title="Light Mode"
-                                    />
-
-                                    <input 
-                                        type="color" 
-                                        value={colors.dark[option.key]} 
-                                        onChange={(e) => handleColorChange("dark", option.key, e.target.value)} 
-                                        title="Dark Mode"
-                                    />
-                                </div>
-                            </div>
-                        ))}
+                    <div className="settingsActionButtons">
+                        <button className="settingsBtn primary">Save theme</button>
+                        <button className="settingsBtn danger" onClick = {() => logOut()}>Log out</button>
                     </div>
-
-                    <button className="settingsBtn primary">Save theme</button>
                 </div>
 
-                <div className="settingsCard">
-                    <h3>Profile</h3>
-                    
-                    <div className="avatarSection">
-                        <div className="avatarWrapper" onClick={() => fileInputRef.current.click()}>
-                            {avatar ? <img src={avatar} alt="Avatar" /> : <div className="avatarPlaceholder">+</div>}
-                        </div>
-
-                        <input 
-                            type="file" 
-                            ref={fileInputRef} 
-                            style={{ display: "none" }} 
-                            accept="image/*" 
-                            onChange={handleAvatarChange} 
-                        />
-
-                        <span className="avatarLabel">Change profile picture</span>
-                    </div>
-
-                    <div className="settingsForm">
-                        <div className="inputGroup">
-                            <label>New username</label>
+                <div className="settingsCard flex-column">
+                    <div>
+                        <h3>Profile</h3>
+                        
+                        <div className="avatarSection">
+                            <div className="avatarWrapper" onClick={() => fileInputRef.current.click()}>
+                                {avatar ? <img src={avatar} alt="Avatar" /> : <div className="avatarPlaceholder">+</div>}
+                            </div>
 
                             <input 
-                                type="text" 
-                                value={username} 
-                                onChange={(e) => setUsername(e.target.value)} 
+                                type="file" 
+                                ref={fileInputRef} 
+                                style={{ display: "none" }} 
+                                accept="image/*" 
+                                onChange={handleAvatarChange} 
                             />
+
+                            <span className="avatarLabel">Change profile picture</span>
                         </div>
 
-                        <div className="inputGroup">
-                            <label>Type the password to confirm</label>
+                        <div className="settingsForm">
+                            <div className="inputGroup">
+                                <label>New username</label>
 
-                            <input 
-                                type="password" 
-                                placeholder="Current password" 
-                                value={confirmPasswordForUser}
-                                onChange={(e) => setConfirmPasswordForUser(e.target.value)}
-                            />
+                                <input 
+                                    type="text" 
+                                    value={username} 
+                                    onChange={(e) => setUsername(e.target.value)} 
+                                />
+                            </div>
+
+                            <div className="inputGroup">
+                                <label>Type the password to confirm</label>
+
+                                <input 
+                                    type="password" 
+                                    placeholder="Current password" 
+                                    value={confirmPasswordForUser}
+                                    onChange={(e) => setConfirmPasswordForUser(e.target.value)}
+                                />
+                            </div>
+
+                            <button className="settingsBtn">Update username</button>
                         </div>
 
-                        <button className="settingsBtn">Update username</button>
-                    </div>
+                        <hr className="settingsDivider" />
 
-                    <hr className="settingsDivider" />
+                        <div className="settingsForm">
+                            <div className="inputGroup">
+                                <label>Current password</label>
 
-                    <div className="settingsForm">
-                        <div className="inputGroup">
-                            <label>Current password</label>
+                                <input 
+                                    type="password" 
+                                    placeholder="••••••••" 
+                                    value={currentPassword}
+                                    onChange={(e) => setCurrentPassword(e.target.value)}
+                                />
+                            </div>
 
-                            <input 
-                                type="password" 
-                                placeholder="••••••••" 
-                                value={currentPassword}
-                                onChange={(e) => setCurrentPassword(e.target.value)}
-                            />
+                            <div className="inputGroup">
+                                <label>New password</label>
+                                
+                                <input 
+                                    type="password" 
+                                    placeholder="••••••••" 
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                />
+                            </div>
+
+                            <button className="settingsBtn">Change password</button>
                         </div>
-
-                        <div className="inputGroup">
-                            <label>New password</label>
-                            
-                            <input 
-                                type="password" 
-                                placeholder="••••••••" 
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                            />
-                        </div>
-
-                        <button className="settingsBtn">Change password</button>
                     </div>
                 </div>
             </div>

@@ -12,23 +12,31 @@ import "./Account.css"
 
 export default function Login() {
     const [showPass, setShowPass] = useState(false)
-    const [showError, setShowError] = useState(0) //1 - email nu există   2 - parolă greșită pentru emailul scris
+    const [showError, setShowError] = useState("") 
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         const formData = new FormData(e.currentTarget); 
-        formData.set("loginEmail", formData.get("loginEmail").replace(/['`"/{};?,#$%^&*()]+/g, ''))
-        formData.set("loginPassword", formData.get("loginPassword").replace(/['`"<>]+/g, ''))
+        formData.set("email", formData.get("email").replace(/['`"/{};?,#$%^&*()]+/g, ''))
+        formData.set("password", formData.get("password").replace(/['`"<>]+/g, ''))
 
-        var formularFinal = {}
-        formData.forEach((valoare, cheie) => formularFinal[cheie] = valoare)
-        formularFinal = JSON.stringify(formularFinal)
+        let DataObject = Object.fromEntries(formData.entries());
 
-        //logica de redirectionare pagina si logare efectiva
-        localStorage.setItem("UID", 1)
-        window.location.replace("/")
-        //
+        let response = await fetch("http://localhost:18080/log_in", {
+            method: "POST",
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(DataObject)
+        })
+
+        let data = await response.json()
+
+        if (data.message == "user logged in") {
+            localStorage.setItem("isLogged", "true")
+            window.location.href = "/"
+        }
+        
     }
     
     useTitle("OffGrid - Login")
@@ -39,7 +47,7 @@ export default function Login() {
                 <h1>Welcome back!</h1>
 
                 <div id="accountFormField">
-                    <input type="email" name="loginEmail" placeholder="Email" 
+                    <input type="email" name="email" placeholder="Email" 
                         pattern="[a-zA-Z0-9@.]+" required
                         onBeforeInput={(e) => {
                             if (!/[a-zA-Z0-9@.]/.test(e.data)) {
@@ -51,7 +59,7 @@ export default function Login() {
                 </div>
 
                 <div id="accountFormField">
-                    <input type={showPass ? "text" : "password"} name="loginPassword" placeholder="Password" required/>
+                    <input type={showPass ? "text" : "password"} name="password" placeholder="Password" required/>
                     
                     <button type="button" id="toggleViewPassword" onClick={() => setShowPass(p => !p)}>
                         {showPass ? <EyeHide /> : <EyeShow />}

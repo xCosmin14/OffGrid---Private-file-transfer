@@ -1,7 +1,6 @@
 import { useState } from "react"
-import {Link} from "react-router-dom"
-
-import {useTitle} from "../UseTitle.js"
+import { Link } from "react-router-dom"
+import { useTitle } from "../UseTitle.js"
 
 import Email from "../assets/SVG/UserIcons/Email.svg?react"
 import Password from "../assets/SVG/UserIcons/Password.svg?react"
@@ -15,32 +14,50 @@ import "./Account.css"
 export default function Register() {
     const [showPass, setShowPass] = useState(false)
     const [showConfirm, setShowConfirm] = useState(false)
-    const [showError, setShowError] = useState(0) //2 - username luat   3 - email luat   4 - invite code invalid
+    
+    const [showError, setShowError] = useState("")
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const formData = new FormData(e.currentTarget); 
+        const formData = new FormData(e.currentTarget)
+        const date = new Date()
+        const mysqlDate = date.toISOString().slice(0, 19).replace('T', ' ');
+
         formData.set("username", formData.get("username").replace(/['`"/{};?,#$%^&*()]+/g, ''))
-        formData.set("firstName", formData.get("firstName").replace(/['`"/{};?,#$%^&*()]+/g, ''))
-        formData.set("lastName", formData.get("lastName").replace(/['`"/{};?,#$%^&*()]+/g, ''))
-        formData.set("registerEmail", formData.get("registerEmail").replace(/['`"/{};?,#$%^&*()]+/g, ''))
-        formData.set("registerPassword", formData.get("registerPassword").replace(/['`"<>]+/g, ''))
+        formData.set("email", formData.get("email").replace(/['`"/{};?,#$%^&*()]+/g, ''))
+        formData.set("password", formData.get("password").replace(/['`"<>]+/g, ''))
         formData.set("confirmPassword", formData.get("confirmPassword").replace(/['`"<>]+/g, ''))
-        formData.set("inviteCode", formData.get("inviteCode").replace(/['`"<>]+/g, ''))
+        formData.set("invite_code", formData.get("invite_code").replace(/['`"<>]+/g, ''))
+        formData.set("join_date", mysqlDate)
         
-        var formularFinal = {}
-        formData.forEach((valoare, cheie) => formularFinal[cheie] = valoare)
-        
-        if (formData.get("registerPassword") !== formData.get("confirmPassword")) {
-            setShowError(1)
+        if (formData.get("password") !== formData.get("confirmPassword")) {
+            setShowError("password mismatch")
             return
         }
-        setShowError(0)
+        
+        setShowError("")
+        formData.delete("confirmPassword")
 
-        formularFinal = JSON.stringify(formularFinal)
-        //verificare dacă username-ul / mailul e luat și invite code-ul e bun
-        return
+        const dataObject = Object.fromEntries(formData.entries())
+
+        try {
+            let response = await fetch("http://localhost:18080/register", {
+                method: "POST",
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(dataObject)
+            })
+
+            let data = await response.json()
+            
+            if (!response.ok || data.status === "error") {
+                 setShowError(data.message) 
+                 return
+            }
+        } catch (error) {
+            setShowError("Network error. Please try again.")
+        }
     }
 
     useTitle("OffGrid - Register")
@@ -53,6 +70,7 @@ export default function Register() {
                 <div id="accountFormField">
                     <input type="text" name="username" placeholder="Username" 
                         pattern="[a-zA-Z0-9]+" required
+                        onChange={() => setShowError("")}
                         onBeforeInput={(e) => {
                             if (!/[a-zA-Z0-9]/.test(e.data)) {
                                 e.preventDefault()
@@ -63,28 +81,9 @@ export default function Register() {
                 </div>
 
                 <div id="accountFormField">
-                    <input type="text" name="firstName" placeholder="First name" className="half" 
-                        pattern="[a-zA-Z]+" required
-                        onBeforeInput={(e) => {
-                            if (!/[a-zA-Z]/.test(e.data)) {
-                                e.preventDefault()
-                            }
-                        }}   
-                    />
-                    <input type="text" name="lastName" placeholder="Last name" className="half" 
-                        pattern="[a-zA-Zz]+" required
-                        onBeforeInput={(e) => {
-                            if (!/[a-zA-Z]/.test(e.data)) {
-                                e.preventDefault()
-                            }
-                        }} 
-                    />
-                    <User />
-                </div>
-
-                <div id="accountFormField">
-                    <input type="email" name="registerEmail" placeholder="Email" 
+                    <input type="email" name="email" placeholder="Email" 
                         pattern="[a-zA-Z0-9@.]+" required
+                        onChange={() => setShowError("")} 
                         onBeforeInput={(e) => {
                             if (!/[a-zA-Z0-9@.]/.test(e.data)) {
                                 e.preventDefault()
@@ -95,12 +94,13 @@ export default function Register() {
                 </div>
 
                 <div id="accountFormField">
-                    <input type={showPass ? "text" : "password"} name="registerPassword" 
+                    <input type={showPass ? "text" : "password"} name="password" 
                         placeholder="Password (8-20 characters)" 
                         required minLength="8" maxLength="20"
+                        onChange={() => setShowError("")}
                     />
                     
-                    <button type="button" id="toggleViewPassword" minLength="8" maxLength="20"
+                    <button type="button" id="toggleViewPassword" 
                         onClick={() => setShowPass(p => !p)}
                     >
                         {showPass ? <EyeHide /> : <EyeShow />}
@@ -111,7 +111,8 @@ export default function Register() {
 
                 <div id="accountFormField">
                     <input type={showConfirm ? "text" : "password"} name="confirmPassword" placeholder="Confirm password" 
-                        required onChange={() => setShowError(0)}
+                        required minLength="8" maxLength="20"
+                        onChange={() => setShowError("")} 
                         />
                     
                     <button type="button" id="toggleViewPassword" onClick={() => setShowConfirm(p => !p)}>
@@ -122,8 +123,9 @@ export default function Register() {
                 </div>
 
                 <div id="accountFormField">
-                    <input type="text" name="inviteCode" placeholder="Invite code"
+                    <input type="text" name="invite_code" placeholder="Invite code"
                         pattern="[a-zA-Z0-9!#$%^?]+" required
+                        onChange={() => setShowError("")}
                         onBeforeInput={(e) => {
                             if (!/[a-zA-Z0-9!#$%^?]/.test(e.data)) {
                                 e.preventDefault()
@@ -135,10 +137,10 @@ export default function Register() {
 
                 <button type="submit">Register</button>
 
-                {showError === 1 && <h3 style={{color: "red"}}>Passwords do not match</h3>}
-                {showError === 2 && <h3 style={{color: "red"}}>Username already exists</h3>}
-                {showError === 3 && <h3 style={{color: "red"}}>This email address is taken</h3>}
-                {showError === 4 && <h3 style={{color: "red"}}>Invalid invite code</h3>}
+                {showError == "duplicate username" && <h3 style={{color: "red"}}>Username is already taken</h3>}
+                {showError == "duplicate email" && <h3 style={{color: "red"}}>Email is already taken</h3>}
+                {showError == "password mismatch" && <h3 style={{color: "red"}}>Passwords don't match</h3>}
+                {showError == "invalid invite code" && <h3 style={{color: "red"}}>Invalid invite code</h3>}
 
                 <Link to="/passwordreset">Forgot your password?</Link>
                 <Link to="/login">Log into your account</Link>
