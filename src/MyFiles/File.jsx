@@ -36,7 +36,6 @@ export default function File(props) {
 
     const handleAction = (e, action) => {
         e.stopPropagation()
-        console.log("Action:", action, "on file:", props.name)
         setShowMenu(false)
     }
 
@@ -94,7 +93,7 @@ export default function File(props) {
                     </div>
 
                     <hr />
-                    
+
                     <div className="pathMenuOption" onClick={(e) => handleAction(e, "access")}>
                         <Group />
                         <h5>Manage Access</h5>
