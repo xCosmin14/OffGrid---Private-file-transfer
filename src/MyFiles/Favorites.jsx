@@ -3,6 +3,7 @@ import {Link} from 'react-router-dom'
 
 import {useTitle} from "../UseTitle.js"
 
+import File from "./File.jsx"
 import Filters from "./Filters.jsx"
 import AddFile from "./AddFile.jsx"
 
@@ -92,7 +93,11 @@ export default function Favorites() {
                 <hr className="fileTableDivider"/>
 
                 <div className="fileList">
-
+                    <File name="Exemplu.pdf" extension="pdf" size="5 MB" lastModified="2026-06-21" owner="CosminN14"/>
+                    <File name="Exemplu.wav" extension="wav" size="50 MB" lastModified="2026-06-21" owner="CosminN14"/>
+                    <File name="Exemplu.cpp" extension="cpp" size="2 MB" lastModified="2026-06-21" owner="CosminN14"/>
+                    <File name="Exemplu.png" extension="png" size="4 MB" lastModified="2026-06-21" owner="CosminN14"/>
+                    <File name="Exemplu" extension="folder" size="400 MB" lastModified="2026-06-21" owner="CosminN14"/>
                 </div>
             </div>
         </div>

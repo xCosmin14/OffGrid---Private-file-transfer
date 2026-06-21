@@ -3,6 +3,7 @@ import {Link} from 'react-router-dom'
 
 import { useTitle } from "../UseTitle.js"
 
+import Song from "../MyFiles/Song.jsx"
 import AddFile from "../MyFiles/AddFile.jsx"
 import Filters from "../MyFiles/Filters.jsx"
 
@@ -103,18 +104,25 @@ export default function MusicLibrary() {
 
             <div className="fileSizeChart"></div>
 
-            <div className="fileContainer">
+            <div className="fileContainer" id="music">
                 <div className="fileTableHeader">
-                    <div>Name</div>
-                    <div>Type</div>
-                    <div>File size</div>
-                    <div>Last modified</div>
+                    <div>Title</div>
+                    <div>Artists</div>
+                    <div>Album</div>
+                    <div>Duration</div>
+                    <div>Release date</div>
+                    <div>Added / Modified</div>
+                    <div>Size</div>
                 </div>
                 
                 <hr className="fileTableDivider"/>
 
                 <div className="fileList">
-
+                    <Song name="Exemplu.flac" extension="flac" size="5 MB" lastModified="2026-06-21" />
+                    <Song name="Exemplu.flac" extension="flac" size="50 MB" lastModified="2026-06-21" />
+                    <Song name="Exemplu.flac" extension="flac" size="2 MB" lastModified="2026-06-21" />
+                    <Song name="Exemplu.flac" extension="flac" size="4 MB" lastModified="2026-06-21" />
+                    <Song name="Exemplu.flac" extension="folder" size="400 MB" lastModified="2026-06-21" />
                 </div>
             </div>
         </div>

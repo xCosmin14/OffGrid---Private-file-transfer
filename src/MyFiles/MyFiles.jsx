@@ -4,6 +4,7 @@ import { useTitle } from "../UseTitle.js"
 
 import AddFile from "./AddFile.jsx"
 import Filters from "./Filters.jsx"
+import File from "./File.jsx"
 
 import ArrowRight from "../assets/SVG/ArrowRight.svg?react"
 import ArrowDown from "../assets/SVG/ArrowDown.svg?react"
@@ -100,15 +101,18 @@ export default function MyFiles() {
                 <div className="fileTableHeader">
                     <div>Name</div>
                     <div>Type</div>
-                    <div>File size</div>
+                    <div>Size</div>
                     <div>Last modified</div>
-                    <div>Owner</div>
                 </div>
                 
                 <hr className="fileTableDivider"/>
 
                 <div className="fileList">
-
+                    <File name="Exemplu.pdf" extension="pdf" size="5 MB" lastModified="2026-06-21" owner="CosminN14"/>
+                    <File name="Exemplu.wav" extension="wav" size="50 MB" lastModified="2026-06-21" owner="CosminN14"/>
+                    <File name="Exemplu.cpp" extension="cpp" size="2 MB" lastModified="2026-06-21" owner="CosminN14"/>
+                    <File name="Exemplu.png" extension="png" size="4 MB" lastModified="2026-06-21" owner="CosminN14"/>
+                    <File name="Exemplu" extension="folder" size="400 MB" lastModified="2026-06-21" owner="CosminN14"/>
                 </div>
             </div>
         </div>

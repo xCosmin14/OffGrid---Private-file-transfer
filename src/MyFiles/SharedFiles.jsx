@@ -3,6 +3,7 @@ import {Link} from 'react-router-dom'
 
 import {useTitle} from "../UseTitle.js"
 
+import File from "./File.jsx"
 import AddFile from "./AddFile.jsx"
 import Filters from "./Filters.jsx"
 
