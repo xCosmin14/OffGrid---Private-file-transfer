@@ -3,7 +3,7 @@ import {Link} from 'react-router-dom'
 
 import { useTitle } from "../UseTitle.js"
 
-import Song from "../MyFiles/Song.jsx"
+import Song from "./Song.jsx"
 import AddFile from "../MyFiles/AddFile.jsx"
 import Filters from "../MyFiles/Filters.jsx"
 

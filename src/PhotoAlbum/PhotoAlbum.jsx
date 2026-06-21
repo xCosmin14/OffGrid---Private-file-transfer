@@ -105,11 +105,14 @@ export default function PhotoAlbum() {
 
             <div className="fileSizeChart"></div>
 
-            <div className="fileContainer">
+            <div className="fileContainer" id="photos">
                 <div className="fileTableHeader">
                     <div>Name</div>
                     <div>Type</div>
-                    <div>File size</div>
+                    <div>Resolution</div>
+                    <div>Color space</div>
+                    <div>Size</div>
+                    <div>Date taken</div>
                     <div>Last modified</div>
                 </div>
                 

@@ -85,7 +85,7 @@ export default function Favorites() {
                 <div className="fileTableHeader">
                     <div>Name</div>
                     <div>Type</div>
-                    <div>File size</div>
+                    <div>Size</div>
                     <div>Last modified</div>
                     <div>Owner</div>
                 </div>

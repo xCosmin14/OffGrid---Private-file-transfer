@@ -103,11 +103,14 @@ export default function Documents() {
 
             <div className="fileSizeChart"></div>
 
-            <div className="fileContainer">
+            <div className="fileContainer" id="documents">
                 <div className="fileTableHeader">
                     <div>Name</div>
+                    <div>Title</div>
+                    <div>Author</div>
+                    <div># of pages/slides/sheets</div>
                     <div>Type</div>
-                    <div>File size</div>
+                    <div>Size</div>
                     <div>Last modified</div>
                 </div>
                 

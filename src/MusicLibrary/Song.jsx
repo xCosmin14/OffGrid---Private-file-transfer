@@ -14,11 +14,7 @@ export default function File(props) {
         <div className="fileRow">
             <div className="fileNameCell">
                 <div className="fileIconWrapper">
-                    {isFolder ? (
-                        <Folder />
-                    ) : (
-                        <FileIcon extension={props.extension} {...(defaultStyles[props.extension] || {})} />
-                    )}
+                    <FileIcon extension={props.extension} {...(defaultStyles[props.extension] || {})} />
                 </div>
                 <h3>{props.name}</h3>
             </div>
