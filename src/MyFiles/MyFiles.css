@@ -1,18 +1,19 @@
 #currentPathDisplay {
     display: flex; flex-direction: row; align-items: center;
-    position: relative; left: 40px; top: 50px;
+    position: relative; left: 40px; top: 60px;
     width: fit-content;
-    font-size: 22px;
+    font-size: 32px; font-weight: bold;
     cursor: pointer;
     z-index: 2;
 }
 
-#currentPathDisplay h2 {
+#currentPathDisplay a {
     width: fit-content; padding-inline: 15px;
     border-radius: 999px;
     transition: .3s ease;
+    margin-left: 7px;
 }
-#currentPathDisplay h2:hover {background: var(--boxBgCol);}
+#currentPathDisplay a:hover {background: var(--boxBgCol);}
 
 #arrowRight {
     width: 36px; height: 36px;
@@ -56,10 +57,45 @@
 }
 
 .fileSizeChart {
-    position: relative; top: 60px; left: 64px;
+    position: relative; top: 80px; left: 64px;
     width: calc(100% - 128px); height: 16px;
     background: var(--boxShadowCol);
     border-radius: 999px;
+}
+
+.fileContainer {
+    width: 100%; height: calc(100% - 270px);
+    position: relative; top: 145px;
+    padding-inline: 40px; 
+    box-sizing: border-box;
+}
+
+.fileTableHeader {
+    display: grid;
+    grid-template-columns: 2fr 0.8fr 0.8fr 1.5fr 1.5fr; 
+    align-items: center;
+    padding: 0 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    opacity: 0.6; 
+    margin-bottom: 15px;
+}
+
+.fileTableDivider {
+    border: none;
+    border-top: 1px solid var(--boxShadowCol);
+    opacity: 0.5;
+    margin: 0; margin-bottom: 10px;
+}
+
+.fileList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+    height: calc(100% - 40px);
+    overflow-y: scroll;
 }
 
 @media screen and (max-width: 500px) {
@@ -73,7 +109,7 @@
         position: relative; left: 3px; top: -10px;
     }
 
-    #currentPathDisplay h2 {
+    #currentPathDisplay a {
         font-size: 20px;
         padding-inline: 0;
     }

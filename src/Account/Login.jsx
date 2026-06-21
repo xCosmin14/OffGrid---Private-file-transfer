@@ -35,8 +35,7 @@ export default function Login() {
         if (data.message == "user logged in") {
             localStorage.setItem("isLogged", "true")
             window.location.href = "/"
-        }
-        
+        } 
     }
     
     useTitle("OffGrid - Login")

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react"
+import {Link} from 'react-router-dom'
 
 import {useTitle} from "../UseTitle.js"
 
@@ -29,16 +30,16 @@ export default function Trash() {
             <Filters />
 
             <div id="currentPathDisplay">
-                <h2>Trash</h2>
+                <Link>Trash</Link>
                 <ArrowRight id="arrowRight"/>
-                <h2>Sursa 1</h2>
+                <Link>Sursa 1</Link>
                 <ArrowRight id="arrowRight"/>
                 
                 <div style={{ position: "relative", display: "inline-block" }} ref={pathMenuRef}>
-                    <h2 onClick={() => setShowPathMenu(prev => !prev)} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                    <Link onClick={() => setShowPathMenu(prev => !prev)} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                         Sursa 2
                         <ArrowDown id="arrowDown"/>
-                    </h2>
+                    </Link>
 
                     {showPathMenu && <div id="pathDropdownMenu">
                         <div className="pathMenuOption" onClick={() => handlePathAction("download")}>
@@ -79,6 +80,22 @@ export default function Trash() {
             </div>
 
             <div className="fileSizeChart"></div>
+
+            <div className="fileContainer">
+                <div className="fileTableHeader">
+                    <div>Name</div>
+                    <div>Type</div>
+                    <div>File size</div>
+                    <div>Last modified</div>
+                    <div>Owner</div>
+                </div>
+                
+                <hr className="fileTableDivider"/>
+
+                <div className="fileList">
+
+                </div>
+            </div>
         </div>
     );
 }
