@@ -246,3 +246,31 @@ h2 {
     color: #ff1a1a;
     border-color: #ff1a1a;
 }
+
+@media screen and (max-width: 500px) {
+    #settingsPage {
+        left: 0; width: 100%;
+        padding-inline: 15px; 
+    }
+
+    h2 {
+        font-size: 28px;
+        margin-left: 0;
+    }
+
+    .settingsGrid {grid-template-columns: 1fr; gap: 20px;}
+
+    .settingsCard {
+        padding-inline: 15px; padding-top: 15px; padding-bottom: 15px;
+    }
+
+    .inputGroup input {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .settingsBtn {
+        width: 100%;
+        text-align: center;
+    }
+}
