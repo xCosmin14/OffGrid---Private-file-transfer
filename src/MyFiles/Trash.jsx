@@ -21,6 +21,9 @@ export default function Trash() {
     useTitle("Trash")
     const [showPathMenu, setShowPathMenu] = useState(false)
     const pathMenuRef = useRef(null)
+
+    const [appliedFilters, setAppliedFilters] = useState({});
+    const handleFilterChange = (filters) => {setAppliedFilters(filters);};
     
         //SE VERIFICA DREPTURILE ASUPRA FISIERULUI SI SUNT OPTIUNI IN FUNCTIE DE ASTA
 

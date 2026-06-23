@@ -24,6 +24,9 @@ export default function MusicLibrary() {
     const [showPathMenu, setShowPathMenu] = useState(false)
     const pathMenuRef = useRef(null)
 
+    const [appliedFilters, setAppliedFilters] = useState({});
+    const handleFilterChange = (filters) => {setAppliedFilters(filters);};
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (pathMenuRef.current && !pathMenuRef.current.contains(event.target)) {

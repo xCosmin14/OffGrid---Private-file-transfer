@@ -1,11 +1,39 @@
+import { useState, useEffect } from "react"
 import { useLocation } from "react-router-dom"
 
 import isMobile from "../IsMobile.js"
 
 import "../Header/Header.css"
 
-export default function Filters() {
+export default function Filters( {onFilterChange} ) {
     const { pathname } = useLocation()
+
+    const [localFilters, setLocalFilters] = useState({
+        dateFilterLowerBound: "",
+        dateFilterUpperBound: "",
+        sizeFilterLowerBound: "",
+        sizeFilterUpperBound: "",
+        extensionFilter: "",
+        sentBy: ""
+    })
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target
+        setLocalFilters(prev => ({
+            ...prev,
+            [name]: value
+        }))
+    }
+
+    useEffect(() => {
+        if (!onFilterChange) return;
+
+        const delayDebounceFn = setTimeout(() => {
+            onFilterChange(localFilters)
+        }, 400)
+
+        return () => clearTimeout(delayDebounceFn)
+    }, [localFilters, onFilterChange])
 
     return (
         <div id="fileSearchFilters">
@@ -14,10 +42,16 @@ export default function Filters() {
                 
                 <div id="boundedInputs">
                     <h3>from:</h3>
-                    <input type="date" name="dateFilterLowerBound"/>
+                    <input type="date" name="dateFilterLowerBound"
+                        value={localFilters.dateFilterLowerBound}
+                        onChange={handleInputChange}
+                    />
 
                     <h3>to:</h3>
-                    <input type="date" name="dateFilterUpperBound"/>
+                    <input type="date" name="dateFilterUpperBound"
+                        value={localFilters.dateFilterUpperBound}
+                        onChange={handleInputChange}
+                    />
                 </div>
             </div>
 
@@ -28,10 +62,16 @@ export default function Filters() {
                 
                 <div id="boundedInputs">
                     <h3>from:</h3>
-                    <input type="number" name="sizeFilterLowerBound"/>
+                    <input type="number" name="sizeFilterLowerBound"
+                        value={localFilters.sizeFilterLowerBound}
+                        onChange={handleInputChange}
+                    />
 
                     <h3>to:</h3>
-                    <input type="number" name="sizeFilterUpperBound"/>
+                    <input type="number" name="sizeFilterUpperBound"
+                        value={localFilters.sizeFilterUpperBound}
+                        onChange={handleInputChange}
+                    />
                 </div>
             </div>
 
@@ -40,7 +80,10 @@ export default function Filters() {
             <div className="parameterSearch">
                 <h2>Extension:</h2>
 
-                <select name="extensionFilter">
+                <select name="extensionFilter"
+                    value={localFilters.extensionFilter}
+                    onChange={handleInputChange}
+                >
                     <option value=".pptx">.pptx</option>
                     <option value=".png">.png</option>
                     {/* SE VOR CITI TOATE FIȘIERELE ȘI SE VOR OBȚINE EXTENSIILE */}
@@ -52,7 +95,10 @@ export default function Filters() {
                 <div className="parameterSearch">
                     <h2>Sent by:</h2>
 
-                    <input type="text" name="sentBy" placeholder="User name"/>
+                    <input type="text" name="sentBy" placeholder="User name"
+                        value={localFilters.sentBy}
+                        onChange={handleInputChange}
+                    />
                 </div>
             }
         </div>
