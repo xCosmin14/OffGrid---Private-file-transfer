@@ -1,4 +1,7 @@
 #include "DatabaseController.h"
+#include "Queries.h"
+#include "Structs.h"
+
 #include <fstream>
 
 mysql::pool_params getParams()

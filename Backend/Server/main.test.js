@@ -16,7 +16,7 @@ async function getResponse(endpoint, method, body = null, cookie = null, content
             ...(cookie && { 'Cookie': cookie })
         },
         credentials: 'include',
-        body: body ? JSON.stringify(body) : undefined
+        body: isFormData ? body : (body ? JSON.stringify(body) : undefined)
     });
 
     return response;
@@ -94,18 +94,52 @@ describe("server", () => {
         let response = await getResponse("/upload_photo", "POST", formData, cookie, "image/png");
         let data = await response.json();
 
-        expect(data).toStrictEqual({ "status": "success", "message": "photo uploaded successfuly" });
+        expect(data).toStrictEqual({ "status": "success", "message": "file uploaded successfuly" });
+
+    })
+
+    it('should upload regular files', async () => {
+        let buffer = fs.readFileSync("../Testing/regular_file.txt");
+        let blob = new Blob([buffer], { type: 'text/plain' });
+
+        let formData = new FormData();
+        formData.append('photo', blob, "regular_file.txt");
+
+        let response = await getResponse("/upload_file", "POST", formData, cookie, 'text/plain');
+        let data = await response.json();
+
+        expect(data).toStrictEqual({ "status": "success", "message": "file uploaded successfuly" });
+
+    })
+
+    it('should upload foders', async () => {
+        let formData = new FormData();
+        let folderFiles = [
+            {
+                name:'idk.txt', path:'folder_test/idk.txt'
+            },
+            {
+                name: 'numai_bile.txt', path: 'folder_test/numai_bile.txt'
+            }
+        ];
+
+        for (let file of folderFiles) {
+            let buffer = fs.readFileSync(`../Testing/folder_test/${file.name}`);
+            let blob = new Blob([buffer], { type: 'text/plain' });
+            formData.append('files', blob, file.path);
+        }
+
+
+        let response = await getResponse("/upload_folder", "POST", formData, cookie, 'text/plain');
+        let data = await response.json();
+
+        expect(data).toStrictEqual({ "status": "success", "message": "folder uploaded successfuly" });
 
     })
 
     it('should log the user out', async () => {
 
-        mail = `test_${crypto.randomUUID().slice(0, 8)}@gmail.com`;
-        name = `testname_${crypto.randomUUID().slice(0, 8)}`;
-
-
         let response = await getResponse("/log_out", "POST", null, cookie);
-
         let data = await response.json();
 
         expect(data).toStrictEqual({ "status": "success", "message": "user logged out" });
@@ -114,6 +148,9 @@ describe("server", () => {
     })
 
     it('should remove the user', async () => {
+
+        mail = `test_${crypto.randomUUID().slice(0, 8)}@gmail.com`;
+        name = `testname_${crypto.randomUUID().slice(0, 8)}`;
 
         let response = await getResponse('/register', 'POST', {
             email: mail,

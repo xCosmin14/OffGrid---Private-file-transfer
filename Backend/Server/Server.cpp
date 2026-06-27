@@ -33,7 +33,7 @@ Async<void> handle_session(boost::asio::ip::tcp::socket socket, ClientController
 
 			std::string target = req_parser.get().target();
 
-			if (target == "/upload_photo") 
+			if (target == "/upload_photo" || target == "/upload_file" || target == "/upload_folder")
 			{
 				Handler<http::vector_body<uint8_t>, http::string_body>handler(req_parser.get(), c);
 				auto res = co_await handler.getResponse();
@@ -49,6 +49,10 @@ Async<void> handle_session(boost::asio::ip::tcp::socket socket, ClientController
 				str_req.target(req_parser.get().target());
 				str_req.version(req_parser.get().version());
 				str_req.body() = std::string(vec.begin(), vec.end());
+
+				for (auto& field : req_parser.get())
+					str_req.insert(field.name(), field.name_string(), field.value());
+
 				str_req.prepare_payload();
 
 

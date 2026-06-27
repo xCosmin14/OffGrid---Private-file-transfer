@@ -8,15 +8,13 @@
 #include <string>
 #include <iostream>
 
+#include "Structs.h"
+
 namespace mysql = boost::mysql;
 namespace asio = boost::asio;
 using asio::use_awaitable;
 namespace json = boost::json;
 
-struct Query {
-	std::string query;
-	std::vector<mysql::field> params;
-};
 
 class DatabaseController
 {

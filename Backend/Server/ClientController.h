@@ -11,6 +11,9 @@
 #include <mutex>
 
 #include "DatabaseController.h"
+#include "Queries.h"
+#include "Structs.h"
+
 
 namespace http = boost::beast::http;
 namespace json = boost::json;
@@ -18,26 +21,7 @@ namespace json = boost::json;
 template <typename T>
 using Async = boost::asio::awaitable<T>;
 
-struct MapEntry
-{
-	std::string uid;
-	std::string device_id;
-	std::string OS;
 
-	MapEntry() = default;
-
-	MapEntry(std::string id, std::string device, std::string os)
-	{
-		this->uid = id; this->device_id = device; this->OS = os;
-	}
-};
-
-struct HttpResponse
-{
-	http::status status_code;
-	std::string json;
-	std::string session_id;
-};
 
 class ClientController
 {
@@ -47,13 +31,15 @@ class ClientController
 	DatabaseController& db;
 
 	std::string createId(std::string);
+	std::string getUserId(std::string);
 
 	Async<HttpResponse> registerUser(json::object&);
 	Async<HttpResponse> loginUser(json::object&);
 	Async<HttpResponse> logoutUser(json::object&, std::string);
 	Async<HttpResponse> removeUser(json::object&, std::string);
 
-	Async<HttpResponse> uploadPhoto(std::vector<uint8_t>&, std::string);
+	Async<HttpResponse> uploadFile(std::vector<uint8_t>&, std::string, std::string);
+	Async<HttpResponse> uploadFolder(std::vector<uint8_t>&, std::string);
 
 public:
 
