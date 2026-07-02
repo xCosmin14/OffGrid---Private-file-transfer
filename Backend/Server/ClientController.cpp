@@ -79,9 +79,6 @@ Async<HttpResponse> ClientController::getFileMetadata(std::string file_id, std::
 	std::exception_ptr error;
 
 
-	std::cerr << "body: " << obj << std::endl;
-	std::cerr << "obj contains fields: " << obj.contains("fields") << std::endl;
-
 	try {
 		uid = this->getUserId(session_id);
 	}
@@ -135,9 +132,7 @@ Async<HttpResponse> ClientController::getFileMetadata(std::string file_id, std::
 		if (rows.empty())
 			co_return Helpers::makeResponse(http::status::not_found, "file not found");
 
-		for (size_t i = 0; i < results.meta().size(); i++)
-			std::cerr << "column " << i << ": '" << results.meta()[i].column_name() << "'" << std::endl;
-
+	
 		json::object response_obj;
 		for (int i = 0; i < rows[0].size(); i++)
 		{
@@ -148,7 +143,7 @@ Async<HttpResponse> ClientController::getFileMetadata(std::string file_id, std::
 			else if (value.is_string()) response_obj[column] = value.as_string();
 			else if (value.is_int64()) response_obj[column] = value.as_int64();
 		}
-		std::cout << response_obj << std::endl;
+
 		co_return Helpers::makeResponse(http::status::ok, "file found", "", response_obj);
 
 
@@ -158,6 +153,30 @@ Async<HttpResponse> ClientController::getFileMetadata(std::string file_id, std::
 		std::cerr << "Database query failed " << e.what() << std::endl;
 		co_return Helpers::makeResponse(http::status::internal_server_error, "internal server error");
 	}
+
+}
+
+
+Async<HttpResponse> ClientController::getProfilePhoto(std::string session_id)
+{
+	std::string uid;
+	std::exception_ptr error;
+
+
+	try {
+		uid = this->getUserId(session_id);
+	}
+	catch (std::exception& e)
+	{
+		error = std::current_exception();
+	}
+
+	if (error)
+		co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
+
+
+
+	co_return Helpers::makeResponse(http::status::ok, "file found", "", { {"path", uid + ".png"}, {"content_type", "image/png"} });
 
 }
 
@@ -210,6 +229,10 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
 				co_return Helpers::makeResponse(http::status::bad_request, "missing file id");
 
 			co_return co_await this->getFile(std::string(target.substr(pos + 9)), session_id);
+		}
+		else if (target == "/get_profile_photo")
+		{
+			co_return co_await this->getProfilePhoto(session_id);
 		}
 	}
 

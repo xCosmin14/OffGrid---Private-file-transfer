@@ -22,9 +22,9 @@ mysql::pool_params getParams()
 
 	mysql::pool_params params;
 	params.server_address.emplace_host_and_port("127.0.0.1", 3306);
-	params.username = "root";
-	params.password = "7$#P82k6m9";
-	params.database = "offgrid_db";
+	params.username = username;
+	params.password = password;
+	params.database = database;
 	params.max_size = 16;
 
 	return params;
