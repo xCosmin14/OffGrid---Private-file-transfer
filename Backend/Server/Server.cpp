@@ -33,7 +33,8 @@ Async<void> handle_session(boost::asio::ip::tcp::socket socket, ClientController
 
 			std::string target = req_parser.get().target();
 
-			if (target == "/upload_photo" || target == "/upload_file" || target == "/upload_folder")
+
+			if (target.starts_with("/upload"))
 			{
 				Handler<http::vector_body<uint8_t>, http::string_body>handler(req_parser.get(), c);
 				auto res = co_await handler.getResponse();
@@ -44,6 +45,7 @@ Async<void> handle_session(boost::asio::ip::tcp::socket socket, ClientController
 
 				auto& vec = req_parser.get().body();
 				http::request<http::string_body> str_req;
+
 
 				str_req.method(req_parser.get().method());
 				str_req.target(req_parser.get().target());
@@ -56,7 +58,7 @@ Async<void> handle_session(boost::asio::ip::tcp::socket socket, ClientController
 				str_req.prepare_payload();
 
 
-				if (target == "/get_file")
+				if (target.starts_with("/get_file?"))
 				{
 					Handler<http::string_body, http::file_body>handler(str_req, c);
 					auto res = co_await handler.getFileResponse();
@@ -67,6 +69,7 @@ Async<void> handle_session(boost::asio::ip::tcp::socket socket, ClientController
 					auto res = co_await handler.getResponse();
 					co_await http::async_write(stream, res, boost::asio::use_awaitable);
 				}
+
 			}
 
 			if (!req_parser.get().keep_alive()) break;

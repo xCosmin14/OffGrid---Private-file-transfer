@@ -145,7 +145,7 @@ public:
 		bool error = false;
 
 		try {
-			this->setHeaders(res, "image/png");
+			this->setHeaders(res, "application/octet-stream");
 		}
 		catch (std::exception& e)
 		{
@@ -154,11 +154,38 @@ public:
 
 		if (error)
 		{
-			res.prepare_payload();
+			res.result(http::status::forbidden);
 			co_return res;
 		}
 
-		auto [stat, file, session_id] = co_await c.handleRequest(req.method(), req.target(), "", this->getSessionId());
+		std::string json = req.body();
+		auto [stat, body, session_id] = co_await c.handleRequest(req.method(), req.target(), "", this->getSessionId());
 
+		res.result(stat);
+
+		if (stat == http::status::ok)
+		{
+			json::object meta = json::parse(body).as_object();
+			std::string file_path = json::value_to<std::string>(meta["path"]);
+			std::string content_type = json::value_to<std::string>(meta["content_type"]);
+			std::string uid = json::value_to<std::string>(meta["creator_id"]);
+
+			res.set(http::field::content_type, content_type);
+
+			boost::beast::error_code e;
+			std::string full_path = "FileSystem/files/" + uid + "/" + file_path;
+			res.body().open(full_path.c_str(), boost::beast::file_mode::read, e);
+			if (e)
+			{
+				res.result(http::status::not_found);
+				co_return res;
+			}
+		}
+		else {
+			co_return res;
+		}
+
+		res.prepare_payload();
+		co_return res;
 	}
 };

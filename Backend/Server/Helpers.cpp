@@ -46,6 +46,7 @@ FileData Helpers::parseBody(std::vector<uint8_t>& body)
 			filename = p.filename().string();
 			path = p.parent_path().string();
 		}
+
 	}
 
 	std::string content_type = "application/octet-stream"; 
@@ -66,6 +67,28 @@ FileData Helpers::parseBody(std::vector<uint8_t>& body)
 	if (data_end == std::string::npos || data_end <= data_start)
 		data_end = body_str.size();
 
+	std::string content = body_str.substr(data_start, data_end - data_start);
+	size_t size = content.size();
 
-	return { body_str.substr(data_start, data_end - data_start), filename, content_type, path };
+	auto pos = filename.find_first_of(".");
+	std::string extention = "unknown extension";
+	if(pos != std::string::npos)
+		extention = filename.substr(pos + 1);
+
+	return { content, filename, content_type, path, extention, size };
+}
+
+
+HttpResponse Helpers::makeResponse(http::status status, std::string message, std::string session_id, json::object additional)
+{
+	json::object response;
+	response["status"] = (status == http::status::ok) ? "success" : "error";
+	response["message"] = message;
+	
+	for (auto& it : additional)
+	{
+		response[it.key()] = it.value();
+	}
+
+	return HttpResponse(status, json::serialize(response), session_id);
 }

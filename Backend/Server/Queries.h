@@ -20,17 +20,28 @@ inline void addParams(std::vector<mysql::field>& values, json::value const& val)
 
 namespace Queries
 {
-	Query InsertUserQuery(json::object const& obj);
+	Query InsertUserQuery(json::object const&);
 
-	Query CreateSessionQuery(std::string session_id, std::string user_id);
+	Query CreateSessionQuery(std::string, std::string);
 
-	Query SelectPassword(json::object const& obj);
+	Query SelectPassword(json::object const&);
 
-	Query EndSessions(std::string uid);
+	Query EndSessions(std::string);
 
-	Query DeleteAccount(std::string uid);
+	Query DeleteAccount(std::string);
 
-	Query insertFile(json::object const& obj);
+	Query insertFile(FileData);
 
-	Query getGeneralData(std::vector<std::string> const& vect, std::string uid);
+	Query insertFolder(FolderData);
+
+	Query insertAccess(std::string, std::string, std::string, std::string, std::string);
+
+	Query getGeneralData(std::vector<std::string> const&, std::string);
+
+	Query GetFile(std::string, std::string);
+
+	Query GetFileMetadata(std::string, std::string, std::vector<std::string>);
+
+	Query GetFolder(std::string, std::string);
+
 };

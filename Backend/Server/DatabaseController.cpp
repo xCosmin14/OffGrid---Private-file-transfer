@@ -52,6 +52,7 @@ asio::awaitable<mysql::results> DatabaseController::runQuery(Query query)
 	try {
 
 		mysql::pooled_connection con = co_await pool->async_get_connection(use_awaitable);
+		con->set_meta_mode(boost::mysql::metadata_mode::full);
 
 		auto stmt = co_await con->async_prepare_statement(query.query, use_awaitable);
 

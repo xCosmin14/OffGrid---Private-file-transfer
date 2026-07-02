@@ -41,6 +41,10 @@ class ClientController
 	Async<HttpResponse> uploadFile(std::vector<uint8_t>&, std::string, std::string);
 	Async<HttpResponse> uploadFolder(std::vector<uint8_t>&, std::string);
 
+	Async<HttpResponse> getFile(std::string, std::string);
+	Async<HttpResponse> getFileMetadata(std::string, std::string, json::object&);
+
+
 public:
 
 	ClientController(DatabaseController& db) :db(db) {}

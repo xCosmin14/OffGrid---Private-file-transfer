@@ -1,7 +1,9 @@
 #include "ClientController.h"
 #include "Queries.h"
 #include "Structs.h"
+#include "Helpers.h"
 
+#include <filesystem>
 
 Async<HttpResponse> ClientController::registerUser(json::object& obj)
 {
@@ -28,7 +30,7 @@ Async<HttpResponse> ClientController::registerUser(json::object& obj)
 		std::unique_lock lock(users_mutex);
 		this->loggedUsers[session_id] = MapEntry(uid, device_id, os);
 
-		co_return HttpResponse(http::status::ok, R"({"status":"success", "message":"user registered"})", session_id);
+		co_return Helpers::makeResponse(http::status::ok, "user registered", session_id);
 
 	}
 	catch (boost::system::system_error& e)
@@ -37,15 +39,15 @@ Async<HttpResponse> ClientController::registerUser(json::object& obj)
 			std::string errorCode = diag.server_message();
 
 			if (errorCode.find("email") != std::string::npos)
-				co_return HttpResponse(http::status::conflict, R"({"status":"error", "message":"duplicate email"})", "");
+				co_return Helpers::makeResponse(http::status::conflict, "duplicate email");
 			else if ((errorCode.find("username") != std::string::npos))
-				co_return HttpResponse(http::status::conflict, R"({"status":"error", "message":"duplicate username"})", "");
+				co_return Helpers::makeResponse(http::status::conflict, "duplicate username");
 
-			co_return HttpResponse(http::status::conflict, R"({"status":"error", "message":"duplicate key"})", "");
+			co_return Helpers::makeResponse(http::status::conflict, "duplicate key");
 		}
 
 		std::cerr << "Database query failed " << e.what() << std::endl;
-		co_return HttpResponse(http::status::internal_server_error, R"({"status":"error", "message":"internal server error"})", "");
+		co_return Helpers::makeResponse(http::status::internal_server_error, "internal server error");
 	}
 }
 
@@ -59,16 +61,14 @@ Async<HttpResponse> ClientController::loginUser(json::object& obj)
 			auto rows = results.rows();
 
 			if (rows.empty())
-				co_return HttpResponse(http::status::not_found, R"({"status":"error", "message":"email not found"})", "");
+				co_return Helpers::makeResponse(http::status::not_found, "email not found");
 
 			std::string user_password = rows[0][1].as_string();
 			std::string uid = rows[0][0].as_string();
 
 			if (obj.contains("password")) {
 				if (user_password != obj["password"].as_string())
-				{
-					co_return HttpResponse(http::status::conflict, R"({"status":"error", "message":"incorrect password"})", "");
-				}
+					co_return Helpers::makeResponse(http::status::conflict, "incorrect password");
 				else
 
 				{
@@ -84,12 +84,12 @@ Async<HttpResponse> ClientController::loginUser(json::object& obj)
 						std::unique_lock lock(users_mutex);
 						this->loggedUsers[session_id] = MapEntry(uid, device_id, os);
 
-						co_return HttpResponse(http::status::ok, R"({"status":"success", "message":"user logged in"})", session_id);
+						co_return Helpers::makeResponse(http::status::ok, "user logged in", session_id);
 					}
 					catch (boost::system::system_error& e)
 					{
 						std::cerr << "Database query failed " << e.what() << std::endl;
-						co_return HttpResponse(http::status::internal_server_error, R"({"status":"error", "message":"internal server error"})", "");
+						co_return Helpers::makeResponse(http::status::internal_server_error, "internal server error");
 					}
 				}
 			}
@@ -98,7 +98,7 @@ Async<HttpResponse> ClientController::loginUser(json::object& obj)
 		catch (boost::system::system_error& e)
 		{
 			std::cerr << "Database query failed " << e.what() << std::endl;
-			co_return HttpResponse(http::status::internal_server_error, R"({"status":"error", "message":"internal server error"})", "");
+			co_return Helpers::makeResponse(http::status::internal_server_error, "internal server error");
 		}
 	}
 }
@@ -118,8 +118,7 @@ Async<HttpResponse> ClientController::logoutUser(json::object& obj, std::string 
 	}
 
 	if (error)
-		co_return HttpResponse(http::status::unauthorized, R"({"status":"error", "message":"unauthorized"})", "");
-
+		co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
 
 
 	try {
@@ -129,12 +128,12 @@ Async<HttpResponse> ClientController::logoutUser(json::object& obj, std::string 
 		std::unique_lock lock(users_mutex);
 		this->loggedUsers.erase(current_session_id);
 
-		co_return HttpResponse(http::status::ok, R"({"status":"success", "message":"user logged out"})", "expired");
+		co_return Helpers::makeResponse(http::status::ok, "user logged out", "expired");
 	}
 	catch (boost::system::system_error& e)
 	{
 		std::cerr << "Database query failed " << e.what() << std::endl;
-		co_return HttpResponse(http::status::internal_server_error, R"({"status":"error", "message":"internal server error"})", "");
+		co_return Helpers::makeResponse(http::status::internal_server_error, "internal server error");
 	}
 
 
@@ -153,31 +152,26 @@ Async<HttpResponse> ClientController::removeUser(json::object& obj, std::string 
 		error = std::current_exception();
 	}
 
-	if(error)
-		co_return HttpResponse(http::status::unauthorized, R"({"status":"error", "message":"unauthorized"})", "");
+	if (error)
+		co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
 
-
-	{
-		std::shared_lock lock(users_mutex);
-		auto it = this->loggedUsers.find(current_session_id);
-		if (it == this->loggedUsers.end())
-			co_return HttpResponse(http::status::unauthorized, R"({"status":"error", "message":"unauthorized"})", "");
-		uid = it->second.uid;
-	}
 
 	try {
+		std::filesystem::remove_all("FileSystem/files/" + uid);
+		std::filesystem::remove_all("FileSystem/profile_photos" + uid);
+
 		Query delete_acc = Queries::DeleteAccount(uid);
 		co_await this->db.runQuery(delete_acc);
 
 		std::unique_lock lock(users_mutex);
 		this->loggedUsers.erase(current_session_id);
 
-		co_return HttpResponse(http::status::ok, R"({"status":"success", "message":"user removed"})", "expired");
+		co_return Helpers::makeResponse(http::status::ok, "user removed", "expired");
 	}
 	catch (boost::system::system_error& e)
 	{
 		std::cerr << "Database query failed " << e.what() << std::endl;
-		co_return HttpResponse(http::status::internal_server_error, R"({"status":"error", "message":"internal server error"})", "");
+		co_return Helpers::makeResponse(http::status::internal_server_error, "internal server error");
 	}
 
 

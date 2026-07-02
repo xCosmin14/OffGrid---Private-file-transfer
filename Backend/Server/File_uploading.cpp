@@ -51,6 +51,10 @@ Async<HttpResponse> ClientController::uploadFile(std::vector<uint8_t>& body, std
 
 	try {
 		Helpers::writeToFile(path, filedata);
+
+		std::filesystem::permissions(path,
+			std::filesystem::perms::owner_exec | std::filesystem::perms::group_exec |
+			std::filesystem::perms::others_exec, std::filesystem::perm_options::remove);
 	}
 	catch (std::exception& e)
 	{
@@ -60,6 +64,11 @@ Async<HttpResponse> ClientController::uploadFile(std::vector<uint8_t>& body, std
 
 	if (subfolder == "/files") {
 		try {
+			if (filedata.path == "")
+				filedata.path = filedata.filename;
+			else
+				filedata.path += "/" + filedata.filename;
+
 			Query q = Queries::insertFile(filedata);
 			co_await this->db.runQuery(q);
 		}
@@ -175,7 +184,13 @@ Async<HttpResponse> ClientController::uploadFolder(std::vector<uint8_t>& body, s
 			co_return Helpers::makeResponse(http::status::internal_server_error, "failed uploading file");
 		}
 
+
 		written_paths.push_back(path);
+
+		if (filedata.path == "")
+			filedata.path = filedata.filename;
+		else
+			filedata.path += "/" + filedata.filename;
 
 		queries.push_back(Queries::insertFile(filedata));
 
