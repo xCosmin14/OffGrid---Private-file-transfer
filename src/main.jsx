@@ -21,11 +21,14 @@ import Documents from "./Documents/Documents.jsx"
 import MusicLibrary from "./MusicLibrary/MusicLibrary.jsx"
 import PhotoAlbum from "./PhotoAlbum/PhotoAlbum.jsx"
 
+import GlobalUploadProgress from "./MyFiles/GlobalUploadProgress.jsx"
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
       <Header />
       {isMobile() == 0 && <Menu />}
+      <GlobalUploadProgress />
 
       <Routes>
         <Route path="/" element = {getUID() === null ? <Login /> : <MyFiles />} />

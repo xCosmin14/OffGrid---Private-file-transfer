@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react"
+import fs from "fs"
 
 import Add from "../assets/SVG/FileIcons/Add.svg?react"
 import Folder from "../assets/SVG/FileIcons/Folder.svg?react"
@@ -11,6 +12,10 @@ import "./AddFile.css"
 export default function AddFile(props) {
     const [show, setShow] = useState(false)
     const menuRef = useRef(null)
+
+    const [uploadProgress, setUploadProgress] = useState(0)
+    const [uploadStats, setUploadStats] = useState({ loaded: 0, total: 0 })
+    const [isUploading, setIsUploading] = useState(false)
     
     let types=""
 
@@ -60,16 +65,120 @@ export default function AddFile(props) {
         setShow(prevShow => !prevShow)
     }
 
-    const handleFileUpload = (e) => {
-        
+    const handleFileUpload = async (e) => {
+        const file = e.target.files[0]
+        if (!file) return
+
+        let formData = new FormData()
+        formData.append('file', file, file.name)
+
+        const totalBytes = file.size
+        const totalMB = (totalBytes / (1024 * 1024)).toFixed(1)
+
+        try {
+            await new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest()
+
+                xhr.upload.addEventListener("progress", (event) => {
+                    if (event.lengthComputable) {
+                        const percentage = Math.round((event.loaded / totalBytes) * 100)
+                        const loadedMB = (event.loaded / (1024 * 1024)).toFixed(1)
+
+                        window.dispatchEvent(new CustomEvent('upload-progress', { 
+                            detail: { 
+                                isUploading: true, 
+                                progress: percentage, 
+                                loaded: loadedMB, 
+                                total: totalMB,
+                                currentFile: file.name,
+                                fileIndex: 1,
+                                totalFiles: 1
+                            } 
+                        }))
+                    }
+                })
+
+                xhr.addEventListener("load", () => {
+                    if (xhr.status >= 200 && xhr.status < 300) resolve()
+                    else reject(new Error("Server error"))
+                })
+
+                xhr.addEventListener("error", reject)
+
+                xhr.open("POST", "http://localhost:18080/upload_file")
+                xhr.withCredentials = true
+                xhr.send(formData)
+            })
+            
+            window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
+        } catch (error) {
+            window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
+        }
     }
 
     const handleCreateFolder = () => {
         
     }
 
-    const handleFolderUpload = (e) => {
+    const handleFolderUpload = async (e) => {
+        const files = Array.from(e.target.files)
+        if (files.length === 0) return
+
+        const totalBytes = files.reduce((acc, file) => acc + file.size, 0)
+        const totalMB = (totalBytes / (1024 * 1024)).toFixed(1)
         
+        let uploadedBytes = 0
+
+        for (let i = 0; i < files.length; i++) {
+            let file = files[i]
+
+            let formData = new FormData()
+            formData.append('files', file, file.webkitRelativePath)
+
+            try {
+                await new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest()
+
+                    xhr.upload.addEventListener("progress", (event) => {
+                        if (event.lengthComputable) {
+                            const currentTotalLoaded = uploadedBytes + event.loaded;
+                            const percentage = Math.round((currentTotalLoaded / totalBytes) * 100)
+                            const loadedMB = (currentTotalLoaded / (1024 * 1024)).toFixed(1)
+
+                            window.dispatchEvent(new CustomEvent('upload-progress', { 
+                                detail: { 
+                                    isUploading: true, 
+                                    progress: percentage, 
+                                    loaded: loadedMB, 
+                                    total: totalMB,
+                                    currentFile: file.name,
+                                    fileIndex: i + 1,
+                                    totalFiles: files.length
+                                } 
+                            }));
+                        }
+                    });
+
+                    xhr.addEventListener("load", () => {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            uploadedBytes += file.size;
+                            resolve()
+                        } else reject(new Error("Server error"))
+                    });
+
+                    xhr.addEventListener("error", reject)
+
+                    xhr.open("POST", "http://localhost:18080/upload_folder")
+                    xhr.withCredentials = true
+                    xhr.send(formData)
+                })
+            } catch (error) {
+                window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
+                return
+            }
+        }
+
+        window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
     }
 
     const handleCreateText = () => {

@@ -65,7 +65,7 @@
     position: relative; top: 135px;
     padding-inline: 40px;
     box-sizing: border-box;
-    overflow-x: auto;
+    overflow-x: auto; overflow-y: hidden;
 }
 
 .fileTableHeader,

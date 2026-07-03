@@ -11,7 +11,8 @@ import Moon from "../assets/SVG/Moon.svg?react"
 import Notification from "../assets/SVG/Notification.svg?react"
 import Search from "../assets/SVG/Search.svg?react"
 import HamburgerToggle from "../assets/SVG/HamburgerToggle.svg?react"
-import MockUserImg from "../assets/MockUserImg.jpg"
+
+import { useProfilePhoto } from "../GetPFP.js"
 
 import "./Header.css"
 
@@ -19,6 +20,8 @@ export default function Header() {
     const [theme, setTheme] = useState(() => {
         return localStorage.getItem("theme") || "light"
     })
+
+    const avatar = useProfilePhoto()
 
     const [notificationsOpen, setNotificationsOpen] = useState(false)
     const [showMobileMenu, setShowMobileMenu] = useState(false)
@@ -90,7 +93,7 @@ export default function Header() {
 
                 {isMobile() == 0 && (
                     <Link to={getUID() === null ? "/login" : "/settings"} id="accountSettingsToggle">
-                        <img src={MockUserImg} alt="User Avatar" />
+                        <img src={avatar} alt="User Avatar" />
                     </Link>
                 )}
 

@@ -5,14 +5,11 @@
 
 #include <filesystem>
 
-Async<HttpResponse> ClientController::registerUser(json::object& obj)
-{
+Async<HttpResponse> ClientController::registerUser(json::object& obj) {
 
 	std::string uid = this->createId("user");
 	std::string session_id = this->createId("session");
 	obj["uid"] = uid;
-
-
 
 	Query query1 = Queries::InsertUserQuery(obj);
 	Query query2 = Queries::CreateSessionQuery(session_id, uid);
@@ -20,9 +17,7 @@ Async<HttpResponse> ClientController::registerUser(json::object& obj)
 	mysql::diagnostics diag;
 
 	try {
-
 		co_await this->db.runTransaction({ query1, query2 }, diag);
-
 
 		std::string device_id = obj.contains("device_id") ? json::value_to<std::string>(obj.at("device_id")) : "";
 		std::string os = obj.contains("os") ? json::value_to<std::string>(obj.at("os")) : "";
@@ -31,10 +26,7 @@ Async<HttpResponse> ClientController::registerUser(json::object& obj)
 		this->loggedUsers[session_id] = MapEntry(uid, device_id, os);
 
 		co_return Helpers::makeResponse(http::status::ok, "user registered", session_id);
-
-	}
-	catch (boost::system::system_error& e)
-	{
+	} catch (boost::system::system_error& e) {
 		if (e.code() == boost::mysql::common_server_errc::er_dup_entry) {
 			std::string errorCode = diag.server_message();
 
@@ -51,8 +43,7 @@ Async<HttpResponse> ClientController::registerUser(json::object& obj)
 	}
 }
 
-Async<HttpResponse> ClientController::loginUser(json::object& obj)
-{
+Async<HttpResponse> ClientController::loginUser(json::object& obj) {
 	if (obj.contains("email")) {
 		Query password_query = Queries::SelectPassword(obj);
 
@@ -69,9 +60,7 @@ Async<HttpResponse> ClientController::loginUser(json::object& obj)
 			if (obj.contains("password")) {
 				if (user_password != obj["password"].as_string())
 					co_return Helpers::makeResponse(http::status::conflict, "incorrect password");
-				else
-
-				{
+				else {
 					std::string session_id = this->createId("session");
 					Query session_query = Queries::CreateSessionQuery(session_id, uid);
 
@@ -85,18 +74,13 @@ Async<HttpResponse> ClientController::loginUser(json::object& obj)
 						this->loggedUsers[session_id] = MapEntry(uid, device_id, os);
 
 						co_return Helpers::makeResponse(http::status::ok, "user logged in", session_id);
-					}
-					catch (boost::system::system_error& e)
-					{
+					} catch (boost::system::system_error& e) {
 						std::cerr << "Database query failed " << e.what() << std::endl;
 						co_return Helpers::makeResponse(http::status::internal_server_error, "internal server error");
 					}
 				}
 			}
-
-		}
-		catch (boost::system::system_error& e)
-		{
+		} catch (boost::system::system_error& e) {
 			std::cerr << "Database query failed " << e.what() << std::endl;
 			co_return Helpers::makeResponse(http::status::internal_server_error, "internal server error");
 		}
@@ -104,22 +88,15 @@ Async<HttpResponse> ClientController::loginUser(json::object& obj)
 }
 
 
-Async<HttpResponse> ClientController::logoutUser(json::object& obj, std::string current_session_id)
-{
+Async<HttpResponse> ClientController::logoutUser(json::object& obj, std::string current_session_id) {
 	std::string uid;
 	std::exception_ptr error;
 
-	try {
-		uid = this->getUserId(current_session_id);
-	}
-	catch (std::exception& e)
-	{
-		error = std::current_exception();
-	}
+	try { uid = this->getUserId(current_session_id); }
+	catch (std::exception& e) {error = std::current_exception();}
 
 	if (error)
 		co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
-
 
 	try {
 		Query expireSession = Queries::EndSessions(uid);
@@ -129,32 +106,24 @@ Async<HttpResponse> ClientController::logoutUser(json::object& obj, std::string 
 		this->loggedUsers.erase(current_session_id);
 
 		co_return Helpers::makeResponse(http::status::ok, "user logged out", "expired");
-	}
-	catch (boost::system::system_error& e)
-	{
+	} catch (boost::system::system_error& e) {
 		std::cerr << "Database query failed " << e.what() << std::endl;
 		co_return Helpers::makeResponse(http::status::internal_server_error, "internal server error");
 	}
-
-
 }
 
-Async<HttpResponse> ClientController::removeUser(json::object& obj, std::string current_session_id)
-{
+Async<HttpResponse> ClientController::removeUser(json::object& obj, std::string current_session_id) {
 	std::string uid;
 	std::exception_ptr error;
 
 	try {
 		uid = this->getUserId(current_session_id);
-	}
-	catch (std::exception& e)
-	{
+	} catch (std::exception& e)	{
 		error = std::current_exception();
 	}
 
 	if (error)
 		co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
-
 
 	try {
 		std::filesystem::remove_all("FileSystem/files/" + uid);
@@ -167,13 +136,8 @@ Async<HttpResponse> ClientController::removeUser(json::object& obj, std::string 
 		this->loggedUsers.erase(current_session_id);
 
 		co_return Helpers::makeResponse(http::status::ok, "user removed", "expired");
-	}
-	catch (boost::system::system_error& e)
-	{
+	} catch (boost::system::system_error& e) {
 		std::cerr << "Database query failed " << e.what() << std::endl;
 		co_return Helpers::makeResponse(http::status::internal_server_error, "internal server error");
 	}
-
-
 }
-

@@ -28,7 +28,7 @@ Async<void> handle_session(boost::asio::ip::tcp::socket socket, ClientController
 		for (;;) {
 
 			http::request_parser<http::vector_body<uint8_t>> req_parser;
-			req_parser.body_limit(10 * 1024 * 1024);
+			req_parser.body_limit(20ULL * 1024 * 1024 * 1024);
 			co_await http::async_read(stream, buffer, req_parser, boost::asio::use_awaitable);
 
 			std::string target = req_parser.get().target();
@@ -58,7 +58,7 @@ Async<void> handle_session(boost::asio::ip::tcp::socket socket, ClientController
 				str_req.prepare_payload();
 
 
-				if (target.starts_with("/get_file?"))
+				if (target.starts_with("/get_file?") || target == "/get_profile_photo")
 				{
 					Handler<http::string_body, http::file_body>handler(str_req, c);
 					auto res = co_await handler.getFileResponse();

@@ -49,11 +49,11 @@ FileData Helpers::parseBody(std::vector<uint8_t>& body)
 
 	}
 
-	std::string content_type = "application/octet-stream"; 
+	std::string content_type = "application/octet-stream";
 	auto type_pos = header_section.find("Content-Type: ");
 	if (type_pos != std::string::npos)
 	{
-		auto start = type_pos + 14; 
+		auto start = type_pos + 14;
 		auto end = header_section.find("\r\n", start);
 		if (end == std::string::npos) {
 			end = header_section.size();
@@ -72,7 +72,7 @@ FileData Helpers::parseBody(std::vector<uint8_t>& body)
 
 	auto pos = filename.find_first_of(".");
 	std::string extention = "unknown extension";
-	if(pos != std::string::npos)
+	if (pos != std::string::npos)
 		extention = filename.substr(pos + 1);
 
 	return { content, filename, content_type, path, extention, size };
@@ -84,7 +84,7 @@ HttpResponse Helpers::makeResponse(http::status status, std::string message, std
 	json::object response;
 	response["status"] = (status == http::status::ok) ? "success" : "error";
 	response["message"] = message;
-	
+
 	for (auto& it : additional)
 	{
 		response[it.key()] = it.value();

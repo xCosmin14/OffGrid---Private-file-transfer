@@ -9,6 +9,8 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <fstream>
+#include <filesystem>
 
 #include "ClientController.h"
 
@@ -49,7 +51,6 @@ class Handler
 			res.set(http::field::access_control_allow_credentials, "true");
 			res.set(http::field::content_type, content_type);
 		}
-
 	}
 
 public:
@@ -168,18 +169,36 @@ public:
 			json::object meta = json::parse(body).as_object();
 			std::string file_path = json::value_to<std::string>(meta["path"]);
 			std::string content_type = json::value_to<std::string>(meta["content_type"]);
-			std::string uid = json::value_to<std::string>(meta["creator_id"]);
-
-			res.set(http::field::content_type, content_type);
-
-			boost::beast::error_code e;
-			std::string full_path = "FileSystem/files/" + uid + "/" + file_path;
-			res.body().open(full_path.c_str(), boost::beast::file_mode::read, e);
-			if (e)
+			std::string full_path;
+			if (req.target() == "/get_profile_photo")
 			{
+				full_path = "FileSystem/profile_photos/" + file_path;
+			}
+			else {
+				std::string uid = json::value_to<std::string>(meta["creator_id"]);
+				full_path = "FileSystem/files/" + uid + "/" + file_path;
+			}
+
+			if (!std::filesystem::exists(full_path))
+			{
+				std::cerr << "File missing from disk assets: " << full_path << std::endl;
+
 				res.result(http::status::not_found);
 				co_return res;
 			}
+
+			boost::beast::error_code e;
+			res.body().open(full_path.c_str(), boost::beast::file_mode::read, e);
+
+			if (e)
+			{
+				res.result(http::status::internal_server_error);
+				co_return res;
+			}
+
+			res.result(http::status::ok);
+			res.set(http::field::content_type, content_type);
+
 		}
 		else {
 			co_return res;

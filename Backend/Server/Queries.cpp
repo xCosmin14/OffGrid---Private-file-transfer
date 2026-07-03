@@ -6,7 +6,7 @@ void addFields(std::string& query, json::object const& obj, std::vector<mysql::f
 	for (auto& it : obj)
 	{
 		query += std::string(it.key()) + ", ";
-		if(placeholders)
+		if (placeholders)
 			*placeholders += "?, ";
 
 		auto const& val = it.value();
@@ -94,7 +94,7 @@ Query Queries::insertAccess(std::string access_id, std::string user_id, std::str
 	values.emplace_back(user_id);
 	values.emplace_back(granted_by);
 	values.emplace_back(id);
-	
+
 	std::string query = "INSERT INTO offgrid_db.access(access_id, user_id, granted_by, ";
 
 	if (resource == "folder")
@@ -129,7 +129,7 @@ Query Queries::getGeneralData(std::vector<std::string> const& vect, std::string 
 Query Queries::GetFile(std::string file_id, std::string uid)
 {
 	std::vector<mysql::field> values;
-	values.emplace_back(file_id); 
+	values.emplace_back(file_id);
 	values.emplace_back(uid);
 	values.emplace_back(uid);
 
@@ -147,7 +147,7 @@ Query Queries::GetFileMetadata(std::string file_id, std::string uid, std::vector
 	values.emplace_back(uid);
 	values.emplace_back(uid);
 
-	std::string query = "SELECT "; 
+	std::string query = "SELECT ";
 	for (auto& it : fields) {
 		query += it + ", ";
 	}

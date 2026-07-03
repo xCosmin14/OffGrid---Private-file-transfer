@@ -30,7 +30,6 @@ export default function SharedFiles() {
 
     return (
         <div className="page">
-            <AddFile />
             <Filters />
 
             <div id="currentPathDisplay">

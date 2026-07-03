@@ -29,7 +29,6 @@ export default function Trash() {
 
     return (
         <div className="page">
-            <AddFile />
             <Filters />
 
             <div id="currentPathDisplay">

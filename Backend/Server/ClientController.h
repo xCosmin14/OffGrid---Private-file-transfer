@@ -42,6 +42,8 @@ class ClientController
 	Async<HttpResponse> uploadFolder(std::vector<uint8_t>&, std::string);
 
 	Async<HttpResponse> getFile(std::string, std::string);
+	Async<HttpResponse> getProfilePhoto(std::string);
+
 	Async<HttpResponse> getFileMetadata(std::string, std::string, json::object&);
 
 

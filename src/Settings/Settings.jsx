@@ -1,5 +1,8 @@
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
+
+import { useProfilePhoto } from "../GetPFP.js"
 import { useTitle } from "../UseTitle.js"
+
 import "./Settings.css"
 
 export default function Settings() {
@@ -30,7 +33,15 @@ export default function Settings() {
     const [currentPassword, setCurrentPassword] = useState("")
     const [newPassword, setNewPassword] = useState("")
     
-    const [avatar, setAvatar] = useState(null)
+    const initialAvatar = useProfilePhoto()
+    const [avatar, setAvatar] = useState(initialAvatar)
+
+    useEffect(() => {
+        if (initialAvatar) {
+            setAvatar(initialAvatar)
+        }
+    }, [initialAvatar])
+
     const fileInputRef = useRef(null)
 
     const handleColorChange = (mode, key, value) => {
@@ -43,9 +54,26 @@ export default function Settings() {
         }))
     }
 
-    const handleAvatarChange = (e) => {
+    const handleAvatarChange = async (e) => {
         const file = e.target.files[0]
-        if (file) setAvatar(URL.createObjectURL(file))
+        if (!file) return
+
+        let formData = new FormData()
+        formData.append('photo', file, file.name)
+
+        try {
+            let response = await fetch("http://localhost:18080/upload_photo", {
+                method: 'POST',
+                credentials: 'include',
+                body: formData,
+            })
+
+            if (response.ok) {
+                let data = await response.json()    
+                window.dispatchEvent(new Event('avatar-updated'))
+            } else console.error("Server denied upload.")
+            
+        } catch (error) {}
     }
 
     const logOut = () => {
@@ -54,7 +82,7 @@ export default function Settings() {
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include'
         })
-        localStorage.setItem("isLogged", "false  ")
+        localStorage.setItem("isLogged", "false")
         location.reload()
         return
     }
@@ -73,7 +101,6 @@ export default function Settings() {
             <h2>Settings</h2>
 
             <div className="settingsGrid">
-                {/* Am adăugat clasa flex-column pentru a împinge conținutul */}
                 <div className="settingsCard flex-column">
                     <div>
                         <h3>Aspect and colors</h3>
