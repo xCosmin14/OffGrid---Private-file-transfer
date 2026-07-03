@@ -1,0 +1,19 @@
+# Build
+build/
+out/
+cmake-build-*/
+
+# Qt Creator
+.qtcreator/
+CMakeLists.txt.user
+CMakeLists.txt.user.*
+*.autosave
+
+# Qt generated
+.qmlls.ini
+*.qmlc
+*.jsc
+
+# OS
+.DS_Store
+Thumbs.dbs
