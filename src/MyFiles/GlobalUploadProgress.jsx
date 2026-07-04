@@ -35,7 +35,7 @@ export default function GlobalUploadProgress() {
         };
     }, []);
 
-    //if (!uploadData.isUploading) return null
+    if (!uploadData.isUploading) return null
 
     const isFinished = uploadData.progress === 100
 

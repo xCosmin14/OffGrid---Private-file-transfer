@@ -91,7 +91,7 @@ export default function Filters( {onFilterChange} ) {
             </div>
 
             {
-                (pathname.includes("shared") || pathname.includes("favorites") || pathname.includes("trash") || pathname.includes("music")) &&
+                (pathname.includes("shared") || pathname.includes("favorites") || pathname.includes("trash")) &&
                 <div className="parameterSearch">
                     <h2>Sent by:</h2>
 
