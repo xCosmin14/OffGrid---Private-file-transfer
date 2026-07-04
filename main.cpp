@@ -16,6 +16,5 @@ int main(int argc, char *argv[])
 
     engine.loadFromModule("Demo1", "Main");
 
-    app.setWindowIcon(QIcon("assets/Logo.png"));
     return QGuiApplication::exec();
 }

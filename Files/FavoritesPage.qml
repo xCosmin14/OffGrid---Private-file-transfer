@@ -8,6 +8,11 @@ Item {
         anchors.fill: parent
         color: "transparent"
 
-        Filters{}
+        Filters {
+            anchors.top: parent.top
+            anchors.topMargin: 11
+            anchors.left: parent.left
+            anchors.leftMargin: 64
+        }
     }
 }

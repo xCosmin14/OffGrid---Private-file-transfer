@@ -4,12 +4,17 @@ import QtQuick.Controls
 
 Rectangle {
     id: filterRoot
+
+    implicitWidth: row.implicitWidth + 40
     height: 40
+
     color: root.menuBgCol
     border.color: "white"
     border.width: 1
+
     radius: 25
-    implicitWidth: row.implicitWidth + 40
+
+    property bool userFilter: (root.currentPath === "/myfiles/shared" || root.currentPath === "/myfiles/favorites" || root.currentPath === "/myfiles/trash")
 
     RowLayout {
         id: row
@@ -85,6 +90,21 @@ Rectangle {
                 border.width: 1
             }
             contentItem: Text { text: parent.currentText; color: root.text; verticalAlignment: Text.AlignVCenter; leftPadding: 10 }
+        }
+
+        Rectangle { width: 1; height: 20; color: root.text; visible: userFilter }
+
+        Text { text: "sent by:"; color: root.text; visible: userFilter}
+        TextField {
+            Layout.preferredWidth: 140
+            Layout.preferredHeight: 28
+            background: Rectangle {
+                color: "transparent"; radius: 5
+                border.color: parent.activeFocus ? root.hoverCol : root.boxShadowCol
+                border.width: 1
+            }
+            color: root.text
+            visible: userFilter
         }
     }
 }

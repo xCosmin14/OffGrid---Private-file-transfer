@@ -29,14 +29,14 @@ ApplicationWindow {
     property color boxBgCol: lightMode ? "#d9ffffff" : "#0ddbdbdb"
 
     onCurrentPathChanged: {
-        if (currentPath === "/") pageStack.replace("Files/MyFilesPage.qml")
-        else if (currentPath === "/myfiles/shared") pageStack.replace("Files/SharedFilesPage.qml")
-        else if (currentPath === "/myfiles/favorites") pageStack.replace("Files/FavoritesPage.qml")
-        else if (currentPath === "/myfiles/documents") pageStack.replace("Files/DocumentsPage.qml")
-        else if (currentPath === "/myfiles/music") pageStack.replace("Files/MusicPage.qml")
-        else if (currentPath === "/myfiles/photos") pageStack.replace("Files/PhotosPage.qml")
-        else if (currentPath === "/myfiles/trash") pageStack.replace("Files/TrashPage.qml")
-        else if (currentPath === "/settings") pageStack.replace("Account/Settings.qml")
+        if (currentPath === "/") pageStack.replace("Files/MyFilesPage.qml", StackView.Immediate)
+        else if (currentPath === "/myfiles/shared") pageStack.replace("Files/SharedFilesPage.qml", StackView.Immediate)
+        else if (currentPath === "/myfiles/favorites") pageStack.replace("Files/FavoritesPage.qml", StackView.Immediate)
+        else if (currentPath === "/myfiles/documents") pageStack.replace("Files/DocumentsPage.qml", StackView.Immediate)
+        else if (currentPath === "/myfiles/music") pageStack.replace("Files/MusicPage.qml", StackView.Immediate)
+        else if (currentPath === "/myfiles/photos") pageStack.replace("Files/PhotosPage.qml", StackView.Immediate)
+        else if (currentPath === "/myfiles/trash") pageStack.replace("Files/TrashPage.qml", StackView.Immediate)
+        else if (currentPath === "/settings") pageStack.replace("Account/Settings.qml", StackView.Immediate)
     }
 
     Shortcut {
@@ -97,6 +97,9 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 initialItem: "Files/MyFilesPage.qml"
+
+                replaceEnter: Transition {}
+                replaceExit: Transition {}
             }
         }
     }

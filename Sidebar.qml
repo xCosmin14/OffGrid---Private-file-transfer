@@ -5,10 +5,8 @@ import QtQuick.Controls
 Rectangle {
     id: menu
 
-    property bool isMobile: root.width <= 500
-    implicitWidth: isMobile ? root.width : 220
+    implicitWidth: 220
     implicitHeight: parent.height
-
     color: root.menuBgCol
 
     component MenuItem: Rectangle {
@@ -21,10 +19,10 @@ Rectangle {
         property bool isHovered: mouseArea.containsMouse
 
         Layout.preferredWidth: 190
-        Layout.preferredHeight: isMobile ? 48 : 40
-        Layout.alignment: isMobile ? Qt.AlignHCenter : Qt.AlignLeft
-        Layout.leftMargin: isMobile ? 0 : 24
-        Layout.bottomMargin: isMobile ? 18 : 12
+        Layout.preferredHeight: 40
+        Layout.alignment: Qt.AlignLeft
+        Layout.leftMargin: 15
+        Layout.bottomMargin: 6
 
         radius: 8
         color: (isHovered || isActive) ? root.boxBgCol : "transparent"
@@ -42,8 +40,8 @@ Rectangle {
             ToolButton {
                 icon.source: itemRoot.iconSource
                 icon.color: itemRoot.contentColor
-                icon.width: isMobile ? 28 : 24
-                icon.height: isMobile ? 28 : 24
+                icon.width: 24
+                icon.height: 24
                 background: null
                 enabled: false
                 Layout.alignment: Qt.AlignVCenter
@@ -52,7 +50,7 @@ Rectangle {
             Text {
                 text: itemRoot.label
                 color: itemRoot.contentColor
-                font.pixelSize: isMobile ? 22 : 20
+                font.pixelSize: 18
                 font.bold: true
                 Layout.fillWidth: true
                 verticalAlignment: Text.AlignVCenter
@@ -72,56 +70,8 @@ Rectangle {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.topMargin: isMobile ? 60 : 0
+        anchors.topMargin: 13
         spacing: 0
-
-        Item {
-            visible: menu.isMobile
-            Layout.alignment: Qt.AlignHCenter
-            Layout.topMargin: 24
-            Layout.bottomMargin: 24
-            Layout.fillWidth: true
-            implicitHeight: profileRow.implicitHeight
-
-            RowLayout {
-                id: profileRow
-                anchors.centerIn: parent
-                spacing: 12
-
-                Rectangle {
-                    width: 48
-                    height: 48
-                    radius: width / 2
-                    clip: true
-
-                    Image {
-                        source: "assets/MockUserImg.jpg"
-                        anchors.fill: parent
-                        fillMode: Image.PreserveAspectCrop
-                    }
-                }
-
-                Text {
-                    text: "Nume Prenume"
-                    color: root.text
-                    font.pixelSize: 24
-                    font.bold: true
-                }
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    root.currentPath = "/settings"
-                }
-            }
-        }
-
-        Item {
-            visible: !menu.isMobile
-            Layout.preferredHeight: 64
-        }
 
         MenuItem {
             label: "My Files"
@@ -142,10 +92,8 @@ Rectangle {
         }
 
         Item {
-            Layout.preferredHeight: 24
+            Layout.preferredHeight: 15
             Layout.preferredWidth: 2
-            Layout.alignment: menu.isMobile ? Qt.AlignHCenter : Qt.AlignLeft
-            Layout.leftMargin: menu.isMobile ? 0 : 24
         }
 
         MenuItem {
@@ -167,10 +115,8 @@ Rectangle {
         }
 
         Item {
-            Layout.preferredHeight: 24
+            Layout.preferredHeight: 15
             Layout.preferredWidth: 2
-            Layout.alignment: menu.isMobile ? Qt.AlignHCenter : Qt.AlignLeft
-            Layout.leftMargin: menu.isMobile ? 0 : 24
         }
 
         MenuItem {
