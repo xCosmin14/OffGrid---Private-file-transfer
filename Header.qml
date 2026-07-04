@@ -1,12 +1,17 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 
 Rectangle {
     id: header
     width: parent.width
     height: 60
     color: root.menuBgCol
+
+    property bool notificationsOpen: false
+
+    TapHandler {onTapped: root.focus = true}
 
     RowLayout {
         anchors.fill: parent
@@ -15,6 +20,7 @@ Rectangle {
         spacing: 16
 
         RowLayout {
+            HoverHandler {cursorShape: Qt.PointingHandCursor}
             spacing: 12
 
             Image {
@@ -33,12 +39,14 @@ Rectangle {
 
         Rectangle {
             id: headerFileSearch
-            Layout.preferredWidth: 300
+            Layout.preferredWidth: searchInput.activeFocus ? 375 : 300
+            Behavior on Layout.preferredWidth { NumberAnimation { duration: 300 } }
             Layout.preferredHeight: 38
             Layout.leftMargin: 10
             color: "transparent"
             border.width: 2
-            border.color: root.text
+            border.color: searchInput.activeFocus ? root.hoverCol : root.text
+            Behavior on border.color { ColorAnimation { duration: 300 } }
             radius: 12
 
             RowLayout {
@@ -48,16 +56,21 @@ Rectangle {
                 spacing: 8
 
                 TextField {
+                    id: searchInput
                     placeholderText: "Search files and folders..."
                     Layout.fillWidth: true
                     font.pixelSize: 16
                     color: root.text
                     background: null
+
+                    Keys.onEscapePressed: {
+                        header.forceActiveFocus()
+                    }
                 }
 
                 ToolButton {
                     hoverEnabled: true
-                    property color btnColor: hovered ? root.hoverCol : root.text
+                    property color btnColor: searchInput.activeFocus || hovered ? root.hoverCol : root.text
                     Behavior on btnColor { ColorAnimation { duration: 300 } }
                     HoverHandler {cursorShape: Qt.PointingHandCursor}
 
@@ -84,9 +97,10 @@ Rectangle {
                 property color btnColor: hovered ? root.hoverCol : root.text
                 Behavior on btnColor { ColorAnimation { duration: 300 } }
                 HoverHandler {cursorShape: Qt.PointingHandCursor}
+                onClicked: notificationsOpen = !notificationsOpen
 
                 icon.source: "assets/svg/Notification.svg"
-                icon.color: btnColor
+                icon.color: notificationsOpen === true ? root.hoverCol : root.text
                 icon.width: 34
                 icon.height: 34
                 Layout.preferredWidth: 34
@@ -119,18 +133,179 @@ Rectangle {
             color: root.text
         }
 
-        Rectangle {
+        Item {
             id: accountSettingsToggle
             Layout.preferredWidth: 32
             Layout.preferredHeight: 32
-            radius: width / 2
-            clip: true
 
             Image {
-                source: "assets/MockUserImg.jpg"
+                id: profileImage
                 anchors.fill: parent
+                source: "assets/MockUserImg.jpg"
                 fillMode: Image.PreserveAspectCrop
+                visible: false
+            }
+
+            Rectangle {
+                id: profileMask
+                anchors.fill: parent
+                radius: width / 2
+                visible: false
+            }
+
+            OpacityMask {
+                anchors.fill: parent
+                source: profileImage
+                maskSource: profileMask
+                HoverHandler {cursorShape: Qt.PointingHandCursor}
+
+                TapHandler {
+                    onTapped: {root.currentPath = "/settings"}
+                }
             }
         }
     }
+
+    Item {
+            id: notificationsCenter
+
+            parent: Overlay.overlay
+
+            visible: header.notificationsOpen
+            width: 360
+            height: notifList.y + notifList.height + 60
+
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.topMargin: 59
+            anchors.rightMargin: 244
+
+            ShaderEffectSource {
+                id: frostCapture
+                sourceItem: root.contentItem
+                sourceRect: Qt.rect(root.width - 360 - 244, 60, 360, notificationsCenter.height)
+                visible: false
+            }
+
+            FastBlur {
+                id: frostBlur
+                anchors.fill: parent
+                source: frostCapture
+                radius: 32
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                color: root.boxBgCol
+                opacity: 0.85
+                border.width: 2
+                border.color: root.menuBgCol
+            }
+
+            Text {
+                id: notifTitle
+                color: root.text
+                font.pixelSize: 36
+                font.bold: true
+                text: "Notifications"
+                x: 20
+                y: 10
+            }
+
+            RowLayout {
+                id: notifHeader
+                anchors.top: notifTitle.bottom
+                anchors.topMargin: 35
+                anchors.left: parent.left
+                anchors.leftMargin: 8
+                spacing: 15
+
+                Rectangle {
+                    id: btnMarkRead
+                    Layout.preferredHeight: 32
+                    Layout.preferredWidth: contentMarkRead.implicitWidth + 20
+                    radius: 8
+
+                    color: mouseAreaRead.containsMouse ? root.boxBgCol : "transparent"
+                    border.width: 1
+                    border.color: mouseAreaRead.containsMouse ? root.boxShadowCol : "transparent"
+                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on border.color { ColorAnimation { duration: 150 } }
+
+                    RowLayout {
+                        id: contentMarkRead
+                        anchors.centerIn: parent
+                        spacing: 6
+
+                        Item {
+                            width: 20; height: 20
+                            Image {
+                                id: iconSeen
+                                source: "assets/svg/Seen.svg"
+                                width: 20; height: 20
+                                visible: false
+                            }
+                            ColorOverlay {
+                                anchors.fill: iconSeen
+                                source: iconSeen
+                                color: root.hoverCol
+                                Behavior on color { ColorAnimation { duration: 150 } }
+                            }
+                        }
+
+                        Text {
+                            text: "Mark all as read"
+                            color: root.text
+                            font.pixelSize: 16
+                            font.bold: true
+                        }
+                    }
+
+                    MouseArea {
+                        id: mouseAreaRead
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: console.log("Mark as read clicked")
+                    }
+                }
+
+                Rectangle {
+                    id: btnViewAll
+                    Layout.preferredHeight: 32
+                    Layout.preferredWidth: contentViewAll.implicitWidth + 20
+                    radius: 8
+
+                    color: mouseAreaView.containsMouse ? root.boxBgCol : "transparent"
+                    border.width: 1
+                    border.color: mouseAreaView.containsMouse ? root.boxShadowCol : "transparent"
+                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on border.color { ColorAnimation { duration: 150 } }
+
+                    Text {
+                        id: contentViewAll
+                        anchors.centerIn: parent
+                        text: "View all"
+                        color: root.text
+                        font.pixelSize: 16
+                        font.bold: true
+                    }
+
+                    MouseArea {
+                        id: mouseAreaView
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: console.log("View all clicked")
+                    }
+                }
+            }
+
+            ColumnLayout {
+                id: notifList
+                anchors.top: notifHeader.bottom
+                anchors.topMargin: 15
+                height: 450
+            }
+        }
 }

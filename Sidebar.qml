@@ -75,31 +75,38 @@ Rectangle {
         anchors.topMargin: isMobile ? 60 : 0
         spacing: 0
 
-        RowLayout {
+        Item {
             visible: menu.isMobile
             Layout.alignment: Qt.AlignHCenter
             Layout.topMargin: 24
             Layout.bottomMargin: 24
-            spacing: 12
+            Layout.fillWidth: true
+            implicitHeight: profileRow.implicitHeight
 
-            Rectangle {
-                width: 48
-                height: 48
-                radius: width / 2
-                clip: true
+            RowLayout {
+                id: profileRow
+                anchors.centerIn: parent
+                spacing: 12
 
-                Image {
-                    source: "assets/MockUserImg.jpg"
-                    anchors.fill: parent
-                    fillMode: Image.PreserveAspectCrop
+                Rectangle {
+                    width: 48
+                    height: 48
+                    radius: width / 2
+                    clip: true
+
+                    Image {
+                        source: "assets/MockUserImg.jpg"
+                        anchors.fill: parent
+                        fillMode: Image.PreserveAspectCrop
+                    }
                 }
-            }
 
-            Text {
-                text: "Nume Prenume"
-                color: root.text
-                font.pixelSize: 24
-                font.bold: true
+                Text {
+                    text: "Nume Prenume"
+                    color: root.text
+                    font.pixelSize: 24
+                    font.bold: true
+                }
             }
 
             MouseArea {

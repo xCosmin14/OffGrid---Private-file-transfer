@@ -5,7 +5,7 @@ project(Demo1 VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(QT_QML_GENERATE_QMLLS_INI ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick Svg)
+find_package(Qt6 REQUIRED COMPONENTS Quick Svg Core5Compat)
 
 qt_standard_project_setup(REQUIRES 6.5)
 
@@ -25,7 +25,20 @@ qt_add_qml_module(appDemo1
         Main.qml
         Header.qml
         Sidebar.qml
-        MyFilesPage.qml
+
+        Files/File.qml
+        Files/MyFilesPage.qml
+        Files/SharedFilesPage.qml
+        Files/FavoritesPage.qml
+
+        Files/MusicPage.qml
+        Files/PhotosPage.qml
+        Files/TrashPage.qml
+
+        Account/Settings.qml
+        Account/Register.qml
+        Account/Login.qml
+        Account/ForgotPassword.qml
 
     RESOURCES
         assets/Logo.png
@@ -69,6 +82,12 @@ qt_add_qml_module(appDemo1
         assets/svg/UserIcons/RemoveFriend.svg
         assets/svg/UserIcons/User.svg
         assets/svg/UserIcons/UserIcon.svg
+        QML_FILES Files/DocumentsPage.qml
+        QML_FILES Files/AddFile.qml
+        QML_FILES Files/File.qml
+        QML_FILES Files/UploadProgress.qml
+        QML_FILES Files/Filters.qml
+        QML_FILES Files/MenuOption.qml
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
@@ -83,7 +102,7 @@ set_target_properties(appDemo1 PROPERTIES
 )
 
 target_link_libraries(appDemo1
-    PRIVATE Qt6::Quick Qt6::Svg
+    PRIVATE Qt6::Quick Qt6::Svg Qt6::Core5Compat
 )
 
 

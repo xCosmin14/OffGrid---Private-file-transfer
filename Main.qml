@@ -4,6 +4,11 @@ import QtQuick.Controls.Basic
 
 ApplicationWindow {
     id: root
+
+    TapHandler {
+        onTapped: root.contentItem.forceActiveFocus()
+    }
+
     minimumWidth: 1366
     minimumHeight: 768
 
@@ -24,14 +29,14 @@ ApplicationWindow {
     property color boxBgCol: lightMode ? "#d9ffffff" : "#0ddbdbdb"
 
     onCurrentPathChanged: {
-        if (currentPath === "/") pageStack.replace("MyFilesPage.qml")
-        else if (currentPath === "/myfiles/shared") pageStack.replace("SharedFilesPage.qml")
-        else if (currentPath === "/myfiles/favorites") pageStack.replace("FavoritesPage.qml")
-        else if (currentPath === "/myfiles/documents") pageStack.replace("DocumentsPage.qml")
-        else if (currentPath === "/myfiles/music") pageStack.replace("MusicPage.qml")
-        else if (currentPath === "/myfiles/photos") pageStack.replace("PhotosPage.qml")
-        else if (currentPath === "/myfiles/trash") pageStack.replace("TrashPage.qml")
-        else if (currentPath === "/settings") pageStack.replace("SettingsPage.qml")
+        if (currentPath === "/") pageStack.replace("Files/MyFilesPage.qml")
+        else if (currentPath === "/myfiles/shared") pageStack.replace("Files/SharedFilesPage.qml")
+        else if (currentPath === "/myfiles/favorites") pageStack.replace("Files/FavoritesPage.qml")
+        else if (currentPath === "/myfiles/documents") pageStack.replace("Files/DocumentsPage.qml")
+        else if (currentPath === "/myfiles/music") pageStack.replace("Files/MusicPage.qml")
+        else if (currentPath === "/myfiles/photos") pageStack.replace("Files/PhotosPage.qml")
+        else if (currentPath === "/myfiles/trash") pageStack.replace("Files/TrashPage.qml")
+        else if (currentPath === "/settings") pageStack.replace("Account/Settings.qml")
     }
 
     Shortcut {
@@ -91,12 +96,7 @@ ApplicationWindow {
                 id: pageStack
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                initialItem: "MyFilesPage.qml"
-
-                pushEnter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 200 } }
-                pushExit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 200 } }
-                popEnter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 200 } }
-                popExit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 200 } }
+                initialItem: "Files/MyFilesPage.qml"
             }
         }
     }
