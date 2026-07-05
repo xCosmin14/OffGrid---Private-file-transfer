@@ -27,7 +27,7 @@ Rectangle {
         Text { text: "from:"; color: root.text; opacity: 0.8 }
         TextField {
             placeholderText: "mm / dd / yyyy"
-            Layout.preferredWidth: 140
+            Layout.preferredWidth: 100
             Layout.preferredHeight: 28
             background: Rectangle {
                 color: "transparent"; radius: 5
@@ -40,7 +40,7 @@ Rectangle {
         Text { text: "to:"; color: root.text; opacity: 0.8 }
         TextField {
             placeholderText: "mm / dd / yyyy"
-            Layout.preferredWidth: 140
+            Layout.preferredWidth: 100
             Layout.preferredHeight: 28
             background: Rectangle {
                 color: "transparent"; radius: 5
@@ -94,7 +94,7 @@ Rectangle {
 
         Rectangle { width: 1; height: 20; color: root.text; visible: userFilter }
 
-        Text { text: "sent by:"; color: root.text; visible: userFilter}
+        Text { text: "Sent by:"; color: root.text; font.bold: true; visible: userFilter}
         TextField {
             Layout.preferredWidth: 140
             Layout.preferredHeight: 28

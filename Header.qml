@@ -3,6 +3,8 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import Qt5Compat.GraphicalEffects
 
+import "Notifications"
+
 Rectangle {
     id: header
     width: parent.width
@@ -167,145 +169,234 @@ Rectangle {
     }
 
     Item {
-            id: notificationsCenter
+        id: notificationsCenter
 
-            parent: Overlay.overlay
+        parent: Overlay.overlay
 
-            visible: header.notificationsOpen
-            width: 360
-            height: notifList.y + notifList.height + 60
+        property bool viewAllMode: false
+        property bool allRead: false
+        property real frozenHeight: notifColumn.implicitHeight
 
-            anchors.top: parent.top
-            anchors.right: parent.right
-            anchors.topMargin: 59
-            anchors.rightMargin: 244
+        visible: header.notificationsOpen
+        width: 360
+        height: (notifFlickable.y + notifFlickable.height)
 
-            ShaderEffectSource {
-                id: frostCapture
-                sourceItem: root.contentItem
-                sourceRect: Qt.rect(root.width - 360 - 244, 60, 360, notificationsCenter.height)
-                visible: false
-            }
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.topMargin: 59
+        anchors.rightMargin: 244
 
-            FastBlur {
-                id: frostBlur
-                anchors.fill: parent
-                source: frostCapture
-                radius: 32
-            }
+        ShaderEffectSource {
+            id: frostCapture
+            sourceItem: root.contentItem
+            sourceRect: Qt.rect(root.width - 360 - 244, 60, 360, notificationsCenter.height)
+            visible: false
+        }
+
+        FastBlur {
+            id: frostBlur
+            anchors.fill: parent
+            source: frostCapture
+            radius: 32
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            color: root.boxBgCol
+            opacity: 0.85
+            border.width: 2
+            border.color: root.menuBgCol
+        }
+
+        Text {
+            id: notifTitle
+            color: root.text
+            font.pixelSize: 36
+            font.bold: true
+            text: "Notifications"
+            x: 20
+            y: 10
+        }
+
+        RowLayout {
+            id: notifHeader
+            anchors.top: notifTitle.bottom
+            anchors.topMargin: 35
+            anchors.left: parent.left
+            anchors.leftMargin: 8
+            spacing: 15
 
             Rectangle {
-                anchors.fill: parent
-                color: root.boxBgCol
-                opacity: 0.85
-                border.width: 2
-                border.color: root.menuBgCol
-            }
+                id: btnMarkRead
+                Layout.preferredHeight: 32
+                Layout.preferredWidth: contentMarkRead.implicitWidth + 20
+                radius: 8
 
-            Text {
-                id: notifTitle
-                color: root.text
-                font.pixelSize: 36
-                font.bold: true
-                text: "Notifications"
-                x: 20
-                y: 10
-            }
+                color: mouseAreaRead.containsMouse ? root.boxBgCol : "transparent"
+                border.width: 1
+                border.color: mouseAreaRead.containsMouse ? root.boxShadowCol : "transparent"
+                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on border.color { ColorAnimation { duration: 150 } }
 
-            RowLayout {
-                id: notifHeader
-                anchors.top: notifTitle.bottom
-                anchors.topMargin: 35
-                anchors.left: parent.left
-                anchors.leftMargin: 8
-                spacing: 15
+                RowLayout {
+                    id: contentMarkRead
+                    anchors.centerIn: parent
+                    spacing: 6
 
-                Rectangle {
-                    id: btnMarkRead
-                    Layout.preferredHeight: 32
-                    Layout.preferredWidth: contentMarkRead.implicitWidth + 20
-                    radius: 8
-
-                    color: mouseAreaRead.containsMouse ? root.boxBgCol : "transparent"
-                    border.width: 1
-                    border.color: mouseAreaRead.containsMouse ? root.boxShadowCol : "transparent"
-                    Behavior on color { ColorAnimation { duration: 150 } }
-                    Behavior on border.color { ColorAnimation { duration: 150 } }
-
-                    RowLayout {
-                        id: contentMarkRead
-                        anchors.centerIn: parent
-                        spacing: 6
-
-                        Item {
+                    Item {
+                        width: 20; height: 20
+                        Image {
+                            id: iconSeen
+                            source: "assets/svg/Seen.svg"
                             width: 20; height: 20
-                            Image {
-                                id: iconSeen
-                                source: "assets/svg/Seen.svg"
-                                width: 20; height: 20
-                                visible: false
-                            }
-                            ColorOverlay {
-                                anchors.fill: iconSeen
-                                source: iconSeen
-                                color: root.hoverCol
-                                Behavior on color { ColorAnimation { duration: 150 } }
-                            }
+                            visible: false
                         }
-
-                        Text {
-                            text: "Mark all as read"
-                            color: root.text
-                            font.pixelSize: 16
-                            font.bold: true
+                        ColorOverlay {
+                            anchors.fill: iconSeen
+                            source: iconSeen
+                            color: root.hoverCol
+                            Behavior on color { ColorAnimation { duration: 150 } }
                         }
                     }
-
-                    MouseArea {
-                        id: mouseAreaRead
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: console.log("Mark as read clicked")
-                    }
-                }
-
-                Rectangle {
-                    id: btnViewAll
-                    Layout.preferredHeight: 32
-                    Layout.preferredWidth: contentViewAll.implicitWidth + 20
-                    radius: 8
-
-                    color: mouseAreaView.containsMouse ? root.boxBgCol : "transparent"
-                    border.width: 1
-                    border.color: mouseAreaView.containsMouse ? root.boxShadowCol : "transparent"
-                    Behavior on color { ColorAnimation { duration: 150 } }
-                    Behavior on border.color { ColorAnimation { duration: 150 } }
 
                     Text {
-                        id: contentViewAll
-                        anchors.centerIn: parent
-                        text: "View all"
+                        text: "Mark all as read"
                         color: root.text
                         font.pixelSize: 16
                         font.bold: true
                     }
+                }
 
-                    MouseArea {
-                        id: mouseAreaView
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: console.log("View all clicked")
+                MouseArea {
+                    id: mouseAreaRead
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: notificationsCenter.allRead = true
+                }
+            }
+
+            Rectangle {
+                id: btnViewAll
+                Layout.preferredHeight: 32
+                Layout.preferredWidth: contentViewAll.implicitWidth + 20
+                radius: 8
+
+                color: mouseAreaView.containsMouse ? root.boxBgCol : "transparent"
+                border.width: 1
+                border.color: mouseAreaView.containsMouse ? root.boxShadowCol : "transparent"
+                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on border.color { ColorAnimation { duration: 150 } }
+
+                Text {
+                    id: contentViewAll
+                    anchors.centerIn: parent
+                    text: "View all"
+                    color: root.text
+                    font.pixelSize: 16
+                    font.bold: true
+                }
+
+                MouseArea {
+                    id: mouseAreaView
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        notificationsCenter.frozenHeight = notifColumn.implicitHeight
+                        notificationsCenter.viewAllMode = true
+                    }
+                }
+            }
+        }
+
+        Flickable {
+            id: notifFlickable
+            anchors.top: notifHeader.bottom
+            anchors.topMargin: 15
+            anchors.left: parent.left
+            anchors.right: parent.right
+
+            height: Math.min(notificationsCenter.frozenHeight, 550)
+            contentHeight: notifColumn.implicitHeight
+            clip: true
+
+            visible: !notificationsCenter.allRead
+
+            interactive: notificationsCenter.viewAllMode
+            boundsBehavior: Flickable.StopAtBounds
+
+            ScrollBar.vertical: ScrollBar {
+                id: notifScrollBar
+                active: notificationsCenter.viewAllMode
+                policy: notificationsCenter.viewAllMode ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
+
+                property real scrollProgress: size < 1 ? position / (1 - size) : 0
+
+                contentItem: Item {}
+
+                background: Rectangle {
+                    implicitWidth: 4
+                    radius: 2
+                    color: root.boxShadowCol
+
+                    Rectangle {
+                        anchors.top: parent.top
+                        width: parent.width
+                        height: parent.height * notifScrollBar.scrollProgress
+                        radius: 2
+                        color: root.hoverCol
                     }
                 }
             }
 
             ColumnLayout {
-                id: notifList
-                anchors.top: notifHeader.bottom
-                anchors.topMargin: 15
-                height: 450
+                id: notifColumn
+                width: parent.width // Obligatoriu "width" în loc de ancore laterale
+                spacing: 0
+
+                AcceptFriendNotification {
+                    senderName: "Nume Prenume"; sendDate: "6.6.2026"
+                }
+
+                ActionNotification {
+                    senderName: "Nume Prenume"; sendDate: "6.6.2026"
+                }
+
+                FilePreviewNotification {
+                    senderName: "Nume Prenume"; sendDate: "6.6.2026"
+                    actionType: 0; fileType: "folder"
+                }
+
+                FilePreviewNotification {
+                    senderName: "Nume Prenume"; sendDate: "6.6.2026"
+                    actionType: 1; fileType: "pdf"
+                }
+
+                FilePreviewNotification {
+                    visible: notificationsCenter.viewAllMode
+                    senderName: "Nume Prenume"; sendDate: "6.6.2026"
+                    actionType: 1; fileType: "apk"
+                }
+
+                TextNotification {
+                    visible: notificationsCenter.viewAllMode
+                    senderName: "Nume Prenume"; sendDate: "6.6.2026"
+                    actionType: 0
+                }
+
+                TextNotification {
+                    visible: notificationsCenter.viewAllMode
+                    senderName: "Nume Prenume"; sendDate: "6.6.2026"
+                    actionType: 1
+                }
+
+                TextNotification {
+                    visible: notificationsCenter.viewAllMode
+                    senderName: "Nume Prenume"; sendDate: "6.6.2026"
+                    actionType: 2
+                }
             }
         }
+    }
 }

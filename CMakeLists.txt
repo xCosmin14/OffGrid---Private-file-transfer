@@ -34,6 +34,18 @@ qt_add_qml_module(appDemo1
         Files/MusicPage.qml
         Files/PhotosPage.qml
         Files/TrashPage.qml
+        Files/DocumentsPage.qml
+        Files/AddFile.qml
+        Files/File.qml
+        Files/UploadProgress.qml
+        Files/Filters.qml
+        Files/MenuOption.qml
+
+        Notifications/NotifFilePreview.qml
+        Notifications/AcceptFriendNotification.qml
+        Notifications/FilePreviewNotification.qml
+        Notifications/ActionNotification.qml
+        Notifications/TextNotification.qml
 
         Account/Settings.qml
         Account/Register.qml
@@ -82,12 +94,6 @@ qt_add_qml_module(appDemo1
         assets/svg/UserIcons/RemoveFriend.svg
         assets/svg/UserIcons/User.svg
         assets/svg/UserIcons/UserIcon.svg
-        QML_FILES Files/DocumentsPage.qml
-        QML_FILES Files/AddFile.qml
-        QML_FILES Files/File.qml
-        QML_FILES Files/UploadProgress.qml
-        QML_FILES Files/Filters.qml
-        QML_FILES Files/MenuOption.qml
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
