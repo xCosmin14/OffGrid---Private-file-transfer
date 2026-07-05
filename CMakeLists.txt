@@ -37,6 +37,7 @@ qt_add_qml_module(appDemo1
         Files/DocumentsPage.qml
         Files/AddFile.qml
         Files/File.qml
+        Files/FileSizeChart.qml
         Files/UploadProgress.qml
         Files/Filters.qml
         Files/MenuOption.qml
