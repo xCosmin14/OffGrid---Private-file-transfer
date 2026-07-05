@@ -108,7 +108,7 @@ Query Queries::insertAccess(std::string access_id, std::string user_id, std::str
 
 }
 
-Query Queries::getGeneralData(std::vector<std::string> const& vect, std::string uid)
+Query Queries::getGeneralUserData(std::vector<std::string> const& vect, std::string uid)
 {
 	std::string query = "SELECT ";
 	std::vector<mysql::field> values;

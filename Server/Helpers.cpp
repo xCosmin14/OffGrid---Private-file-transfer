@@ -1,3 +1,4 @@
+
 #include "Helpers.h"
 
 void Helpers::writeToFile(std::string path, FileData const& filedata)
@@ -28,7 +29,7 @@ FileData Helpers::parseBody(std::vector<uint8_t>& body)
 	std::string header_section = body_str.substr(0, header);
 
 
-	std::string filename = "unknown_file", path = "unknown";
+	std::string filename = "unknown_file";
 	auto filename_pos = header_section.find("filename=\"");
 
 
@@ -44,7 +45,6 @@ FileData Helpers::parseBody(std::vector<uint8_t>& body)
 			std::filesystem::path p(raw_path);
 
 			filename = p.filename().string();
-			path = p.parent_path().string();
 		}
 
 	}
@@ -75,7 +75,7 @@ FileData Helpers::parseBody(std::vector<uint8_t>& body)
 	if(pos != std::string::npos)
 		extention = filename.substr(pos + 1);
 
-	return { content, filename, content_type, path, extention, size };
+	return { content, filename, content_type, extention, size };
 }
 
 
@@ -91,4 +91,72 @@ HttpResponse Helpers::makeResponse(http::status status, std::string message, std
 	}
 
 	return HttpResponse(status, json::serialize(response), session_id);
+}
+
+
+std::vector<std::string> Helpers::getFields(json::object& obj, const std::unordered_map<std::string, std::string>& allowed_fields)
+{
+	std::vector<std::string> fields;
+
+	if (obj.contains("fields") && obj["fields"].is_array())
+	{
+		const json::array& fields_array = obj["fields"].as_array();
+		for (auto const& it : fields_array)
+		{
+			if (!it.is_string())
+				throw std::runtime_error("unkown field");
+
+			std::string name = it.as_string().c_str();
+			if (allowed_fields.empty())
+			{
+				fields.push_back(name);
+			}
+			else {
+				auto found = allowed_fields.find(name);
+
+				if (found == allowed_fields.end())
+					throw std::runtime_error("unkown field");
+				else
+					fields.push_back(found->second);
+			}
+		}
+	}
+
+	return fields;
+}
+
+Async<json::object> Helpers::getGeneralData(Query q, DatabaseController& db)
+{
+	
+
+	try {
+		boost::mysql::results results = co_await db.runQuery(q);
+
+
+		auto rows = results.rows();
+
+		if (rows.empty())
+			throw std::runtime_error("not found");
+
+
+		json::object response_obj;
+		for (int i = 0; i < rows[0].size(); i++)
+		{
+			std::string column = results.meta()[i].column_name();
+			auto value = rows[0][i];
+
+			if (value.is_null()) response_obj[column] = nullptr;
+			else if (value.is_string()) response_obj[column] = value.as_string();
+			else if (value.is_int64()) response_obj[column] = value.as_int64();
+		}
+
+		co_return response_obj;
+
+
+	}
+	catch (boost::system::system_error& e)
+	{
+		std::cerr << "Database query failed " << e.what() << std::endl;
+		throw;
+	}
 }

@@ -36,7 +36,7 @@ namespace Queries
 
 	Query insertAccess(std::string, std::string, std::string, std::string, std::string);
 
-	Query getGeneralData(std::vector<std::string> const&, std::string);
+	Query getGeneralUserData(std::vector<std::string> const&, std::string);
 
 	Query GetFile(std::string, std::string);
 

@@ -28,6 +28,10 @@ class ClientController
 	std::unordered_map < std::string, MapEntry> loggedUsers; // sesion_id -> {uid, device_id, OS}
 	std::shared_mutex users_mutex; // mutex for the loggedUsers map
 
+
+	std::unordered_map<std::string, FileMapEntry> files_cache; // transaction_id -> { path, function to remove from cache(coming soon) }
+	std::shared_mutex files_mutex;
+
 	DatabaseController& db;
 
 	std::string createId(std::string);
@@ -38,13 +42,16 @@ class ClientController
 	Async<HttpResponse> logoutUser(json::object&, std::string);
 	Async<HttpResponse> removeUser(json::object&, std::string);
 
-	Async<HttpResponse> uploadFile(std::vector<uint8_t>&, std::string, std::string);
-	Async<HttpResponse> uploadFolder(std::vector<uint8_t>&, std::string);
+	Async<HttpResponse> uploadFile(std::vector<uint8_t>&, std::string, std::string, std::string folder_id = "");
+	Async<HttpResponse> uploadFolder(json::object& obj, std::string);
 
 	Async<HttpResponse> getFile(std::string, std::string);
 	Async<HttpResponse> getProfilePhoto(std::string);
 
 	Async<HttpResponse> getFileMetadata(std::string, std::string, json::object&);
+
+	Async<HttpResponse> getUserData(json::object&, std::string);
+
 
 
 public:

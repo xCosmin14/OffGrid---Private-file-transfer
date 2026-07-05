@@ -28,6 +28,26 @@ struct MapEntry
 	}
 };
 
+struct FileMapEntry
+{
+	std::string user_id;
+	std::vector<std::string> file_paths;
+	int current_file;
+	std::vector<Query> preparedQueries;
+
+	void removeFromCache(int time)
+	{
+
+	}
+
+	FileMapEntry() = default;
+	FileMapEntry(std::string uid, std::vector<std::string> file_paths):
+		file_paths(file_paths), user_id(uid) 
+	{
+		current_file = 0;
+	}
+};
+
 struct HttpResponse
 {
 	http::status status_code;
@@ -40,9 +60,9 @@ struct FileData
 	std::string content;
 	std::string filename;
 	std::string content_type;
-	std::string path;
 	std::string extention;
 	size_t size;
+	std::string path = "";
 	std::string file_id = "";
 	std::string folder_id = "";
 	std::string creator_id = "";
