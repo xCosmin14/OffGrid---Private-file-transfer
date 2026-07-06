@@ -21,7 +21,13 @@ ApplicationWindow {
     property bool lightMode: Application.styleHints.colorScheme === Qt.Light
     property string currentPath: "/"
 
-    property bool isUserLoggedIn: (typeof sessionMgr !== "undefined" && sessionMgr !== null) ? sessionMgr.hasActiveSession : false
+    property bool isUserLoggedIn: sessionMgr ? sessionMgr.hasActiveSession : false
+    Connections {
+        target: sessionMgr
+        function onHasActiveSessionChanged() {
+            root.isUserLoggedIn = sessionMgr.hasActiveSession
+        }
+        }
 
     property color bgCol: lightMode ? "#f2effb" : "#352F44"
     property color menuBgCol : lightMode ? "#ccffffff" : "#94655d7a"
@@ -72,21 +78,22 @@ ApplicationWindow {
 
     function updateRoute() {
         if (!root.isUserLoggedIn) {
-            if (pageStack.currentItem === null || pageStack.currentItem.objectName !== "loginPage")
-                pageStack.replace("Account/Login.qml", StackView.Immediate)
+            if (currentPath !== "/login" && currentPath !== "/register") currentPath = "/login"
 
+            pageStack.replace(null, "Account/Login.qml", StackView.Immediate)
             return;
         }
 
-        if (currentPath === "/") pageStack.replace("Files/MyFilesPage.qml", StackView.Immediate)
-        else if (currentPath === "/myfiles/shared" && isUserLoggedIn) pageStack.replace("Files/SharedFilesPage.qml", StackView.Immediate)
-        else if (currentPath === "/myfiles/favorites" && isUserLoggedIn) pageStack.replace("Files/FavoritesPage.qml", StackView.Immediate)
-        else if (currentPath === "/myfiles/documents" && isUserLoggedIn) pageStack.replace("Files/DocumentsPage.qml", StackView.Immediate)
-        else if (currentPath === "/myfiles/music" && isUserLoggedIn) pageStack.replace("Files/MusicPage.qml", StackView.Immediate)
-        else if (currentPath === "/myfiles/photos" && isUserLoggedIn) pageStack.replace("Files/PhotosPage.qml", StackView.Immediate)
-        else if (currentPath === "/myfiles/trash" && isUserLoggedIn) pageStack.replace("Files/TrashPage.qml", StackView.Immediate)
-        else if (currentPath === "/register") pageStack.replace("Account/Register.qml", StackView.Immediate)
-        else if (currentPath === "/settings" && isUserLoggedIn) pageStack.replace("Account/Settings.qml", StackView.Immediate)
+        if (currentPath === "/") pageStack.replace(null, "Files/MyFilesPage.qml", StackView.Immediate)
+        else if (currentPath === "/myfiles/shared" && isUserLoggedIn) pageStack.replace(null, "Files/SharedFilesPage.qml", StackView.Immediate)
+        else if (currentPath === "/myfiles/favorites" && isUserLoggedIn) pageStack.replace(null, "Files/FavoritesPage.qml", StackView.Immediate)
+        else if (currentPath === "/myfiles/documents" && isUserLoggedIn) pageStack.replace(null, "Files/DocumentsPage.qml", StackView.Immediate)
+        else if (currentPath === "/myfiles/music" && isUserLoggedIn) pageStack.replace(null, "Files/MusicPage.qml", StackView.Immediate)
+        else if (currentPath === "/myfiles/photos" && isUserLoggedIn) pageStack.replace(null, "Files/PhotosPage.qml", StackView.Immediate)
+        else if (currentPath === "/myfiles/trash" && isUserLoggedIn) pageStack.replace(null, "Files/TrashPage.qml", StackView.Immediate)
+        else if (currentPath === "/register") pageStack.replace(null, "Account/Register.qml", StackView.Immediate)
+        else if (currentPath === "/login") pageStack.replace(null, "Account/Login.qml", StackView.Immediate)
+        else if (currentPath === "/settings" && isUserLoggedIn) pageStack.replace(null, "Account/Settings.qml", StackView.Immediate)
     }
 
     onCurrentPathChanged: updateRoute()

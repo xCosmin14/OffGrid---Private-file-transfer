@@ -25,6 +25,8 @@ qt_add_qml_module(appDemo1
     SOURCES
         Account/SessionManager.cpp
         Account/SessionManager.h
+        TextFiltering.h
+
 
     QML_FILES
         Main.qml
@@ -46,6 +48,7 @@ qt_add_qml_module(appDemo1
         Files/UploadProgress.qml
         Files/Filters.qml
         Files/MenuOption.qml
+        Files/CustomDatePicker.qml
 
         Notifications/NotifFilePreview.qml
         Notifications/AcceptFriendNotification.qml

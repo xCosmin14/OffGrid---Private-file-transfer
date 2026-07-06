@@ -5,8 +5,10 @@ import QtQuick.Dialogs
 
 Item {
     id: addFileRoot
+
     width: 40
     height: 40
+    z: 99
 
     property bool showMenu: false
 

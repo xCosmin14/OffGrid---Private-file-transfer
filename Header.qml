@@ -72,6 +72,15 @@ Rectangle {
                     Keys.onEscapePressed: {
                         header.forceActiveFocus()
                     }
+
+                    onTextEdited: {
+                        let oldCursor = cursorPosition
+                        let oldLength = text.length
+
+                        text = textFiltering.TransformAlphaNumeric(text)
+                        let deletedChars = oldLength - text.length
+                        cursorPosition = Math.max(0, oldCursor - deletedChars)
+                    }
                 }
 
                 ToolButton {
@@ -357,7 +366,7 @@ Rectangle {
 
             ColumnLayout {
                 id: notifColumn
-                width: parent.width // Obligatoriu "width" în loc de ancore laterale
+                width: parent.width
                 spacing: 0
 
                 AcceptFriendNotification {

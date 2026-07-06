@@ -58,6 +58,14 @@ Item {
             color: root.text
             echoMode: fieldRoot.isPassword && !fieldRoot.showPassword ? TextInput.Password : TextInput.Normal
             clip: true
+
+            onTextEdited: {
+                let oldCursor = cursorPosition
+                let oldLength = text.length
+                text = fieldRoot.isPassword ? textFiltering.TransformComplex(text) : textFiltering.TransformEmail(text)
+                let deletedChars = oldLength - text.length
+                cursorPosition = Math.max(0, oldCursor - deletedChars)
+            }
         }
 
         Item {
@@ -170,6 +178,7 @@ Item {
                 id: emailField
                 placeholderText: "Email"
                 iconSource: "../assets/svg/UserIcons/Email.svg"
+                isPassword: false
             }
 
             AccountField {

@@ -22,6 +22,7 @@ Item {
         property string iconSource: ""
         property bool isPassword: false
         property bool showPassword: false
+        property string filterType: ""
 
         HoverHandler {cursorShape: Qt.IBeamCursor}
 
@@ -47,16 +48,31 @@ Item {
         }
 
         TextInput {
-            id: input
-            anchors.fill: parent
-            anchors.leftMargin: 16
-            anchors.rightMargin: fieldRoot.isPassword ? 70 : 40
-            verticalAlignment: TextInput.AlignVCenter
-            font.pixelSize: 15
-            color: root.text
-            echoMode: fieldRoot.isPassword && !fieldRoot.showPassword ? TextInput.Password : TextInput.Normal
-            clip: true
-        }
+                id: input
+                anchors.fill: parent
+                anchors.leftMargin: 16
+                anchors.rightMargin: fieldRoot.isPassword ? 70 : 40
+                verticalAlignment: TextInput.AlignVCenter
+                font.pixelSize: 15
+                color: root.text
+                echoMode: fieldRoot.isPassword && !fieldRoot.showPassword ? TextInput.Password : TextInput.Normal
+                clip: true
+
+                onTextEdited: {
+                    if (filterType === "none") return;
+
+                    let oldCursor = cursorPosition
+                    let oldLength = text.length
+
+                    if (filterType === "alpha") text = textFiltering.TransformAlpha(text)
+                    else if (filterType === "alphaNumeric") text = textFiltering.TransformAlphaNumeric(text)
+                    else if (filterType === "email") text = textFiltering.TransformEmail(text)
+                    else if (filterType === "complex") text = textFiltering.TransformComplex(text)
+
+                    let deletedChars = oldLength - text.length
+                    cursorPosition = Math.max(0, oldCursor - deletedChars)
+                }
+            }
 
         Item {
             anchors.right: parent.right
@@ -168,12 +184,14 @@ Item {
                 id: usernameField
                 placeholderText: "Username"
                 iconSource: "../assets/svg/UserIcons/UserIcon.svg"
+                filterType: "alphaNumeric"
             }
 
             AccountField {
                 id: emailField
                 placeholderText: "Email"
                 iconSource: "../assets/svg/UserIcons/Email.svg"
+                filterType: "email"
             }
 
             AccountField {
@@ -181,6 +199,7 @@ Item {
                 placeholderText: "Password (8-20 characters)"
                 iconSource: "../assets/svg/UserIcons/Password.svg"
                 isPassword: true
+                filterType: "complex"
             }
 
             AccountField {
@@ -188,12 +207,14 @@ Item {
                 placeholderText: "Confirm password"
                 iconSource: "../assets/svg/UserIcons/Password.svg"
                 isPassword: true
+                filterType: "complex"
             }
 
             AccountField {
                 id: inviteCodeField
                 placeholderText: "Invite code"
                 iconSource: "../assets/svg/UserIcons/Group.svg"
+                filterType: "complex"
             }
 
             Text {
