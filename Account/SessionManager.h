@@ -8,18 +8,18 @@ class SessionManager : public QObject
     Q_OBJECT
     Q_PROPERTY(bool hasActiveSession READ hasActiveSession NOTIFY hasActiveSessionChanged)
 
-    private:
-        bool m_hasActiveSession = false;
+private:
+    bool m_hasActiveSession = false;
 
-    public:
-        explicit SessionManager(QObject *parent = nullptr);
+public:
+    explicit SessionManager(QObject *parent = nullptr);
 
-        bool hasActiveSession() const { return m_hasActiveSession; }
+    bool hasActiveSession() const { return m_hasActiveSession; }
 
-        Q_INVOKABLE void checkSession();
+    Q_INVOKABLE void checkSession();
+    Q_INVOKABLE void saveSession(bool isLoggedIn);
+    Q_INVOKABLE void clearSession();
 
-    signals:
-        void hasActiveSessionChanged();
-
-
+signals:
+    void hasActiveSessionChanged();
 };

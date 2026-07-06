@@ -13,17 +13,20 @@ void SessionManager::checkSession()
     QDir().mkpath(appDataDir);
     QString path = appDataDir + "/session.dat";
 
-    bool fileExists = QFile::exists(path);
+    QFile file(path);
+
+    if (!file.exists()) {
+        if (file.open(QIODevice::WriteOnly)) {
+            file.write("0");
+            file.close();
+        }
+    }
 
     bool isValid = false;
-    if (fileExists) {
-        QFile file(path);
-
-        if (file.open(QIODevice::ReadOnly)) {
-            QString token = file.readAll().trimmed();
-
-            isValid = !token.isEmpty() && token != "0";
-        }
+    if (file.open(QIODevice::ReadOnly)) {
+        QString token = file.readAll().trimmed();
+        isValid = !token.isEmpty() && token != "0";
+        file.close();
     }
 
     if (m_hasActiveSession != isValid) {
@@ -31,3 +34,19 @@ void SessionManager::checkSession()
         emit hasActiveSessionChanged();
     }
 }
+
+void SessionManager::saveSession(bool isLoggedIn) {
+    QString appDataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QDir().mkpath(appDataDir);
+    QString path = appDataDir + "/session.dat";
+
+    QFile file(path);
+    if (file.open(QIODevice::WriteOnly)) {
+        file.write(isLoggedIn ? "1" : "0");
+        file.close();
+
+        checkSession();
+    }
+}
+
+void SessionManager::clearSession() { saveSession(false); }

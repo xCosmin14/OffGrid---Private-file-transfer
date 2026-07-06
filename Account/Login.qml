@@ -5,6 +5,7 @@ import Qt5Compat.GraphicalEffects
 
 Item {
     id: loginPage
+    objectName: "loginPage"
     property string requestMessage: ""
 
     width: parent ? parent.width : 1280
@@ -181,6 +182,7 @@ Item {
             Text {
                 color: "red"
                 anchors.horizontalCenter: parent.horizontalCenter
+                visible: (requestMessage !== "")
 
                 font.pixelSize: 20
                 font.bold: true

@@ -13,8 +13,6 @@ Rectangle {
 
     property bool notificationsOpen: false
 
-    TapHandler {onTapped: root.focus = true}
-
     RowLayout {
         anchors.fill: parent
         anchors.leftMargin: 24

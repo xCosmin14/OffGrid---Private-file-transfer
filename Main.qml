@@ -79,14 +79,14 @@ ApplicationWindow {
         }
 
         if (currentPath === "/") pageStack.replace("Files/MyFilesPage.qml", StackView.Immediate)
-        else if (currentPath === "/myfiles/shared") pageStack.replace("Files/SharedFilesPage.qml", StackView.Immediate)
-        else if (currentPath === "/myfiles/favorites") pageStack.replace("Files/FavoritesPage.qml", StackView.Immediate)
-        else if (currentPath === "/myfiles/documents") pageStack.replace("Files/DocumentsPage.qml", StackView.Immediate)
-        else if (currentPath === "/myfiles/music") pageStack.replace("Files/MusicPage.qml", StackView.Immediate)
-        else if (currentPath === "/myfiles/photos") pageStack.replace("Files/PhotosPage.qml", StackView.Immediate)
-        else if (currentPath === "/myfiles/trash") pageStack.replace("Files/TrashPage.qml", StackView.Immediate)
+        else if (currentPath === "/myfiles/shared" && isUserLoggedIn) pageStack.replace("Files/SharedFilesPage.qml", StackView.Immediate)
+        else if (currentPath === "/myfiles/favorites" && isUserLoggedIn) pageStack.replace("Files/FavoritesPage.qml", StackView.Immediate)
+        else if (currentPath === "/myfiles/documents" && isUserLoggedIn) pageStack.replace("Files/DocumentsPage.qml", StackView.Immediate)
+        else if (currentPath === "/myfiles/music" && isUserLoggedIn) pageStack.replace("Files/MusicPage.qml", StackView.Immediate)
+        else if (currentPath === "/myfiles/photos" && isUserLoggedIn) pageStack.replace("Files/PhotosPage.qml", StackView.Immediate)
+        else if (currentPath === "/myfiles/trash" && isUserLoggedIn) pageStack.replace("Files/TrashPage.qml", StackView.Immediate)
         else if (currentPath === "/register") pageStack.replace("Account/Register.qml", StackView.Immediate)
-        else if (currentPath === "/settings") pageStack.replace("Account/Settings.qml", StackView.Immediate)
+        else if (currentPath === "/settings" && isUserLoggedIn) pageStack.replace("Account/Settings.qml", StackView.Immediate)
     }
 
     onCurrentPathChanged: updateRoute()
@@ -113,7 +113,7 @@ ApplicationWindow {
                 id: pageStack
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                initialItem: "Files/MyFilesPage.qml"
+                initialItem: isUserLoggedIn ? "Files/MyFilesPage.qml" : "Account/Login.qml"
 
                 replaceEnter: Transition {}
                 replaceExit: Transition {}
