@@ -5,11 +5,10 @@ import Qt5Compat.GraphicalEffects
 
 Item {
     id: loginPage
+    property string requestMessage: ""
 
     width: parent ? parent.width : 1280
     height: parent ? parent.height : 720
-
-    property string errorMessage: ""
 
     component AccountField: Item {
         id: fieldRoot
@@ -19,7 +18,9 @@ Item {
         property alias placeholderText: placeholder.text
         property alias text: input.text
         property alias echoMode: input.echoMode
+
         property string iconSource: ""
+
         property bool isPassword: false
         property bool showPassword: false
 
@@ -178,17 +179,17 @@ Item {
             }
 
             Text {
-                text: loginPage.errorMessage
-                color: "#ff4d4d"
-                font.pixelSize: 14
-                font.weight: Font.DemiBold
-                visible: loginPage.errorMessage !== ""
+                color: "red"
                 anchors.horizontalCenter: parent.horizontalCenter
+
+                font.pixelSize: 20
+                font.bold: true
+                text: (requestMessage === "email not found") ? "Email does not exist" : "Wrong password"
             }
 
             Item {
                 width: 1
-                height: 10
+                height: 1
             }
 
             Rectangle {
@@ -220,7 +221,6 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: console.log("Login submitted")
                 }
             }
 
