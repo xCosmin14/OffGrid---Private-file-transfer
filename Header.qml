@@ -41,9 +41,15 @@ Rectangle {
 
         Rectangle {
             id: headerFileSearch
+            visible: root.isUserLoggedIn
+
+            HoverHandler {cursorShape: Qt.IBeamCursor}
+
             Layout.preferredWidth: searchInput.activeFocus ? 375 : 300
-            Behavior on Layout.preferredWidth { NumberAnimation { duration: 300 } }
             Layout.preferredHeight: 38
+
+            Behavior on Layout.preferredWidth { NumberAnimation { duration: 300 } }
+
             Layout.leftMargin: 10
             color: "transparent"
             border.width: 2
@@ -100,6 +106,7 @@ Rectangle {
                 Behavior on btnColor { ColorAnimation { duration: 300 } }
                 HoverHandler {cursorShape: Qt.PointingHandCursor}
                 onClicked: notificationsOpen = !notificationsOpen
+                visible: root.isUserLoggedIn
 
                 icon.source: "assets/svg/Notification.svg"
                 icon.color: notificationsOpen === true ? root.hoverCol : root.text

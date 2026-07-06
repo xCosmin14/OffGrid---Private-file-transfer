@@ -1,20 +1,20 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
-#include <QIcon>
+#include <QQmlContext>
+#include "Account/SessionManager.h"
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     QGuiApplication app(argc, argv);
+
+    app.setOrganizationName("OffGrid");
+    app.setApplicationName("Demo1");
+
     QQmlApplicationEngine engine;
 
-    QObject::connect(
-        &engine,
-        &QQmlApplicationEngine::objectCreationFailed,
-        &app,
-        []() { QCoreApplication::exit(-1); },
-        Qt::QueuedConnection);
+    SessionManager sessionManager;
+    engine.rootContext()->setContextProperty("sessionMgr", &sessionManager);
 
-    engine.loadFromModule("Demo1", "Main");
+    engine.load(QUrl(QStringLiteral("qrc:/qt/qml/Demo1/Main.qml")));
 
-    return QGuiApplication::exec();
+    return app.exec();
 }

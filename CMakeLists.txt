@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
+set(CMAKE_AUTOMOC ON)
 
 project(Demo1 VERSION 0.1 LANGUAGES CXX)
 
@@ -20,6 +21,10 @@ qt_add_executable(appDemo1
 
 qt_add_qml_module(appDemo1
     URI Demo1
+
+    SOURCES
+        Account/SessionManager.cpp
+        Account/SessionManager.h
 
     QML_FILES
         Main.qml

@@ -21,23 +21,14 @@ ApplicationWindow {
     property bool lightMode: Application.styleHints.colorScheme === Qt.Light
     property string currentPath: "/"
 
+    property bool isUserLoggedIn: (typeof sessionMgr !== "undefined" && sessionMgr !== null) ? sessionMgr.hasActiveSession : false
+
     property color bgCol: lightMode ? "#f2effb" : "#352F44"
     property color menuBgCol : lightMode ? "#ccffffff" : "#94655d7a"
     property color text: lightMode ? "#231e3d" : "#ffffff"
     property color hoverCol: lightMode ? "#3cbff3" : "#3cf38f"
     property color boxShadowCol: lightMode ? "#332e2d2d" : "#33f0f0f0"
     property color boxBgCol: lightMode ? "#d9ffffff" : "#0ddbdbdb"
-
-    onCurrentPathChanged: {
-        if (currentPath === "/") pageStack.replace("Files/MyFilesPage.qml", StackView.Immediate)
-        else if (currentPath === "/myfiles/shared") pageStack.replace("Files/SharedFilesPage.qml", StackView.Immediate)
-        else if (currentPath === "/myfiles/favorites") pageStack.replace("Files/FavoritesPage.qml", StackView.Immediate)
-        else if (currentPath === "/myfiles/documents") pageStack.replace("Files/DocumentsPage.qml", StackView.Immediate)
-        else if (currentPath === "/myfiles/music") pageStack.replace("Files/MusicPage.qml", StackView.Immediate)
-        else if (currentPath === "/myfiles/photos") pageStack.replace("Files/PhotosPage.qml", StackView.Immediate)
-        else if (currentPath === "/myfiles/trash") pageStack.replace("Files/TrashPage.qml", StackView.Immediate)
-        else if (currentPath === "/settings") pageStack.replace("Account/Settings.qml", StackView.Immediate)
-    }
 
     Shortcut {
         sequence: "F11"
@@ -79,6 +70,29 @@ ApplicationWindow {
         onActivated: currentPath = "/myfiles/trash"
     }
 
+    function updateRoute() {
+        if (!root.isUserLoggedIn) {
+            if (pageStack.currentItem === null || pageStack.currentItem.objectName !== "loginPage")
+                pageStack.replace("Account/Login.qml", StackView.Immediate)
+
+            return;
+        }
+
+        if (currentPath === "/") pageStack.replace("Files/MyFilesPage.qml", StackView.Immediate)
+        else if (currentPath === "/myfiles/shared") pageStack.replace("Files/SharedFilesPage.qml", StackView.Immediate)
+        else if (currentPath === "/myfiles/favorites") pageStack.replace("Files/FavoritesPage.qml", StackView.Immediate)
+        else if (currentPath === "/myfiles/documents") pageStack.replace("Files/DocumentsPage.qml", StackView.Immediate)
+        else if (currentPath === "/myfiles/music") pageStack.replace("Files/MusicPage.qml", StackView.Immediate)
+        else if (currentPath === "/myfiles/photos") pageStack.replace("Files/PhotosPage.qml", StackView.Immediate)
+        else if (currentPath === "/myfiles/trash") pageStack.replace("Files/TrashPage.qml", StackView.Immediate)
+        else if (currentPath === "/register") pageStack.replace("Account/Register.qml", StackView.Immediate)
+        else if (currentPath === "/settings") pageStack.replace("Account/Settings.qml", StackView.Immediate)
+    }
+
+    onCurrentPathChanged: updateRoute()
+    onIsUserLoggedInChanged: updateRoute()
+    Component.onCompleted: updateRoute()
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
@@ -90,7 +104,10 @@ ApplicationWindow {
             Layout.fillHeight: true
             spacing: 0
 
-            Sidebar {Layout.fillHeight: true}
+            Sidebar {
+                Layout.fillHeight: true
+                visible: isUserLoggedIn
+            }
 
             StackView {
                 id: pageStack
