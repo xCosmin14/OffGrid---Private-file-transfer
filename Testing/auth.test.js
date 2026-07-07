@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 
-import { getResponse, extractCookie } from "./helper_functions";
+import { getResponse, extractCookie } from "./helpers.js";
 
 let mail = `test_${crypto.randomUUID().slice(0, 8)}@gmail.com`;
 let name = `testname_${crypto.randomUUID().slice(0, 8)}`;

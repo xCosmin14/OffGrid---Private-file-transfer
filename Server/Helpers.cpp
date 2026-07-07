@@ -29,7 +29,7 @@ FileData Helpers::parseBody(std::vector<uint8_t>& body)
 	std::string header_section = body_str.substr(0, header);
 
 
-	std::string filename = "unknown_file";
+	std::string filename = "unknown_file", path = "unknown_path";
 	auto filename_pos = header_section.find("filename=\"");
 
 
@@ -45,6 +45,8 @@ FileData Helpers::parseBody(std::vector<uint8_t>& body)
 			std::filesystem::path p(raw_path);
 
 			filename = p.filename().string();
+			path = p.parent_path().string();
+			if (path == "") path = filename;
 		}
 
 	}
@@ -75,7 +77,7 @@ FileData Helpers::parseBody(std::vector<uint8_t>& body)
 	if(pos != std::string::npos)
 		extention = filename.substr(pos + 1);
 
-	return { content, filename, content_type, extention, size };
+	return { content, filename, path, content_type, extention, size };
 }
 
 

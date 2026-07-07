@@ -1,11 +1,12 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest"
 import fs from 'fs'
-import { getResponse, extractCookie } from "./helper_functions";
+
+import { getResponse, extractCookie } from "./helpers.js";
 import { spawn, execSync } from "child_process";
+
 import dotenv from 'dotenv';
-import { esmExternalRequirePlugin } from "vite";
-import { inherits } from "util";
-import { resolve } from "dns";
+import { get } from "http";
+import { traceSegment } from "@jridgewell/trace-mapping";
 
 
 let mail = `pookie${crypto.randomUUID().slice(0, 8)}@gmail.com`;
@@ -74,32 +75,6 @@ describe("File Tests", () => {
 
     })
 
-    it('should upload folders', async () => {
-        let formData = new FormData();
-        let folderFiles = [
-            {
-                name: 'idk.txt', path: 'folder_test/idk.txt'
-            },
-            {
-                name: 'numai_bile.txt', path: 'folder_test/numai_bile.txt'
-            }
-        ];
-
-        for (let file of folderFiles) {
-            let buffer = fs.readFileSync(`Testing/dummies/folder_test/${file.name}`);
-            let blob = new Blob([buffer], { type: 'text/plain' });
-            formData.append('files', blob, file.path);
-        }
-
-
-        let response = await getResponse("/upload_folder", "POST", formData, cookie);
-        let data = await response.json();
-
-        expect(data.status).toBe("success");
-        expect(data.message).toBe("folder uploaded successfuly");
-        expect(data.folder_id).toBeDefined();
-
-    })
 
     it('should retrieve a file', async () => {
 
@@ -134,6 +109,43 @@ describe("File Tests", () => {
     })
 
 
+    it('should upload folders', async () => {
+        let formData = new FormData();
+        let folderFiles = [
+            {
+                name: 'idk.txt', path: 'folder_test/idk.txt'
+            },
+            {
+                name: 'numai_bile.txt', path: 'folder_test/numai_bile.txt'
+            }
+        ];
+
+        let response = await getResponse("/upload_folder", "POST", {
+            'fields': ["folder_test/idk.txt", "folder_test/numai_bile.txt"]
+        }, cookie);
+
+        let json = await response.json();
+
+        expect(json.status).toBe("success");
+        expect(json.message).toBe("ready to receive files");
+        expect(json.transaction_id).toBeDefined();
+
+        for (let file of folderFiles) {
+            let buffer = fs.readFileSync(`Testing/dummies/${file.path}`);
+            let blob = new Blob([buffer], { type: 'text/plain' });
+
+            let formData = new FormData();
+            formData.append('file', blob, file.name);
+
+            response = await getResponse(`/upload_file?transaction_id=${json.transaction_id}`, "POST", formData, cookie);
+                    console.log(await response.json());
+
+        }
+
+
+    })
+
+
     afterAll(() => {
         console.log("Cleaning up");
 
@@ -141,7 +153,7 @@ describe("File Tests", () => {
 
         execSync("node Testing/clean_up.js", { stdio: 'inherit' });
 
-        return new Promise((resolve, reject) => {
+       /*  return new Promise((resolve, reject) => {
             const proc = spawn(process.env.MYSQL_PATH || 'mysql', [
                 "-u", "offgrid_test",
                 `-p${process.env.DB_PASS}`,
@@ -152,7 +164,7 @@ describe("File Tests", () => {
             proc.stdin.end();
             proc.on('close', resolve);
             proc.on('error', reject);
-        })
+        }) */
     })
 
 })

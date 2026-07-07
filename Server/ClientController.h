@@ -32,6 +32,9 @@ class ClientController
 	std::unordered_map<std::string, FileMapEntry> files_cache; // transaction_id -> { path, function to remove from cache(coming soon) }
 	std::shared_mutex files_mutex;
 
+	std::atomic<bool> stop_clean_up{ false };
+	std::thread cleaning_thread;
+
 	DatabaseController& db;
 
 	std::string createId(std::string);
@@ -51,12 +54,25 @@ class ClientController
 	Async<HttpResponse> getFileMetadata(std::string, std::string, json::object&);
 
 	Async<HttpResponse> getUserData(json::object&, std::string);
+	Async<HttpResponse> UpdateDb(std::vector<Query>, std::string);
 
+	std::vector<std::string> appendFolders(std::vector<Query>&, const std::vector<std::string>&, std::string, std::string);
 
+	void cleanUpCache();
 
 public:
 
-	ClientController(DatabaseController& db) :db(db) {}
+	ClientController(DatabaseController& db) :db(db) { 
+		this->cleaning_thread = std::thread(&ClientController::cleanUpCache, this); 
+	}
+
+	~ClientController()
+	{
+		this->stop_clean_up = true;
+
+		if (this->cleaning_thread.joinable())
+			this->cleaning_thread.join();
+	}
 
 	Async<HttpResponse> handleRequest(http::verb, std::string_view, std::string, std::string);
 	Async<HttpResponse> handleRequest(http::verb, std::string_view, std::vector<uint8_t>, std::string);

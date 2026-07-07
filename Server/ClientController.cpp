@@ -151,6 +151,7 @@ Async<HttpResponse> ClientController::getProfilePhoto(std::string session_id)
 
 }
 
+
 Async<HttpResponse> ClientController::getUserData(json::object& obj, std::string session_id)
 {
 	std::string uid;
@@ -203,6 +204,45 @@ Async<HttpResponse> ClientController::getUserData(json::object& obj, std::string
 }
 
 
+Async<HttpResponse> ClientController::UpdateDb(std::vector<Query> queries, std::string transaction_id)
+{
+	mysql::diagnostics diag;
+	try {
+		co_await this->db.runTransaction(queries, diag);
+		co_return Helpers::makeResponse(http::status::ok, "folder uploaded sucessfuly");
+	}
+	catch (boost::system::system_error& e)
+	{
+		std::cerr << "Transaction error: " << e.what() << std::endl;
+		std::vector<std::string> paths_to_clean;
+		{
+			std::unique_lock lock(files_mutex);
+			if (files_cache.count(transaction_id))
+			{
+				paths_to_clean = std::move(this->files_cache[transaction_id].file_paths);
+				this->files_cache.erase(transaction_id);
+			}
+			
+		}
+
+		for (const auto& file : paths_to_clean)
+		{
+			if (std::filesystem::exists(file)) {
+				std::filesystem::remove(file);
+
+				auto parent = std::filesystem::path(file).parent_path();
+				while (!parent.empty() && std::filesystem::is_empty(parent)) {
+					std::filesystem::remove(parent);
+					parent = parent.parent_path();
+				}
+			}
+		}
+
+		co_return Helpers::makeResponse(http::status::internal_server_error, "failed uploading folder");
+	}
+}
+
+
 Async<HttpResponse> ClientController::handleRequest(http::verb method, std::string_view target, std::string body, std::string session_id)
 {
 
@@ -237,6 +277,8 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
 
 		else if (target == "/upload_folder")
 			co_return co_await this->uploadFolder(obj, session_id);
+
+		
 
 		else if (target.starts_with("/get_file_metadata"))
 		{
@@ -276,9 +318,9 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
 		
 		else if (target.starts_with("/upload_file"))
 		{
-			if (target.find("?folder_id=") != std::string::npos) {
-				std::string folder_id = std::string(target).substr(target.find("?folder_id=") + 11);
-				co_return co_await this->uploadFile(body, session_id, "/files", folder_id);
+			if (target.find("?transaction_id=") != std::string::npos) {
+				std::string transaction_id = std::string(target).substr(target.find("?transaction_id=") + 16);
+				co_return co_await this->uploadFile(body, session_id, "/files", transaction_id);
 			}
 			co_return co_await this->uploadFile(body, session_id, "/files");
 		}

@@ -180,7 +180,6 @@ public:
 				full_path = "FileSystem/files/" + uid + "/" + file_path;
 			}
 
-			std::cout << full_path << std::endl;
 			if (!std::filesystem::exists(full_path))
 			{
 				std::cerr << "File missing from disk assets: " << full_path << std::endl;

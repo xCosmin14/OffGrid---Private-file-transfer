@@ -4,6 +4,7 @@
 #include <boost/json.hpp>
 #include <string>
 #include <vector>
+#include <chrono>
 
 namespace http = boost::beast::http;
 namespace mysql = boost::mysql;
@@ -34,11 +35,9 @@ struct FileMapEntry
 	std::vector<std::string> file_paths;
 	int current_file;
 	std::vector<Query> preparedQueries;
+	std::vector<std::string> folder_ids;
 
-	void removeFromCache(int time)
-	{
-
-	}
+	std::chrono::steady_clock::time_point created;
 
 	FileMapEntry() = default;
 	FileMapEntry(std::string uid, std::vector<std::string> file_paths):
@@ -59,10 +58,10 @@ struct FileData
 {
 	std::string content;
 	std::string filename;
+	std::string path;
 	std::string content_type;
 	std::string extention;
 	size_t size;
-	std::string path = "";
 	std::string file_id = "";
 	std::string folder_id = "";
 	std::string creator_id = "";
@@ -91,7 +90,6 @@ struct FolderData
 	std::string parent_folder_id;
 	std::string creator_id;
 	std::string folder_name;
-	std::string type;
 	std::string path;
 
 
@@ -103,7 +101,6 @@ struct FolderData
 		obj["creator_id"] = creator_id;
 		obj["name"] = folder_name;
 		obj["path"] = path;
-		obj["type"] = type;
 
 		return obj;
 	}

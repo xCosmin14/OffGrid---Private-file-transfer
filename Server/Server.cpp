@@ -34,7 +34,7 @@ Async<void> handle_session(boost::asio::ip::tcp::socket socket, ClientController
 			std::string target = req_parser.get().target();
 
 
-			if (target.starts_with("/upload"))
+			if (target.starts_with("/upload") && target.find("folder") == std::string::npos)
 			{
 				Handler<http::vector_body<uint8_t>, http::string_body>handler(req_parser.get(), c);
 				auto res = co_await handler.getResponse();
