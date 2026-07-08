@@ -15,7 +15,7 @@ export default function Login() {
     const [showError, setShowError] = useState("") 
 
     const handleSubmit = async (e) => {
-        e.preventDefault()
+        e.preventDefault();
 
         const formData = new FormData(e.currentTarget); 
         formData.set("email", formData.get("email").replace(/['`"/{};?,#$%^&*()]+/g, ''))
@@ -35,7 +35,7 @@ export default function Login() {
         if (data.message == "user logged in") {
             localStorage.setItem("isLogged", "true")
             window.location.href = "/"
-        } else setShowError(data.message === "email not found" ? 1 : 2)
+        } 
     }
     
     useTitle("OffGrid - Login")
@@ -67,7 +67,8 @@ export default function Login() {
                     <Password />
                 </div>
 
-                {showError && <h3 style={{color: "red"}}>{showError === 1 ? "Email does not exist" : "Wrong password"}</h3>}
+                {showError === 1 && <h3 style={{color: "red"}}>Email does not exist</h3>}
+                {showError === 2 && <h3 style={{color: "red"}}>Wrong password</h3>}
 
                 <button type="submit">Login</button>
 
