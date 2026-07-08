@@ -160,3 +160,9 @@ Query Queries::GetFileMetadata(std::string file_id, std::string uid, std::vector
 
 	return { query, values };
 }
+
+
+Query Queries::GetLoggedUsers()
+{
+	return { "SELECT session_id, uid FROM offgrid_db.session WHERE end_time is null", {} };
+}

@@ -98,6 +98,12 @@ Async<void> listener(unsigned short port, ClientController& c)
 	}
 }
 
+Async<void> startUp(ClientController& c, unsigned short port)
+{
+	co_await c.loadLoggedUsers();
+	co_await listener(port, c);
+}
+
 int main()
 {
 	boost::asio::io_context ioc;
@@ -105,6 +111,6 @@ int main()
 	DatabaseController db_controller(ioc.get_executor());
 	ClientController client_controller(db_controller);
 
-	boost::asio::co_spawn(ioc, listener(18080, client_controller), boost::asio::detached);
+	boost::asio::co_spawn(ioc, startUp(client_controller, 18080), boost::asio::detached);
 	ioc.run();
 }

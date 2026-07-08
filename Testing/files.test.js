@@ -1,12 +1,13 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest"
-import fs from 'fs'
+import fs, { fdatasync } from 'fs'
 
-import { getResponse, extractCookie } from "./helpers.js";
-import { spawn, execSync } from "child_process";
+import { getResponse, extractCookie, checkDirectory, checkFile } from "./helpers.js";
+import { spawn, execSync, exec } from "child_process";
 
 import dotenv from 'dotenv';
-import { get } from "http";
-import { traceSegment } from "@jridgewell/trace-mapping";
+import { exp } from "prelude-ls";
+import { check } from "zod";
+import { transformAsync } from "@babel/core";
 
 
 let mail = `pookie${crypto.randomUUID().slice(0, 8)}@gmail.com`;
@@ -73,6 +74,7 @@ describe("File Tests", () => {
         expect(data.file_id).toBeDefined();
         file_id = data.file_id;
 
+        expect(checkFile("Server/FileSystem/files", "regular_file.txt")).toBeTruthy();
     })
 
 
@@ -108,6 +110,26 @@ describe("File Tests", () => {
         expect(json).toStrictEqual(expected);
     })
 
+    it('should cancel folder upload', async () => {
+        let response = await getResponse("/upload_folder", "POST", {
+            'fields': ["folder_test/idk.txt", "folder_test/numai_bile.txt"]
+        }, cookie);
+
+        let json = await response.json();
+
+        let buffer = fs.readFileSync("Testing/dummies/folder_test/idk.txt");
+        let blob = new Blob([buffer], { type: 'text/plain' });
+
+        let formData = new FormData();
+        formData.append('file', blob, 'idk.txt');
+
+        response = await getResponse(`/upload_file?transaction_id=${json.transaction_id}`, "POST", formData, cookie);
+
+        response = await getResponse(`/cancel_upload?transaction_id=${json.transaction_id}`, "DELETE", null, cookie);
+
+        json = await response.json();
+        expect(json).toStrictEqual({ status: 'success', message: 'Upload cancelled successfuly' });
+    })
 
     it('should upload folders', async () => {
         let formData = new FormData();
@@ -138,12 +160,14 @@ describe("File Tests", () => {
             formData.append('file', blob, file.name);
 
             response = await getResponse(`/upload_file?transaction_id=${json.transaction_id}`, "POST", formData, cookie);
-                    console.log(await response.json());
 
         }
 
+        expect(checkDirectory("Server/FileSystem/files",
+            ["folder_test/idk.txt", "folder_test/numai_bile.txt", "regular_file.txt"])).toBeTruthy();
 
     })
+
 
 
     afterAll(() => {
@@ -153,7 +177,7 @@ describe("File Tests", () => {
 
         execSync("node Testing/clean_up.js", { stdio: 'inherit' });
 
-       /*  return new Promise((resolve, reject) => {
+        new Promise((resolve, reject) => {
             const proc = spawn(process.env.MYSQL_PATH || 'mysql', [
                 "-u", "offgrid_test",
                 `-p${process.env.DB_PASS}`,
@@ -164,7 +188,9 @@ describe("File Tests", () => {
             proc.stdin.end();
             proc.on('close', resolve);
             proc.on('error', reject);
-        }) */
+        })
+
+
     })
 
 })

@@ -326,3 +326,24 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
 
 	}
 }
+
+Async<void> ClientController::loadLoggedUsers()
+{
+	try {
+		mysql::results results = co_await this->db.runQuery(Queries::GetLoggedUsers());
+
+		std::unique_lock lock(users_mutex);
+
+		for (const auto& row : results.rows())
+		{
+			std::string session_id = row.at(0).as_string();
+			std::string uid = row.at(1).as_string();
+
+			this->loggedUsers[session_id] = MapEntry(uid, "", "");
+		}
+	}
+	catch (boost::system::system_error& e)
+	{
+		std::cout << "Failed loading logged users: " << e.what() << std::endl;
+	}
+}
