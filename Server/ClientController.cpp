@@ -204,7 +204,7 @@ Async<HttpResponse> ClientController::getUserData(json::object& obj, std::string
 }
 
 
-Async<HttpResponse> ClientController::UpdateDb(std::vector<Query> queries, std::string transaction_id)
+Async<HttpResponse> ClientController::UpdateDb(std::vector<Query> queries, std::string transaction_id, std::string uid)
 {
 	mysql::diagnostics diag;
 	try {
@@ -225,18 +225,7 @@ Async<HttpResponse> ClientController::UpdateDb(std::vector<Query> queries, std::
 			
 		}
 
-		for (const auto& file : paths_to_clean)
-		{
-			if (std::filesystem::exists(file)) {
-				std::filesystem::remove(file);
-
-				auto parent = std::filesystem::path(file).parent_path();
-				while (!parent.empty() && std::filesystem::is_empty(parent)) {
-					std::filesystem::remove(parent);
-					parent = parent.parent_path();
-				}
-			}
-		}
+		Helpers::removeFiles(paths_to_clean, uid);
 
 		co_return Helpers::makeResponse(http::status::internal_server_error, "failed uploading folder");
 	}
@@ -278,7 +267,6 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
 		else if (target == "/upload_folder")
 			co_return co_await this->uploadFolder(obj, session_id);
 
-		
 
 		else if (target.starts_with("/get_file_metadata"))
 		{
@@ -305,6 +293,17 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
 		}
 	}
 
+	else if (method == http::verb::delete_)
+	{
+		if (target.starts_with("/cancel_upload"))
+		{
+			auto pos = target.find("?transaction_id=");
+			if (pos == std::string::npos)
+				co_return Helpers::makeResponse(http::status::bad_request, "missing transaction_id");
+
+			co_return co_await this->cancelFolderUpload(std::string(target.substr(pos + 16)), session_id);
+		}
+	}
 	co_return Helpers::makeResponse(http::status::not_found, "unexistent endpoint");
 
 }

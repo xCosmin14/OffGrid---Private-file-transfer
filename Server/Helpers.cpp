@@ -162,3 +162,27 @@ Async<json::object> Helpers::getGeneralData(Query q, DatabaseController& db)
 		throw;
 	}
 }
+
+void Helpers::removeFiles(std::vector<std::string> paths_to_clean, std::string uid)
+{
+	for (const auto& file : paths_to_clean)
+	{
+		std::filesystem::path full_path = "FileSystem/files/" + uid + "/" + file;
+
+		if (std::filesystem::exists(full_path)) {
+
+			std::filesystem::remove(full_path);
+
+			auto parent = full_path.parent_path();
+
+			while (!parent.empty() && parent != "." && parent != "/" && parent != "FileSystem"
+				&& parent != "FileSystem/files" && parent != ("FileSystem/files/" + uid)
+				&& std::filesystem::is_empty(parent)) 
+			{
+
+				std::filesystem::remove(parent);
+				parent = parent.parent_path();
+			}
+		}
+	}
+}

@@ -78,6 +78,40 @@ std::vector<std::string> ClientController::appendFolders(std::vector<Query>&quer
 
 }
 
+Async<HttpResponse> ClientController::cancelFolderUpload(std::string transaction_id, std::string session_id)
+{
+	std::string uid;
+	std::exception_ptr error;
+
+	try {
+		uid = this->getUserId(session_id);
+	}
+	catch (std::exception& e)
+	{
+		error = std::current_exception();
+	}
+
+	if (error)
+		co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
+
+	std::vector<std::string> paths;
+	{
+		std::unique_lock lock(files_mutex);
+
+		auto it = files_cache.find(transaction_id);
+
+		if (it == files_cache.end() || it->second.user_id != uid)
+			co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
+
+		paths = it->second.file_paths;
+		files_cache.erase(it);
+	}
+
+	Helpers::removeFiles(paths, uid);
+
+	co_return Helpers::makeResponse(http::status::ok, "Upload cancelled successfuly");
+}
+
 
 Async<HttpResponse> ClientController::uploadFile(std::vector<uint8_t>& body, std::string session_id, std::string subfolder, std::string transaction_id)
 {
@@ -94,7 +128,6 @@ Async<HttpResponse> ClientController::uploadFile(std::vector<uint8_t>& body, std
 
 	if (error)
 		co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
-
 
 
 	FileData filedata;
@@ -153,8 +186,6 @@ Async<HttpResponse> ClientController::uploadFile(std::vector<uint8_t>& body, std
 	}
 	else if (subfolder == "/files")
 	{
-		/*std::filesystem::create_directories("FileSystem/files/" + uid);
-		path = "FileSystem/files/" + uid + "/" + filedata.path;*/
 		std::string final_rel_path = filedata.path.empty() ? filedata.filename : filedata.path;
 		std::filesystem::path full_target_path = "FileSystem/files/" + uid + "/" + final_rel_path;
 
@@ -193,7 +224,7 @@ Async<HttpResponse> ClientController::uploadFile(std::vector<uint8_t>& body, std
 	}
 
 	if(isLastFile)
-		co_return co_await this->UpdateDb(queries_to_run, transaction_id);
+		co_return co_await this->UpdateDb(queries_to_run, transaction_id, uid);
 
 	co_return Helpers::makeResponse(http::status::ok, "file uploaded successfuly", "", { { "file_id", filedata.file_id } });
 }
