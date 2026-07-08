@@ -68,21 +68,21 @@ export default function Header() {
 
                 {(isMobile() == 1 && showMobileMenu) && <Menu />}
 
-                <div id="headerFileSearch">
+                {localStorage.getItem("isLogged") === "true" && <div id="headerFileSearch">
                     <input type="text" placeholder="Search files and folders..." />
                     <Search id="filtersIcon" />
-                </div>
+                </div>}
             </div>
 
             <div className="headerRight">
                 <div className="headerOptions">
-                    <Link>
+                    {localStorage.getItem("isLogged") === "true" && <Link>
                         <Notification 
                             onClick={() => toggleMobileNotifications()} 
                             id="notifButton" 
                             style={notificationsOpen ? { color: "var(--hoverCol)" } : { color: "var(--text)" }} 
                         />
-                    </Link>
+                    </Link>}
 
                     <button id="theme-toggle" onClick={handleToggleTheme}>
                         {theme === "light" ? <Sun /> : <Moon />}

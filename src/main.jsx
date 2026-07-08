@@ -27,7 +27,7 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
       <Header />
-      {isMobile() == 0 && <Menu />}
+      {isMobile() == 0 && localStorage.getItem("isLogged") === "true" && <Menu />}
       <GlobalUploadProgress />
 
       <Routes>
