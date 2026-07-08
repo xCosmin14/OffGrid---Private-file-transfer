@@ -346,4 +346,5 @@ Async<void> ClientController::loadLoggedUsers()
 	{
 		std::cout << "Failed loading logged users: " << e.what() << std::endl;
 	}
+
 }
