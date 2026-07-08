@@ -1,0 +1,51 @@
+#pragma once
+#include <QObject>
+#include <QFile>
+#include <QDir>
+#include <QString>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QUrl>
+#include <QJsonObject>
+#include <QJsonDocument>
+#include <QUrlQuery>
+
+class SessionManager : public QObject {
+    Q_OBJECT
+
+    Q_PROPERTY(QString serverMessage READ serverMessage WRITE setServerMessage NOTIFY serverMessageChanged)
+    Q_PROPERTY(bool hasActiveSession READ hasActiveSession NOTIFY hasActiveSessionChanged)
+
+    public:
+        explicit SessionManager(QObject *parent = nullptr);
+
+        ~SessionManager(){};
+
+        Q_INVOKABLE void checkSession();
+        Q_INVOKABLE void saveSession(bool isLoggedIn);
+        Q_INVOKABLE void clearSession();
+
+        Q_INVOKABLE void registerUser(const QString &username, const QString &email, const QString &password, const QString &confirmPassword, const QString &inviteCode);
+        Q_INVOKABLE void loginUser(const QString &email, const QString &password);
+
+        bool hasActiveSession() const { return m_hasActiveSession; }
+        QString serverMessage() const { return m_serverMessage; }
+
+    public slots:
+        void setServerMessage(const QString &message) {
+            if (m_serverMessage != message) {
+                m_serverMessage = message;
+                emit serverMessageChanged();
+            }
+        }
+
+    private:
+        QString m_serverMessage = "";
+        bool m_hasActiveSession = false;
+
+    signals:
+        void serverMessageChanged();
+        void hasActiveSessionChanged();
+        void registrationSuccessful();
+};

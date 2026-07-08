@@ -6,7 +6,7 @@ project(Demo1 VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(QT_QML_GENERATE_QMLLS_INI ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick Svg Core5Compat)
+find_package(Qt6 REQUIRED COMPONENTS Quick Svg Core5Compat Network)
 
 qt_standard_project_setup(REQUIRES 6.5)
 
@@ -24,8 +24,9 @@ qt_add_qml_module(appDemo1
 
     SOURCES
         Account/SessionManager.cpp
-        Account/SessionManager.h
+
         TextFiltering.h
+        SessionManager.h
 
 
     QML_FILES
@@ -117,9 +118,8 @@ set_target_properties(appDemo1 PROPERTIES
 )
 
 target_link_libraries(appDemo1
-    PRIVATE Qt6::Quick Qt6::Svg Qt6::Core5Compat
+    PRIVATE Qt6::Quick Qt6::Svg Qt6::Core5Compat Qt6::Network
 )
-
 
 install(TARGETS appDemo1
     BUNDLE DESTINATION .

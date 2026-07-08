@@ -217,15 +217,6 @@ Item {
                 filterType: "complex"
             }
 
-            Text {
-                text: registerPage.errorMessage
-                color: "#ff4d4d"
-                font.pixelSize: 14
-                font.weight: Font.DemiBold
-                visible: registerPage.errorMessage !== ""
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-
             Item {
                 width: 1
                 height: 10
@@ -260,12 +251,23 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
+
+                    onClicked:
+                        sessionMgr.registerUser(
+                           usernameField.text, emailField.text,
+                           passwordField.text, confirmPasswordField.text,
+                           inviteCodeField.text
+                        )
                 }
             }
 
-            Item {
-                width: 1
-                height: 10
+            Text {
+                text: sessionMgr.serverMessage
+                color: sessionMgr.serverMessage === "Account created. Going to Login..." ? root.hoverCol : "red"
+                font.pixelSize: 20
+                font.weight: Font.DemiBold
+                visible: sessionMgr.serverMessage !== ""
+                anchors.horizontalCenter: parent.horizontalCenter
             }
 
             Column {
@@ -275,17 +277,30 @@ Item {
                 FormLink {
                     linkText: "Forgot your password?"
                     anchors.horizontalCenter: parent.horizontalCenter
+                    onLinkClicked: {
+                        root.currentPath = "/forgotPassword"
+                        pageStack.replace("ForgotPassword.qml", StackView.Immediate)
+                    }
                 }
 
                 FormLink {
                     linkText: "Log into your account"
                     anchors.horizontalCenter: parent.horizontalCenter
                     onLinkClicked: {
-                        root.currentPath = "/"
+                        root.currentPath = "/login"
                         pageStack.replace("Login.qml", StackView.Immediate)
                     }
                 }
             }
+        }
+    }
+
+    Connections {
+        target: sessionMgr
+
+        function onRegistrationSuccessful() {
+            root.currentPath = "/login"
+            pageStack.replace("Login.qml", StackView.Immediate)
         }
     }
 }

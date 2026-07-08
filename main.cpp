@@ -2,7 +2,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 
-#include "Account/SessionManager.h"
+#include "SessionManager.h"
 #include "TextFiltering.h"
 
 int main(int argc, char *argv[]) {
