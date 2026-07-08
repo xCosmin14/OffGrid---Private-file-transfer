@@ -23,4 +23,6 @@ namespace Helpers
 	std::vector<std::string> getFields(json::object&, const std::unordered_map<std::string, std::string> & = {});
 	Async<json::object> getGeneralData(Query, DatabaseController&);
 
+	void removeFiles(std::vector<std::string>, std::string);
+
 };

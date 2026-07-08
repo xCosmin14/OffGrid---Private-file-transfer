@@ -44,4 +44,6 @@ namespace Queries
 
 	Query GetFolder(std::string, std::string);
 
+	Query GetLoggedUsers();
+
 };

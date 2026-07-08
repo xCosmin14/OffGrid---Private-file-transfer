@@ -54,10 +54,13 @@ class ClientController
 	Async<HttpResponse> getFileMetadata(std::string, std::string, json::object&);
 
 	Async<HttpResponse> getUserData(json::object&, std::string);
-	Async<HttpResponse> UpdateDb(std::vector<Query>, std::string);
+	Async<HttpResponse> UpdateDb(std::vector<Query>, std::string, std::string);
+	Async<HttpResponse> cancelFolderUpload(std::string, std::string);
+
 
 	std::vector<std::string> appendFolders(std::vector<Query>&, const std::vector<std::string>&, std::string, std::string);
 
+	
 	void cleanUpCache();
 
 public:
@@ -76,5 +79,5 @@ public:
 
 	Async<HttpResponse> handleRequest(http::verb, std::string_view, std::string, std::string);
 	Async<HttpResponse> handleRequest(http::verb, std::string_view, std::vector<uint8_t>, std::string);
-
+	Async<void> loadLoggedUsers();
 };
