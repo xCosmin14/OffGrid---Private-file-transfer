@@ -8,7 +8,7 @@
 
 #include <set>
 
-std::vector<std::string> ClientController::appendFolders(std::vector<Query>&queries, const std::vector<std::string>&paths, std::string uid, std::string transaction_id)
+std::vector<std::string> ClientController::appendFolders(std::vector<Query>& queries, const std::vector<std::string>& paths, std::string uid, std::string transaction_id)
 {
 	std::unordered_map<std::string, std::string> existingFolders;
 
@@ -123,6 +123,7 @@ Async<HttpResponse> ClientController::uploadFile(std::vector<uint8_t>& body, std
 	}
 	catch (std::exception& e)
 	{
+		std::cout << e.what();
 		error = std::current_exception();
 	}
 
@@ -146,13 +147,13 @@ Async<HttpResponse> ClientController::uploadFile(std::vector<uint8_t>& body, std
 		filedata.file_id = this->createId("file");
 		filedata.creator_id = uid;
 
-		
+
 		if (transaction_id != "") {
 
 			std::unique_lock lock(files_mutex);
 
 			auto it = files_cache.find(transaction_id);
-			if(it == files_cache.end() || it->second.user_id != uid)
+			if (it == files_cache.end() || it->second.user_id != uid)
 				co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
 
 
@@ -173,7 +174,7 @@ Async<HttpResponse> ClientController::uploadFile(std::vector<uint8_t>& body, std
 				queries_to_run = std::move(entry.preparedQueries);
 			}
 		}
-		
+
 
 	}
 
@@ -223,7 +224,7 @@ Async<HttpResponse> ClientController::uploadFile(std::vector<uint8_t>& body, std
 		}
 	}
 
-	if(isLastFile)
+	if (isLastFile)
 		co_return co_await this->UpdateDb(queries_to_run, transaction_id, uid);
 
 	co_return Helpers::makeResponse(http::status::ok, "file uploaded successfuly", "", { { "file_id", filedata.file_id } });

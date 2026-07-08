@@ -222,7 +222,7 @@ Async<HttpResponse> ClientController::UpdateDb(std::vector<Query> queries, std::
 				paths_to_clean = std::move(this->files_cache[transaction_id].file_paths);
 				this->files_cache.erase(transaction_id);
 			}
-			
+
 		}
 
 		Helpers::removeFiles(paths_to_clean, uid);
@@ -264,8 +264,9 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
 		else if (target == "/get_user_data")
 			co_return co_await this->getUserData(obj, session_id);
 
-		else if (target == "/upload_folder")
+		else if (target == "/upload_folder") {
 			co_return co_await this->uploadFolder(obj, session_id);
+		}
 
 
 		else if (target.starts_with("/get_file_metadata"))
@@ -308,13 +309,16 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
 
 }
 
-Async<HttpResponse> ClientController::handleRequest(http::verb method, std::string_view target, std::vector<uint8_t> body, std::string session_id)
-{
+Async<HttpResponse> ClientController::handleRequest(http::verb method,
+	std::string_view target,
+	std::vector<uint8_t>& body,
+	std::string session_id
+) {
 	if (method == http::verb::post)
 	{
 		if (target == "/upload_photo")
 			co_return co_await this->uploadFile(body, session_id, "/profile_photos");
-		
+
 		else if (target.starts_with("/upload_file"))
 		{
 			if (target.find("?transaction_id=") != std::string::npos) {

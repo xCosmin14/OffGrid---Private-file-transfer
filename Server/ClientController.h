@@ -60,24 +60,24 @@ class ClientController
 
 	std::vector<std::string> appendFolders(std::vector<Query>&, const std::vector<std::string>&, std::string, std::string);
 
-	
+
 	void cleanUpCache();
 
 public:
 
-	ClientController(DatabaseController& db) :db(db) { 
-		this->cleaning_thread = std::thread(&ClientController::cleanUpCache, this); 
+	ClientController(DatabaseController& db) :db(db) {
+		//this->cleaning_thread = std::thread(&ClientController::cleanUpCache, this);
 	}
 
 	~ClientController()
 	{
-		this->stop_clean_up = true;
+		//this->stop_clean_up = true;
 
-		if (this->cleaning_thread.joinable())
-			this->cleaning_thread.join();
+		//if (this->cleaning_thread.joinable())
+			//this->cleaning_thread.join();
 	}
 
 	Async<HttpResponse> handleRequest(http::verb, std::string_view, std::string, std::string);
-	Async<HttpResponse> handleRequest(http::verb, std::string_view, std::vector<uint8_t>, std::string);
+	Async<HttpResponse> handleRequest(http::verb method, std::string_view target, std::vector<uint8_t>& body, std::string session_id);
 	Async<void> loadLoggedUsers();
 };

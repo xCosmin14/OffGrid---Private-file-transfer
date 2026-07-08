@@ -28,9 +28,10 @@ Async<void> handle_session(boost::asio::ip::tcp::socket socket, ClientController
 		for (;;) {
 
 			http::request_parser<http::vector_body<uint8_t>> req_parser;
-			req_parser.body_limit(10 * 1024 * 1024);
+			req_parser.body_limit(100000ULL * 1024 * 1024);
 			co_await http::async_read(stream, buffer, req_parser, boost::asio::use_awaitable);
 
+			auto& vec = req_parser.get().body();
 			std::string target = req_parser.get().target();
 
 
@@ -42,7 +43,6 @@ Async<void> handle_session(boost::asio::ip::tcp::socket socket, ClientController
 
 			}
 			else {
-
 				auto& vec = req_parser.get().body();
 				http::request<http::string_body> str_req;
 

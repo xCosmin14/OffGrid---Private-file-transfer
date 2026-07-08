@@ -16,7 +16,7 @@ void ClientController::cleanUpCache()
 			}
 
 			auto now = std::chrono::steady_clock::now();
-			auto max_time = std::chrono::minutes(2);
+			auto max_time = std::chrono::minutes(5);
 
 			std::unique_lock lock(files_mutex);
 			for (auto it = files_cache.begin(); it != files_cache.end();)
@@ -27,5 +27,5 @@ void ClientController::cleanUpCache()
 					it++;
 			}
 		}
-	}).detach();
+		}).detach();
 }

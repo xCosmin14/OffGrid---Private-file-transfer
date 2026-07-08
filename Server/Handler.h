@@ -185,7 +185,7 @@ public:
 				std::cerr << "File missing from disk assets: " << full_path << std::endl;
 
 				res.result(http::status::not_found);
-				co_return res; 
+				co_return res;
 			}
 
 			boost::beast::error_code e;
