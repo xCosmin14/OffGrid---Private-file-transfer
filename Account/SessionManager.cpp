@@ -1,25 +1,28 @@
 #include "sessionmanager.h"
+
 #include <QStandardPaths>
 #include <QDir>
+
 #include <QTime>
 #include <QTimer>
 
+#include <QNetworkCookie>
+#include <QNetworkCookieJar>
+
 SessionManager::SessionManager(QObject *parent) : QObject(parent) {
     checkSession();
+    m_manager = new QNetworkAccessManager(this);
 
-    QUrl loginUrl("http://localhost:18080/log_in");
     QUrl logoutUrl("http://localhost:18080/log_out");
     QUrl changeUserPhotoUrl("http://localhost:18080/upload_photo");
 }
 
-void SessionManager::checkSession()
-{
+void SessionManager::checkSession() {
     QString appDataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     QDir().mkpath(appDataDir);
     QString path = appDataDir + "/session.dat";
 
     QFile file(path);
-
     if (!file.exists()) {
         if (file.open(QIODevice::WriteOnly)) {
             file.write("0");
@@ -34,6 +37,27 @@ void SessionManager::checkSession()
         file.close();
     }
 
+    if (isValid && m_manager) {
+        QString cookiesPath = appDataDir + "/cookies.dat";
+        QFile cookiesFile(cookiesPath);
+
+        if (cookiesFile.open(QIODevice::ReadOnly)) {
+            QDataStream in(&cookiesFile);
+            int size; in >> size;
+
+            QList<QNetworkCookie> restoredCookies;
+            for (int i = 0; i < size; ++i) {
+                QByteArray rawCookie; in >> rawCookie;
+
+                QList<QNetworkCookie> parsed = QNetworkCookie::parseCookies(rawCookie);
+                if (!parsed.isEmpty()) restoredCookies.append(parsed.first());
+            }
+
+            m_manager->cookieJar()->setCookiesFromUrl(restoredCookies, QUrl("http://localhost:18080"));
+            cookiesFile.close();
+        }
+    }
+
     if (m_hasActiveSession != isValid) {
         m_hasActiveSession = isValid;
         emit hasActiveSessionChanged();
@@ -43,21 +67,35 @@ void SessionManager::checkSession()
 void SessionManager::saveSession(bool isLoggedIn) {
     QString appDataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     QDir().mkpath(appDataDir);
-    QString path = appDataDir + "/session.dat";
 
+    QString path = appDataDir + "/session.dat";
     QFile file(path);
     if (file.open(QIODevice::WriteOnly)) {
         file.write(isLoggedIn ? "1" : "0");
         file.close();
-
-        checkSession();
     }
-}
 
-void SessionManager::clearSession() { saveSession(false); }
+    QString cookiesPath = appDataDir + "/cookies.dat";
+    QFile cookiesFile(cookiesPath);
+
+    if (isLoggedIn) {
+        if (cookiesFile.open(QIODevice::WriteOnly)) {
+            QList<QNetworkCookie> cookies = m_manager->cookieJar()->cookiesForUrl(QUrl("http://localhost:18080"));
+
+            QDataStream out(&cookiesFile);
+            out << cookies.size();
+            for (const QNetworkCookie &cookie : cookies) out << cookie.toRawForm();
+
+            cookiesFile.close();
+        }
+    } else cookiesFile.remove();
+
+    checkSession();
+}
 
 Q_INVOKABLE void SessionManager::registerUser(const QString &username, const QString &email, const QString &password, const QString &confirmPassword, const QString &inviteCode) {
     setServerMessage("");
+
     if (!(email.contains("@")) || !(email.contains(".")) || email.contains("@.")) {
         setServerMessage("Invalid email");
         return;
@@ -73,24 +111,20 @@ Q_INVOKABLE void SessionManager::registerUser(const QString &username, const QSt
         return;
     }
 
-    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-
     QUrl registerUrl("http://localhost:18080/register");
     QNetworkRequest registerRequest(registerUrl);
     registerRequest.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
     QJsonObject json;
-    json["username"] = username;
-    json["email"] = email;
+    json["username"] = username;  json["email"] = email;
     json["password"] = password;
     json["invite_code"] = inviteCode;
     json["join_date"] = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
 
-    QNetworkReply *reply = manager->post(registerRequest, QJsonDocument(json).toJson());
+    QNetworkReply *reply = m_manager->post(registerRequest, QJsonDocument(json).toJson());
 
-    connect(reply, &QNetworkReply::finished, this, [this, reply, manager]() {
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         reply->deleteLater();
-        manager->deleteLater();
 
         QByteArray responseBytes = reply->readAll();
         QJsonObject responseObj = QJsonDocument::fromJson(responseBytes).object();
@@ -117,11 +151,71 @@ Q_INVOKABLE void SessionManager::registerUser(const QString &username, const QSt
                 setServerMessage(serverMessage);
             } else
                 setServerMessage("Network error or invalid server response.");
-
         }
     });
 }
 
 Q_INVOKABLE void SessionManager::loginUser(const QString &email, const QString &password) {
+    setServerMessage("");
 
+    if (!(email.contains("@")) || !(email.contains(".")) || email.contains("@.")) {
+        setServerMessage("Invalid email");
+        return;
+    }
+
+    QUrl loginUrl("http://localhost:18080/log_in");
+    QNetworkRequest loginRequest(loginUrl);
+    loginRequest.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+    QJsonObject json;
+    json["email"] = email;
+    json["password"] = password;
+
+    QNetworkReply *reply = m_manager->post(loginRequest, QJsonDocument(json).toJson());
+
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        reply->deleteLater();
+
+        QByteArray responseBytes = reply->readAll();
+        QJsonObject responseObj = QJsonDocument::fromJson(responseBytes).object();
+
+        if (reply->error() == QNetworkReply::NoError) {
+            QString token = responseObj["message"].toString();
+
+            if (!token.isEmpty()) {
+                QVariant cookieHeader = reply->header(QNetworkRequest::SetCookieHeader);
+                QList<QNetworkCookie> cookies = qvariant_cast<QList<QNetworkCookie>>(cookieHeader);
+
+                saveSession(true);
+                emit loginSuccesful();
+            }
+        } else {
+            QString serverMessage = responseObj["message"].toString();
+
+            if (serverMessage == "email not found")
+                setServerMessage("Email does not exist");
+            else setServerMessage("Wrong password");
+        }
+    });
+}
+
+Q_INVOKABLE void SessionManager::logoutUser() {
+    setServerMessage("");
+
+    QUrl logoutUrl("http://localhost:18080/log_out");
+    QNetworkRequest logoutRequest(logoutUrl);
+    logoutRequest.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+    QNetworkReply *reply = m_manager->post(logoutRequest, "{}");
+
+    saveSession(false);
+
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        reply->deleteLater();
+
+        if (m_manager && m_manager->cookieJar())
+            m_manager->setCookieJar(new QNetworkCookieJar(this));
+
+        qDebug() << "Logout complet. Sesiunea și cookie-urile au fost distruse de pe disc și din RAM.";
+    });
 }

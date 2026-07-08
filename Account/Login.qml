@@ -232,12 +232,19 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
+
+                    onClicked:
+                        sessionMgr.loginUser(emailField.text, passwordField.text)
                 }
             }
 
-            Item {
-                width: 1
-                height: 10
+            Text {
+                text: sessionMgr.serverMessage
+                color: "red"
+                font.pixelSize: 20
+                font.weight: Font.DemiBold
+                visible: sessionMgr.serverMessage !== ""
+                anchors.horizontalCenter: parent.horizontalCenter
             }
 
             Column {
@@ -262,6 +269,15 @@ Item {
                     }
                 }
             }
+        }
+    }
+
+    Connections {
+        target: sessionMgr
+
+        function onLoginSuccesful() {
+            root.currentPath = "/"
+            pageStack.replace("../Files/MyFilesPage.qml", StackView.Immediate)
         }
     }
 }

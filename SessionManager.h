@@ -19,15 +19,16 @@ class SessionManager : public QObject {
 
     public:
         explicit SessionManager(QObject *parent = nullptr);
+        QNetworkAccessManager *m_manager = nullptr;
 
         ~SessionManager(){};
 
         Q_INVOKABLE void checkSession();
         Q_INVOKABLE void saveSession(bool isLoggedIn);
-        Q_INVOKABLE void clearSession();
 
         Q_INVOKABLE void registerUser(const QString &username, const QString &email, const QString &password, const QString &confirmPassword, const QString &inviteCode);
         Q_INVOKABLE void loginUser(const QString &email, const QString &password);
+        Q_INVOKABLE void logoutUser();
 
         bool hasActiveSession() const { return m_hasActiveSession; }
         QString serverMessage() const { return m_serverMessage; }
@@ -47,5 +48,7 @@ class SessionManager : public QObject {
     signals:
         void serverMessageChanged();
         void hasActiveSessionChanged();
+
         void registrationSuccessful();
+        void loginSuccesful();
 };

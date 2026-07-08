@@ -273,7 +273,7 @@ Rectangle {
                             SettingsButton {
                                 text: "Log out"
                                 type: 2
-                                onClicked: sessionMgr.clearSession()
+                                onClicked: sessionMgr.logoutUser()
                             }
                         }
                     }
