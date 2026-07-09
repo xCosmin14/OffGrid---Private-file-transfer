@@ -36,6 +36,7 @@ class SessionManager : public QObject {
 
         QString getPFP();
         Q_INVOKABLE void fetchPFP();
+        Q_INVOKABLE void changePFP(const QUrl &fileUrl);
 
     public slots:
         void setServerMessage(const QString &message) {

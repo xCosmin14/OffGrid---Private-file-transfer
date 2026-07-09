@@ -6,7 +6,7 @@ project(Demo1 VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(QT_QML_GENERATE_QMLLS_INI ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick Svg Core5Compat Network)
+find_package(Qt6 REQUIRED COMPONENTS Quick Svg Core5Compat Network Widgets)
 
 qt_standard_project_setup(REQUIRES 6.5)
 
@@ -118,7 +118,7 @@ set_target_properties(appDemo1 PROPERTIES
 )
 
 target_link_libraries(appDemo1
-    PRIVATE Qt6::Quick Qt6::Svg Qt6::Core5Compat Qt6::Network
+    PRIVATE Qt6::Quick Qt6::Svg Qt6::Core5Compat Qt6::Network Qt6::Widgets
 )
 
 install(TARGETS appDemo1

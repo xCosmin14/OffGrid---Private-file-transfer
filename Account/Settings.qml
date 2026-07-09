@@ -358,7 +358,20 @@ Rectangle {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
+                                    onClicked: fileDialog.open()
                                 }
+
+                                FileDialog {
+                                        id: fileDialog
+                                        title: "Select photo"
+
+                                        fileMode: FileDialog.OpenFile
+
+                                        nameFilters: ["Images (*.jpg *.png *.dng *.webp)", ]
+
+                                        onAccepted: sessionMgr.changePFP(fileDialog.selectedFile)
+                                        onRejected: {return}
+                                    }
                             }
 
                             Text {

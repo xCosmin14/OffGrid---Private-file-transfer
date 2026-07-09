@@ -157,7 +157,7 @@ Rectangle {
             Image {
                 id: profileImage
                 anchors.fill: parent
-                source: sessionMgr.pfp
+                source: null || sessionMgr.pfp
                 fillMode: Image.PreserveAspectCrop
                 visible: false
             }

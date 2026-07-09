@@ -2,6 +2,13 @@
 
 #include <QStandardPaths>
 #include <QDir>
+#include <QUrl>
+#include <QFileInfo>
+#include <QFile>
+
+#include <QHttpMultiPart>
+#include <QHttpPart>
+#include <QMimeDatabase>
 
 #include <QTime>
 #include <QTimer>
@@ -12,8 +19,6 @@
 SessionManager::SessionManager(QObject *parent) : QObject(parent) {
     m_manager = new QNetworkAccessManager(this);
     checkSession();
-
-    QUrl changeUserPhotoUrl("http://localhost:18080/upload_photo");
 }
 
 void SessionManager::checkSession() {
@@ -196,8 +201,7 @@ Q_INVOKABLE void SessionManager::loginUser(const QString &email, const QString &
         } else {
             QString serverMessage = responseObj["message"].toString();
 
-            if (serverMessage == "email not found")
-                setServerMessage("Email does not exist");
+            if (serverMessage == "email not found") setServerMessage("Email does not exist");
             else setServerMessage("Wrong password");
         }
     });
@@ -212,13 +216,19 @@ Q_INVOKABLE void SessionManager::logoutUser() {
 
     QNetworkReply *reply = m_manager->post(logoutRequest, "{}");
 
-    saveSession(false);
-
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         reply->deleteLater();
 
+        if (reply->error() != QNetworkReply::NoError) {
+            qDebug() << "[LOGOUT] ERROR: Server connection fail:" << reply->errorString();
+
+            return;
+        }
+
         if (m_manager && m_manager->cookieJar())
             m_manager->setCookieJar(new QNetworkCookieJar(this));
+
+        saveSession(false);
     });
 }
 
@@ -255,7 +265,6 @@ void SessionManager::fetchPFP() {
 
                 emit pfpChanged();
             } else qDebug() << "Profile picture photo can't be written on disk";
-
         }
     });
 }
@@ -270,4 +279,46 @@ QString SessionManager::getPFP() {
         return "file:///" + path + "?t=" + QString::number(QDateTime::currentMSecsSinceEpoch());
 
     return "assets/MockUserImg.jpg";
+}
+
+void SessionManager::changePFP(const QUrl &fileUrl) {
+    if (!hasActiveSession()) return;
+
+    QUrl changeUserPhotoUrl("http://localhost:18080/upload_photo");
+
+    QString localPath = fileUrl.toLocalFile();
+    if (localPath.isEmpty()) return;
+
+    QFile *file = new QFile(localPath);
+    if (!file->open(QIODevice::ReadOnly)) {
+        delete file;
+        return;
+    }
+
+    QFileInfo fileInfo(*file);
+
+    QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+    QHttpPart photoPart;
+
+    QString dispositionHeader = QString("form-data; name=\"photo\"; filename=\"%1\"").arg(fileInfo.fileName());
+    photoPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant(dispositionHeader));
+
+    QMimeDatabase mimeDb;
+    QMimeType mimeType = mimeDb.mimeTypeForFile(fileInfo);
+    photoPart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant(mimeType.name()));
+
+    photoPart.setBodyDevice(file);
+    file->setParent(multiPart);
+    multiPart->append(photoPart);
+
+    QNetworkRequest request(changeUserPhotoUrl);
+
+    QNetworkReply *reply = m_manager->post(request, multiPart);
+    multiPart->setParent(reply);
+
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        reply->deleteLater();
+
+        if (reply->error() == QNetworkReply::NoError) fetchPFP();
+    });
 }
