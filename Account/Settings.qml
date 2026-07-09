@@ -343,7 +343,7 @@ Rectangle {
 
                                     Image {
                                         id: avatarImg
-                                        source: "../assets/MockUserImg.jpg"
+                                        source: sessionMgr.pfp
                                         anchors.fill: parent
                                         fillMode: Image.PreserveAspectCrop
                                         layer.enabled: true

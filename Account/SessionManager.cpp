@@ -10,10 +10,9 @@
 #include <QNetworkCookieJar>
 
 SessionManager::SessionManager(QObject *parent) : QObject(parent) {
-    checkSession();
     m_manager = new QNetworkAccessManager(this);
+    checkSession();
 
-    QUrl logoutUrl("http://localhost:18080/log_out");
     QUrl changeUserPhotoUrl("http://localhost:18080/upload_photo");
 }
 
@@ -61,6 +60,10 @@ void SessionManager::checkSession() {
     if (m_hasActiveSession != isValid) {
         m_hasActiveSession = isValid;
         emit hasActiveSessionChanged();
+    }
+
+    if (m_hasActiveSession) {
+        QTimer::singleShot(500, this, [this]() {fetchPFP();});
     }
 }
 
@@ -188,6 +191,7 @@ Q_INVOKABLE void SessionManager::loginUser(const QString &email, const QString &
 
                 saveSession(true);
                 emit loginSuccesful();
+                fetchPFP();
             }
         } else {
             QString serverMessage = responseObj["message"].toString();
@@ -215,7 +219,55 @@ Q_INVOKABLE void SessionManager::logoutUser() {
 
         if (m_manager && m_manager->cookieJar())
             m_manager->setCookieJar(new QNetworkCookieJar(this));
-
-        qDebug() << "Logout complet. Sesiunea și cookie-urile au fost distruse de pe disc și din RAM.";
     });
+}
+
+void SessionManager::fetchPFP() {
+    if (!hasActiveSession()) return;
+
+    QUrl getPFPLink("http://localhost:18080/get_profile_photo");
+    QNetworkRequest PfpRequest(getPFPLink);
+
+    PfpRequest.setHeader(QNetworkRequest::UserAgentHeader, "OffGrid-Desktop-App/1.0");
+
+    QNetworkReply *reply = m_manager->get(PfpRequest);
+
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        reply->deleteLater();
+
+        int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+
+        if (reply->error() == QNetworkReply::NoError) {
+            QByteArray imageBlob = reply->readAll();
+
+            if (imageBlob.isEmpty()) {
+                qDebug() << "ERROR: Server returned empty profile picture file";
+                return;
+            }
+
+            QString appDataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+            QString path = appDataDir + "/profile_photo.jpg";
+
+            QFile file(path);
+            if (file.open(QIODevice::WriteOnly)) {
+                file.write(imageBlob);
+                file.close();
+
+                emit pfpChanged();
+            } else qDebug() << "Profile picture photo can't be written on disk";
+
+        }
+    });
+}
+
+QString SessionManager::getPFP() {
+    if (!hasActiveSession()) return "assets/MockUserImg.jpg";
+
+    QString appDataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QString path = appDataDir + "/profile_photo.jpg";
+
+    if (QFile::exists(path))
+        return "file:///" + path + "?t=" + QString::number(QDateTime::currentMSecsSinceEpoch());
+
+    return "assets/MockUserImg.jpg";
 }

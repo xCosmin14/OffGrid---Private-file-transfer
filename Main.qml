@@ -27,7 +27,7 @@ ApplicationWindow {
         function onHasActiveSessionChanged() {
             root.isUserLoggedIn = sessionMgr.hasActiveSession
         }
-        }
+    }
 
     property color bgCol: lightMode ? "#f2effb" : "#352F44"
     property color menuBgCol : lightMode ? "#ccffffff" : "#94655d7a"

@@ -15,6 +15,7 @@ class SessionManager : public QObject {
     Q_OBJECT
 
     Q_PROPERTY(QString serverMessage READ serverMessage WRITE setServerMessage NOTIFY serverMessageChanged)
+    Q_PROPERTY(QString pfp READ getPFP NOTIFY pfpChanged)
     Q_PROPERTY(bool hasActiveSession READ hasActiveSession NOTIFY hasActiveSessionChanged)
 
     public:
@@ -30,8 +31,11 @@ class SessionManager : public QObject {
         Q_INVOKABLE void loginUser(const QString &email, const QString &password);
         Q_INVOKABLE void logoutUser();
 
-        bool hasActiveSession() const { return m_hasActiveSession; }
+        Q_INVOKABLE bool hasActiveSession() const { return m_hasActiveSession; }
         QString serverMessage() const { return m_serverMessage; }
+
+        QString getPFP();
+        Q_INVOKABLE void fetchPFP();
 
     public slots:
         void setServerMessage(const QString &message) {
@@ -51,4 +55,6 @@ class SessionManager : public QObject {
 
         void registrationSuccessful();
         void loginSuccesful();
+
+        void pfpChanged();
 };

@@ -157,7 +157,7 @@ Rectangle {
             Image {
                 id: profileImage
                 anchors.fill: parent
-                source: "assets/MockUserImg.jpg"
+                source: sessionMgr.pfp
                 fillMode: Image.PreserveAspectCrop
                 visible: false
             }
