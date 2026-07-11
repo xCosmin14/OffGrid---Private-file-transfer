@@ -1,0 +1,442 @@
+#include "ClientController.h"
+#include "Helpers.h"
+
+#include <fstream>
+#include <filesystem>
+
+std::string ClientController::createId(std::string entity)
+{
+	boost::uuids::random_generator gen;
+	boost::uuids::uuid u = gen();
+	std::string id = entity[0] + boost::uuids::to_string(u);
+	return id;
+}
+
+std::string ClientController::getUserId(std::string session_id)
+{
+	std::string uid;
+
+	{
+		std::shared_lock lock(users_mutex);
+		auto it = this->loggedUsers.find(session_id);
+
+		if (it == this->loggedUsers.end())
+			throw std::runtime_error("unauthorized");
+
+		uid = it->second.uid;
+	}
+
+	return uid;
+}
+
+Async<HttpResponse> ClientController::getFile(std::string file_id, std::string session_id)
+{
+	std::string uid;
+	std::exception_ptr error;
+
+	try {
+		uid = this->getUserId(session_id);
+	}
+	catch (std::exception& e)
+	{
+		error = std::current_exception();
+	}
+
+	if (error)
+		co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
+
+
+	try {
+		Query q = Queries::GetFile(file_id, uid);
+		boost::mysql::results results = co_await this->db.runQuery(q);
+
+
+		auto rows = results.rows();
+
+		if (rows.empty())
+			co_return Helpers::makeResponse(http::status::not_found, "file not found");
+
+		std::string path = rows[0][0].as_string();
+		std::string content_type = rows[0][1].as_string();
+		std::string creator_id = rows[0][2].as_string();
+
+		co_return Helpers::makeResponse(http::status::ok, "file found", "", { {"path", path}, {"content_type", content_type}, {"creator_id", creator_id} });
+
+
+	}
+	catch (boost::system::system_error& e)
+	{
+		std::cerr << "Database query failed " << e.what() << std::endl;
+		co_return Helpers::makeResponse(http::status::internal_server_error, "internal server error");
+	}
+
+}
+
+Async<HttpResponse> ClientController::getFileMetadata(std::string file_id, std::string session_id, json::object& obj)
+{
+	std::string uid;
+	std::exception_ptr error;
+
+
+	try {
+		uid = this->getUserId(session_id);
+	}
+	catch (std::exception& e)
+	{
+		error = std::current_exception();
+	}
+
+	if (error)
+		co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
+
+
+	std::unordered_map<std::string, std::string> allowed_fields = {
+		{"path", "file.path"},
+		{"content_type", "file.content_type"},
+		{"size", "file.size"},
+		{"name", "file.name"},
+		{"extention", "file.extention"},
+		{"favourite", "file.favourite"},
+		{"inTrash", "file.inTrash"}
+	};
+
+	std::vector<std::string> fields;
+
+	try {
+		fields = Helpers::getFields(obj, allowed_fields);
+	}
+	catch (std::exception& e)
+	{
+		co_return Helpers::makeResponse(http::status::not_found, e.what());
+	}
+
+	try {
+		json::object response_obj = co_await Helpers::getGeneralData(Queries::GetFileMetadata(file_id, uid, fields), this->db);
+
+		co_return Helpers::makeResponse(http::status::ok, "file found", "", response_obj);
+	}
+	catch (boost::system::system_error& e)
+	{
+		co_return Helpers::makeResponse(http::status::internal_server_error, "internal server error");
+	}
+	catch (std::exception& e)
+	{
+		co_return Helpers::makeResponse(http::status::not_found, e.what());
+	}
+
+}
+
+
+Async<HttpResponse> ClientController::getProfilePhoto(std::string session_id)
+{
+	std::string uid;
+	std::exception_ptr error;
+
+
+	try {
+		uid = this->getUserId(session_id);
+	}
+	catch (std::exception& e)
+	{
+		error = std::current_exception();
+	}
+
+	if (error)
+		co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
+
+
+
+	co_return Helpers::makeResponse(http::status::ok, "file found", "", { {"path", uid + ".png"}, {"content_type", "image/png"} });
+
+}
+
+
+Async<HttpResponse> ClientController::getUserData(json::object& obj, std::string session_id)
+{
+	std::string uid;
+	std::exception_ptr error;
+
+
+	try {
+		uid = this->getUserId(session_id);
+	}
+	catch (std::exception& e)
+	{
+		error = std::current_exception();
+	}
+
+	if (error)
+		co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
+
+
+	std::unordered_map<std::string, std::string> allowed_fields = {
+		{"username", "user.username"},
+		{"email", "user.email"},
+		{"join_date", "user.join_date"}
+	};
+
+	std::vector<std::string> fields;
+
+	try {
+		fields = Helpers::getFields(obj, allowed_fields);
+	}
+	catch (std::exception& e)
+	{
+		co_return Helpers::makeResponse(http::status::not_found, e.what());
+	}
+
+	try {
+		json::object response_obj = co_await Helpers::getGeneralData(Queries::getGeneralUserData(fields, uid), this->db);
+
+		co_return Helpers::makeResponse(http::status::ok, "user found", "", response_obj);
+	}
+	catch (boost::system::system_error& e)
+	{
+		co_return Helpers::makeResponse(http::status::internal_server_error, "internal server error");
+	}
+	catch (std::exception& e)
+	{
+		co_return Helpers::makeResponse(http::status::not_found, e.what());
+	}
+
+
+}
+
+
+Async<HttpResponse> ClientController::UpdateDb(std::vector<Query> queries, std::string transaction_id, std::string uid)
+{
+	mysql::diagnostics diag;
+	try {
+		co_await this->db.runTransaction(queries, diag);
+		co_return Helpers::makeResponse(http::status::ok, "folder uploaded sucessfuly");
+	}
+	catch (boost::system::system_error& e)
+	{
+		std::cerr << "Transaction error: " << e.what() << std::endl;
+		std::vector<std::string> paths_to_clean;
+		{
+			std::unique_lock lock(files_mutex);
+			if (files_cache.count(transaction_id))
+			{
+				paths_to_clean = std::move(this->files_cache[transaction_id].file_paths);
+				this->files_cache.erase(transaction_id);
+			}
+
+		}
+
+		Helpers::removeFiles(paths_to_clean, uid);
+
+		co_return Helpers::makeResponse(http::status::internal_server_error, "failed uploading folder");
+	}
+}
+
+
+Async<HttpResponse> ClientController::handleRequest(http::verb method, std::string_view target, std::string body, std::string session_id)
+{
+
+	json::object obj;
+
+	if (!body.empty())
+	{
+		json::value json_value = json::parse(body);
+		if (!json_value.is_object())
+			co_return Helpers::makeResponse(http::status::bad_request, "expected a json object");
+
+		obj = json_value.as_object();
+
+	}
+
+	if (method == http::verb::post)
+	{
+		if (target == "/register")
+			co_return co_await this->registerUser(obj);
+
+		else if (target == "/log_in")
+			co_return co_await this->loginUser(obj);
+
+		else if (target == "/log_out")
+			co_return co_await this->logoutUser(obj, session_id);
+
+		else if (target == "/delete_account")
+			co_return co_await this->removeUser(obj, session_id);
+
+		else if (target == "/get_user_data")
+			co_return co_await this->getUserData(obj, session_id);
+
+		else if (target == "/upload_folder") {
+			co_return co_await this->uploadFolder(obj, session_id);
+		}
+
+
+		else if (target.starts_with("/get_file_metadata"))
+		{
+			auto pos = target.find("?file_id=");
+			if (pos == std::string::npos)
+				co_return Helpers::makeResponse(http::status::bad_request, "missing file id");
+
+			co_return co_await this->getFileMetadata(std::string(target.substr(pos + 9)), session_id, obj);
+		}
+
+		else if (target == "/create_folder")
+		{
+			co_return co_await this->createEntity(obj, session_id, { "color", "name", "type", "parent_folder_id" },
+				"folder");
+		}
+		else if (target == "/create_file")
+		{
+			co_return co_await this->createEntity(obj, session_id, { "name", "folder_id" }, "file");
+		}
+	}
+	else if (method == http::verb::get)
+	{
+		if (target.starts_with("/get_file"))
+		{
+			auto pos = target.find("?file_id=");
+			if (pos == std::string::npos)
+				co_return Helpers::makeResponse(http::status::bad_request, "missing file id");
+
+			co_return co_await this->getFile(std::string(target.substr(pos + 9)), session_id);
+		}
+		else if (target == "/get_profile_photo")
+		{
+			co_return co_await this->getProfilePhoto(session_id);
+		}
+	}
+
+	else if (method == http::verb::delete_)
+	{
+		if (target.starts_with("/cancel_upload"))
+		{
+			auto pos = target.find("?transaction_id=");
+			if (pos == std::string::npos)
+				co_return Helpers::makeResponse(http::status::bad_request, "missing transaction_id");
+
+			co_return co_await this->cancelFolderUpload(std::string(target.substr(pos + 16)), session_id);
+		}
+	}
+	else if (method == http::verb::patch)
+	{
+		if (target.starts_with("/change_username"))
+			co_return co_await this->changeUsername(obj, session_id);
+		else if (target.starts_with("/change_password"))
+			co_return co_await this->changePassword(obj, session_id);
+	}
+	co_return Helpers::makeResponse(http::status::not_found, "unexistent endpoint");
+
+}
+
+Async<HttpResponse> ClientController::handleRequest(http::verb method, std::string_view target, std::vector<uint8_t>& body, std::string session_id) {
+	
+	
+	if (method == http::verb::post)
+	{
+		if (target == "/upload_photo")
+			co_return co_await this->uploadFile(body, session_id, "/profile_photos");
+
+		else if (target.starts_with("/upload_file"))
+		{
+			if (target.find("?transaction_id=") != std::string::npos) {
+				std::string transaction_id = std::string(target).substr(target.find("?transaction_id=") + 16);
+				co_return co_await this->uploadFile(body, session_id, "/files", transaction_id);
+			}
+			co_return co_await this->uploadFile(body, session_id, "/files");
+		}
+
+	}
+}
+
+
+Async<HttpResponse> ClientController::createEntity(json::object& obj, std::string session_id, 
+	std::unordered_set<std::string> allowed_fields, std::string entity)
+
+{
+	std::string uid;
+	std::exception_ptr error;
+	try {
+		uid = this->getUserId(session_id);
+	}
+	catch (std::exception& e)
+	{
+		error = std::current_exception();
+	}
+	if (error)
+		co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
+
+
+	for (auto& it : obj)
+	{
+		if(!allowed_fields.count(it.key()))
+			co_return Helpers::makeResponse(http::status::bad_request, "unkown field");
+
+	}
+
+	obj[entity + "_id"] = this->createId(entity);
+	obj["creator_id"] = uid;
+
+	try {
+		std::string field; Query q;
+
+		if (entity == "file") {
+			q = Queries::InsertFile(obj); 
+			field = "folder_id";
+		}
+		else if (entity == "folder") {
+			field = "parent_folder_id";
+			q = Queries::InsertFolder(obj);
+		}
+		else throw std::runtime_error("invalid entity");
+
+		if (obj.contains(field) && obj.at(field).is_string())
+		{
+			std::string folder_id = json::value_to<std::string>(obj.at(field));
+
+			mysql::results results = co_await this->db.runQuery(Queries::VerifyFolderId(folder_id, uid));
+
+			if(results.rows().empty())
+				co_return Helpers::makeResponse(http::status::bad_request, "nonexistent parent folder");
+
+		}
+
+		co_await this->db.runQuery(q);
+	}
+	catch (boost::system::system_error& e)
+	{
+		std::cout << "Failed query: " << e.what() << std::endl;
+		co_return Helpers::makeResponse(http::status::internal_server_error, "failed creating folder");
+	}
+	catch (std::exception& e)
+	{
+		std::cout << "Internal error: " << e.what() << std::endl;
+		co_return Helpers::makeResponse(http::status::internal_server_error, "failed creating folder");
+	}
+
+	co_return Helpers::makeResponse(http::status::ok, "folder created successfuly");
+}
+
+
+Async<void> ClientController::loadLoggedUsers()
+{
+	try {
+		mysql::results results = co_await this->db.runQuery(Queries::GetLoggedUsers());
+
+		std::unique_lock lock(users_mutex);
+
+		for (const auto& row : results.rows())
+		{
+			std::string session_id = row.at(0).as_string();
+			std::string uid = row.at(1).as_string();
+
+			this->loggedUsers[session_id] = MapEntry(uid, "", "");
+		}
+	}
+	catch (boost::system::system_error& e)
+	{
+		std::cout << "Failed loading logged users: " << e.what() << std::endl;
+	}
+
+	for (auto& it : loggedUsers)
+	{
+		std::cout << it.first << " -> " << it.second.uid << std::endl;
+	}
+
+}
