@@ -32,6 +32,9 @@ export default function Settings() {
     
     const [currentPassword, setCurrentPassword] = useState("")
     const [newPassword, setNewPassword] = useState("")
+
+    const [uError, setuError] = useState(null)
+    const [pError, setpError] = useState(null)
     
     const initialAvatar = useProfilePhoto()
     const [avatar, setAvatar] = useState(initialAvatar)
@@ -41,6 +44,26 @@ export default function Settings() {
             setAvatar(initialAvatar)
         }
     }, [initialAvatar])
+
+    useEffect(() => {
+        if (uError) {
+            const timer = setTimeout(() => {
+                setuError(null)
+            }, 5000)
+
+            return () => clearTimeout(timer) 
+        }
+    }, [uError])
+
+    useEffect(() => {
+        if (pError) {
+            const timer = setTimeout(() => {
+                setpError(null)
+            }, 5000)
+
+            return () => clearTimeout(timer) 
+        }
+    }, [pError])
 
     const fileInputRef = useRef(null)
 
@@ -65,7 +88,7 @@ export default function Settings() {
             let response = await fetch("http://localhost:18080/upload_photo", {
                 method: 'POST',
                 credentials: 'include',
-                body: formData,
+                body: formData
             })
 
             if (response.ok) {
@@ -76,6 +99,59 @@ export default function Settings() {
         } catch (error) {}
     }
 
+    const handleUpdateUsername = async () => {
+        if (!username || !confirmPasswordForUser) {
+            setuError("Please fill in all fields.")
+            return
+        }
+        
+        const payload = {
+            username: username,
+            password: confirmPasswordForUser 
+        }
+
+        try {
+            let response = await fetch("http://localhost:18080/change_username", {
+                method: 'PATCH',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': "application/json"
+                },
+                body: JSON.stringify(payload)
+            })
+
+            let data = await response.json()
+            setuError(data.message)
+        } catch (error) {}
+    }
+
+    const handleChangePassword = async () => {
+        if (!currentPassword || !newPassword) {
+            setpError("Please fill in the fields.")
+            return
+        }
+
+        const payload = {
+            current_password: currentPassword,
+            new_password: newPassword
+        }
+
+        try {
+            let response = await fetch("http://localhost:18080/change_password", {
+                method: 'PATCH',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': "application/json"
+                },
+                body: JSON.stringify(payload)
+            })
+
+            let data = await response.json()
+            setpError(data.message)
+        } catch (error) {
+
+        }
+    }
     const logOut = () => {
         let response = fetch("http://localhost:18080/log_out", {
             method: 'POST',
@@ -190,7 +266,8 @@ export default function Settings() {
                                 />
                             </div>
 
-                            <button className="settingsBtn">Update username</button>
+                            <button className="settingsBtn" onClick={handleUpdateUsername}>Update username</button>
+                            {(uError != null) && <h3 id="settingsError">{uError}</h3>}
                         </div>
 
                         <hr className="settingsDivider" />
@@ -218,7 +295,8 @@ export default function Settings() {
                                 />
                             </div>
 
-                            <button className="settingsBtn">Change password</button>
+                            {(pError != null) && <h3 id="settingsError">{pError}</h3>}
+                            <button className="settingsBtn" onClick={handleChangePassword}>Change password</button>
                         </div>
                     </div>
                 </div>

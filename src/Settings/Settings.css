@@ -167,6 +167,7 @@ h2 {
 }
 
 .settingsForm {
+    position: relative;
     display: flex; flex-direction: column;
     gap: 18px;
 }
@@ -245,6 +246,14 @@ h2 {
     background: rgba(255, 77, 77, 0.1);
     color: #ff1a1a;
     border-color: #ff1a1a;
+}
+
+#settingsError {
+    color: var(--hoverCol);
+    position: absolute;
+    bottom: -17px; right: 10px;
+    border-bottom: none;
+    padding-bottom: 0;
 }
 
 @media screen and (max-width: 500px) {

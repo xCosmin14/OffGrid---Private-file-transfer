@@ -8,11 +8,11 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+Server
+Backend
 dist
 dist-ssr
 *.local
-backend
-Backend
 
 # Editor directories and files
 .vscode/*
@@ -24,6 +24,3 @@ Backend
 *.njsproj
 *.sln
 *.sw?
-*.cpp
-*.hpp
-*.h

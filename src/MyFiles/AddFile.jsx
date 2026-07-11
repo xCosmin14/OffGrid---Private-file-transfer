@@ -124,58 +124,76 @@ export default function AddFile(props) {
         const files = Array.from(e.target.files)
         if (files.length === 0) return
 
+        const paths = files.map(file => file.webkitRelativePath)
+
         const totalBytes = files.reduce((acc, file) => acc + file.size, 0)
         const totalMB = (totalBytes / (1024 * 1024)).toFixed(1)
+
+        const folderName = files[0].webkitRelativePath.split('/')[0]
+
+        let response = await fetch("http://localhost:18080/upload_folder", {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ fields: paths })
+        })
+        let data = await response.json()
         
+        if (!response.ok || !data.transaction_id) {
+            window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
+            throw new Error(data.message || `upload_folder failed: ${response.status}`)
+        }
+
+        let transaction_Id = data.transaction_id
+
         let uploadedBytes = 0
 
         for (let i = 0; i < files.length; i++) {
             let file = files[i]
 
             let formData = new FormData()
-            formData.append('files', file, file.webkitRelativePath)
+            formData.append('file', file, file.name)
+            formData.append('path', file.webkitRelativePath)
+            formData.append('transaction_Id', transaction_Id)
 
-            try {
-                await new Promise((resolve, reject) => {
-                    const xhr = new XMLHttpRequest()
+            await new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest()
 
-                    xhr.upload.addEventListener("progress", (event) => {
-                        if (event.lengthComputable) {
-                            const currentTotalLoaded = uploadedBytes + event.loaded;
-                            const percentage = Math.round((currentTotalLoaded / totalBytes) * 100)
-                            const loadedMB = (currentTotalLoaded / (1024 * 1024)).toFixed(1)
+                xhr.upload.addEventListener("progress", (event) => {
+                    if (event.lengthComputable) {
+                        const currentTotalLoaded = uploadedBytes + event.loaded
+                        const percentage = Math.round((currentTotalLoaded / totalBytes) * 100)
+                        const loadedMB = (currentTotalLoaded / (1024 * 1024)).toFixed(1)
 
-                            window.dispatchEvent(new CustomEvent('upload-progress', { 
-                                detail: { 
-                                    isUploading: true, 
-                                    progress: percentage, 
-                                    loaded: loadedMB, 
-                                    total: totalMB,
-                                    currentFile: file.name,
-                                    fileIndex: i + 1,
-                                    totalFiles: files.length
-                                } 
-                            }));
-                        }
-                    });
-
-                    xhr.addEventListener("load", () => {
-                        if (xhr.status >= 200 && xhr.status < 300) {
-                            uploadedBytes += file.size;
-                            resolve()
-                        } else reject(new Error("Server error"))
-                    });
-
-                    xhr.addEventListener("error", reject)
-
-                    xhr.open("POST", "http://localhost:18080/upload_folder")
-                    xhr.withCredentials = true
-                    xhr.send(formData)
+                        window.dispatchEvent(new CustomEvent('upload-progress', { 
+                            detail: { 
+                                isUploading: true, 
+                                progress: percentage, 
+                                loaded: loadedMB, 
+                                total: totalMB,
+                                currentFile: file.name,
+                                fileIndex: i + 1,
+                                totalFiles: files.length
+                            } 
+                        }))
+                    }
                 })
-            } catch (error) {
-                window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
-                return
-            }
+
+                xhr.addEventListener("load", () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        uploadedBytes += file.size
+                        resolve()
+                    } else {
+                        reject(new Error(xhr.status))
+                    }
+                })
+
+                xhr.addEventListener("error", () => reject(new Error("Network error")))
+
+                xhr.open("POST", `http://localhost:18080/upload_file?transaction_id=${transaction_Id}`)
+                xhr.withCredentials = true 
+                xhr.send(formData)
+            })
         }
 
         window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
