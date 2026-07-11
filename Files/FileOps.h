@@ -19,4 +19,7 @@ class FileOps : public QObject {
     public:
         Q_INVOKABLE void uploadFile(const QUrl &fileUrl);
         Q_INVOKABLE void uploadFolder(const QUrl &folderUrl);
+
+    signals:
+        void uploadProgressChanged(bool isUploading, int progress, double loaded, double total, const QString &currentFile, int fileIndex, int totalFiles);
 };

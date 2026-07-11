@@ -11,8 +11,6 @@ Item {
     height: 40
     z: 99
 
-    property bool showMenu: false
-
     ToolButton {
         id: roundButton
         width: 40

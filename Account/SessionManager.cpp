@@ -22,6 +22,7 @@ SessionManager::SessionManager(QObject *parent) : QObject(parent) {
     m_instance = this;
 
     m_manager = new QNetworkAccessManager(this);
+    m_manager->setCookieJar(new QNetworkCookieJar(this));
     checkSession();
 }
 
@@ -65,7 +66,7 @@ void SessionManager::checkSession() {
                 if (!parsed.isEmpty()) restoredCookies.append(parsed.first());
             }
 
-            m_manager->cookieJar()->setCookiesFromUrl(restoredCookies, QUrl("http://localhost:18080"));
+            m_manager->cookieJar()->setCookiesFromUrl(restoredCookies, QUrl("http://localhost:18080/"));
             cookiesFile.close();
         }
     }
@@ -96,7 +97,7 @@ void SessionManager::saveSession(bool isLoggedIn) {
 
     if (isLoggedIn) {
         if (cookiesFile.open(QIODevice::WriteOnly)) {
-            QList<QNetworkCookie> cookies = m_manager->cookieJar()->cookiesForUrl(QUrl("http://localhost:18080"));
+            QList<QNetworkCookie> cookies = m_manager->cookieJar()->cookiesForUrl(QUrl("http://localhost:18080/"));
 
             QDataStream out(&cookiesFile);
             out << cookies.size();
@@ -199,9 +200,6 @@ Q_INVOKABLE void SessionManager::loginUser(const QString &email, const QString &
             QString token = responseObj["message"].toString();
 
             if (!token.isEmpty()) {
-                QVariant cookieHeader = reply->header(QNetworkRequest::SetCookieHeader);
-                QList<QNetworkCookie> cookies = qvariant_cast<QList<QNetworkCookie>>(cookieHeader);
-
                 saveSession(true);
                 emit loginSuccesful();
                 fetchPFP();
@@ -226,12 +224,6 @@ Q_INVOKABLE void SessionManager::logoutUser() {
 
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         reply->deleteLater();
-
-        if (reply->error() != QNetworkReply::NoError) {
-            qDebug() << "[LOGOUT] ERROR: Server connection fail:" << reply->errorString();
-
-            return;
-        }
 
         if (m_manager && m_manager->cookieJar())
             m_manager->setCookieJar(new QNetworkCookieJar(this));

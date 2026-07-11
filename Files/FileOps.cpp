@@ -32,11 +32,12 @@ void FileOps::uploadFile(const QUrl &fileUrl) {
     }
 
     QFileInfo fileInfo(*file);
+    QString fileName = fileInfo.fileName();
 
     QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
     QHttpPart filePart;
 
-    QString dispositionHeader = QString("form-data; name=\"file\"; filename=\"%1\"").arg(fileInfo.fileName());
+    QString dispositionHeader = QString("form-data; name=\"file\"; filename=\"%1\"").arg(fileName);
     filePart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant(dispositionHeader));
 
     QMimeDatabase mimeDb;
@@ -52,8 +53,23 @@ void FileOps::uploadFile(const QUrl &fileUrl) {
     QNetworkReply *reply = SessionManager::instance()->m_manager->post(request, multiPart);
     multiPart->setParent(reply);
 
-    connect(reply, &QNetworkReply::finished, this, [reply]() {
+    connect(reply, &QNetworkReply::uploadProgress, this, [this, fileName](qint64 bytesSent, qint64 bytesTotal) {
+        if (bytesTotal > 0) {
+            int percentage = static_cast<int>((bytesSent * 100) / bytesTotal);
+            double loadedMB = static_cast<double>(bytesSent) / (1024.0 * 1024.0);
+            double totalMB = static_cast<double>(bytesTotal) / (1024.0 * 1024.0);
+
+            emit uploadProgressChanged(true, percentage, loadedMB, totalMB, fileName, 1, 1);
+        }
+    });
+
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         reply->deleteLater();
+
+        if (reply->error() == QNetworkReply::NoError)
+            emit uploadProgressChanged(false, 100, 0, 0, "", 1, 1);
+        else
+            emit uploadProgressChanged(false, 0, 0, 0, "", 1, 1);
     });
 }
 

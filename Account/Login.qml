@@ -272,6 +272,11 @@ Item {
         }
     }
 
+    Shortcut {
+        sequence: "Enter"
+        onActivated: sessionMgr.loginUser(emailField.text, passwordField.text)
+    }
+
     Connections {
         target: sessionMgr
 
