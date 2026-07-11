@@ -100,7 +100,7 @@ void SessionManager::saveSession(bool isLoggedIn) {
             QList<QNetworkCookie> cookies = m_manager->cookieJar()->cookiesForUrl(QUrl("http://localhost:18080/"));
 
             QDataStream out(&cookiesFile);
-            out << cookies.size();
+            out << static_cast<qint32>(cookies.size());
             for (const QNetworkCookie &cookie : cookies) out << cookie.toRawForm();
 
             cookiesFile.close();
@@ -320,5 +320,62 @@ void SessionManager::changePFP(const QUrl &fileUrl) {
         reply->deleteLater();
 
         if (reply->error() == QNetworkReply::NoError) fetchPFP();
+    });
+}
+
+void SessionManager::changeUsername(const QString &newUsername, const QString &password) {
+    if (newUsername == "" || password == "") {
+        setUsernameError("Please fill in all the fields.");
+        return;
+    }
+
+    QUrl changeUsernameUrl("http://localhost:18080/change_username");
+    QNetworkRequest changeUsernameRequest(changeUsernameUrl);
+    changeUsernameRequest.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+    QJsonObject json;
+    json["username"] = newUsername; json["password"] = password;
+
+    QByteArray customVerb("PATCH");
+    QNetworkReply *reply = m_manager->sendCustomRequest(changeUsernameRequest, customVerb, QJsonDocument(json).toJson());
+
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        reply->deleteLater();
+
+        QByteArray responseBytes = reply->readAll();
+        QJsonObject responseObj = QJsonDocument::fromJson(responseBytes).object();
+
+        QString token = responseObj["message"].toString();
+
+        setUsernameError(token);
+    });
+}
+
+void SessionManager::changePassword(const QString &currentPassword, const QString &newPassword) {
+    if (currentPassword == "" || newPassword == "") {
+        setUsernameError("Please fill in all the fields.");
+        return;
+    }
+
+    QUrl changePasswordUrl("http://localhost:18080/change_password");
+    QNetworkRequest changePasswordRequest(changePasswordUrl);
+    changePasswordRequest.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+    QJsonObject json;
+    json["current_password"] = currentPassword; json["new_password"] = newPassword;
+
+    QByteArray customVerb("PATCH");
+    QNetworkReply *reply = m_manager->sendCustomRequest(changePasswordRequest, customVerb, QJsonDocument(json).toJson());
+
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        reply->deleteLater();
+
+        QByteArray responseBytes = reply->readAll();
+        QJsonObject responseObj = QJsonDocument::fromJson(responseBytes).object();
+
+        QString token = responseObj["message"].toString();
+
+        setPasswordError(token);
+        qDebug() << m_passwordError;
     });
 }

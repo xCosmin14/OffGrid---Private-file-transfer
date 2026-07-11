@@ -19,7 +19,8 @@ Rectangle {
         property int type: 0
         signal clicked()
 
-        Layout.fillWidth: true
+        Layout.fillWidth: false
+        implicitWidth: 164
         implicitHeight: 46
         radius: 8
         border.width: 1
@@ -117,6 +118,34 @@ Rectangle {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: rootCircle.circleClicked()
+        }
+    }
+
+    Timer {
+        id: uErrorTimer
+        interval: 5000
+        onTriggered: sessionMgr.usernameError = ""
+    }
+
+    Timer {
+        id: pErrorTimer
+        interval: 5000
+        onTriggered: sessionMgr.passwordError = ""
+    }
+
+    Connections {
+        target: sessionMgr
+
+        function onUsernameErrorChanged() {
+            if (sessionMgr.usernameError !== "") {
+                uErrorTimer.restart()
+            }
+        }
+
+        function onPasswordErrorChanged() {
+            if (sessionMgr.passwordError !== "") {
+                pErrorTimer.restart()
+            }
         }
     }
 
@@ -269,11 +298,14 @@ Rectangle {
                             spacing: 15
                             Layout.topMargin: 15
 
-                            SettingsButton { text: "Save theme"; type: 1 }
                             SettingsButton {
-                                text: "Log out"
-                                type: 2
+                                text: "Save theme"; type: 1
+                                Layout.fillWidth: true
+                            }
+                            SettingsButton {
+                                text: "Log out"; type: 2
                                 onClicked: sessionMgr.logoutUser()
+                                Layout.fillWidth: true
                             }
                         }
                     }
@@ -364,11 +396,8 @@ Rectangle {
                                 FileDialog {
                                     id: fileDialog
                                     title: "Select photo"
-
                                     fileMode: FileDialog.OpenFile
-
-                                    nameFilters: ["Images (*.jpg *.png *.dng *.webp)", ]
-
+                                    nameFilters: ["Images (*.jpg *.png *.dng *.webp)"]
                                     onAccepted: sessionMgr.changePFP(fileDialog.selectedFile)
                                     onRejected: {return}
                                 }
@@ -383,9 +412,37 @@ Rectangle {
                             }
                         }
 
-                        InputGroup { labelText: "New username"; placeholder: "User123" }
-                        InputGroup { labelText: "Type the password to confirm"; placeholder: "Current password"; echoMode: TextInput.Password }
-                        SettingsButton { text: "Update username"; type: 0 }
+                        InputGroup {
+                            id: newUsername
+                            labelText: "New username"; placeholder: "User123"
+                        }
+                        InputGroup {
+                            id: changeUsernamePassword
+                            labelText: "Type the password to confirm"; placeholder: "Current password"; echoMode: TextInput.Password
+                        }
+
+                        Item {
+                            Layout.fillWidth: true
+                            implicitHeight: 46
+
+                            SettingsButton {
+                                id: sb1
+                                text: "Update username"; type: 0
+                                anchors.left: parent.left
+                                anchors.verticalCenter: parent.verticalCenter
+                                onClicked: sessionMgr.changeUsername(newUsername.text, changeUsernamePassword.text)
+                            }
+
+                            Text {
+                                text: sessionMgr.usernameError
+                                visible: text !== ""
+                                color: root.hoverCol
+                                font.pixelSize: 20
+                                font.weight: Font.Medium
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
 
                         Rectangle {
                             Layout.fillWidth: true
@@ -395,9 +452,37 @@ Rectangle {
                             Layout.bottomMargin: 15
                         }
 
-                        InputGroup { labelText: "Current password"; placeholder: "••••••••"; echoMode: TextInput.Password }
-                        InputGroup { labelText: "New password"; placeholder: "••••••••"; echoMode: TextInput.Password }
-                        SettingsButton { text: "Change password"; type: 0 }
+                        InputGroup {
+                            id: currentPassword
+                            labelText: "Current password"; placeholder: "••••••••"; echoMode: TextInput.Password
+                        }
+                        InputGroup {
+                            id: newPassword
+                            labelText: "New password"; placeholder: "••••••••"; echoMode: TextInput.Password
+                        }
+
+                        Item {
+                            Layout.fillWidth: true
+                            implicitHeight: 46
+
+                            SettingsButton {
+                                id: sb2
+                                text: "Change password"; type: 0
+                                anchors.left: parent.left
+                                anchors.verticalCenter: parent.verticalCenter
+                                onClicked: sessionMgr.changePassword(currentPassword.text, newPassword.text)
+                            }
+
+                            Text {
+                                text: sessionMgr.passwordError
+                                visible: text !== ""
+                                color: root.hoverCol
+                                font.pixelSize: 20
+                                font.weight: Font.Medium
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
 
                         Item { Layout.fillHeight: true }
                     }
