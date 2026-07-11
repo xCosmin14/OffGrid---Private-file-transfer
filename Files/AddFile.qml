@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import QtQuick.Dialogs
+import QtQuick.Window
 
 Item {
     id: addFileRoot
@@ -84,6 +85,26 @@ Item {
                 iconSource: "../assets/svg/FileIcons/TextFile.svg"
                 text: "Create Markdown file"
             }
+        }
+
+        FileDialog {
+            id: fileDialog
+            title: "Select file"
+
+            fileMode: FileDialog.OpenFile
+
+            nameFilters: ["All file types (*)"]
+
+            onAccepted: handleUploads.uploadFile(fileDialog.selectedFile)
+            onRejected: {return}
+        }
+
+        FolderDialog {
+            id: folderDialog
+            title: "Select folder"
+
+            onAccepted: handleUploads.uploadFolder(folderDialog.selectedFolder)
+            onRejected: {return}
         }
     }
 }

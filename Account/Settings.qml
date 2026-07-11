@@ -362,16 +362,16 @@ Rectangle {
                                 }
 
                                 FileDialog {
-                                        id: fileDialog
-                                        title: "Select photo"
+                                    id: fileDialog
+                                    title: "Select photo"
 
-                                        fileMode: FileDialog.OpenFile
+                                    fileMode: FileDialog.OpenFile
 
-                                        nameFilters: ["Images (*.jpg *.png *.dng *.webp)", ]
+                                    nameFilters: ["Images (*.jpg *.png *.dng *.webp)", ]
 
-                                        onAccepted: sessionMgr.changePFP(fileDialog.selectedFile)
-                                        onRejected: {return}
-                                    }
+                                    onAccepted: sessionMgr.changePFP(fileDialog.selectedFile)
+                                    onRejected: {return}
+                                }
                             }
 
                             Text {

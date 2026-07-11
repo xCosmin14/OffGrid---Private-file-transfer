@@ -104,6 +104,8 @@ qt_add_qml_module(appDemo1
         assets/svg/UserIcons/RemoveFriend.svg
         assets/svg/UserIcons/User.svg
         assets/svg/UserIcons/UserIcon.svg
+        SOURCES Files/FileOps.h
+        SOURCES Files/FileOps.cpp
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

@@ -16,9 +16,17 @@
 #include <QNetworkCookie>
 #include <QNetworkCookieJar>
 
+SessionManager* SessionManager::m_instance = nullptr;
+
 SessionManager::SessionManager(QObject *parent) : QObject(parent) {
+    m_instance = this;
+
     m_manager = new QNetworkAccessManager(this);
     checkSession();
+}
+
+SessionManager* SessionManager::instance() {
+    return m_instance;
 }
 
 void SessionManager::checkSession() {

@@ -24,6 +24,8 @@ class SessionManager : public QObject {
 
         ~SessionManager(){};
 
+        static SessionManager* instance();
+
         Q_INVOKABLE void checkSession();
         Q_INVOKABLE void saveSession(bool isLoggedIn);
 
@@ -47,6 +49,8 @@ class SessionManager : public QObject {
         }
 
     private:
+        static SessionManager* m_instance;
+
         QString m_serverMessage = "";
         bool m_hasActiveSession = false;
 
