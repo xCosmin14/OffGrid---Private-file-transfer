@@ -58,49 +58,52 @@ Async<HttpResponse> ClientController::loginUser(json::object& obj)
 	if (!obj.contains("password"))
 		co_return Helpers::makeResponse(http::status::conflict, "password not provided");
 
-	Query password_query = Queries::SelectPassword(obj);
+		Query password_query = Queries::SelectPassword(obj);
 
-	try {
-		boost::mysql::results results = co_await this->db.runQuery(password_query);
-		auto rows = results.rows();
+		try {
+			boost::mysql::results results = co_await this->db.runQuery(password_query);
+			auto rows = results.rows();
 
-		if (rows.empty())
-			co_return Helpers::makeResponse(http::status::not_found, "email not found");
+			if (rows.empty())
+				co_return Helpers::makeResponse(http::status::not_found, "email not found");
 
-		std::string user_password = rows[0][1].as_string();
-		std::string uid = rows[0][0].as_string();
+			std::string user_password = rows[0][1].as_string();
+			std::string uid = rows[0][0].as_string();
 
-		if (user_password != obj["password"].as_string())
-			co_return Helpers::makeResponse(http::status::conflict, "incorrect password");
-		else
-		{
-			std::string session_id = this->createId("session");
-			Query session_query = Queries::CreateSessionQuery(session_id, uid);
+			if (obj.contains("password")) {
+				if (user_password != obj["password"].as_string())
+					co_return Helpers::makeResponse(http::status::conflict, "incorrect password");
+				else
 
-			try {
-				co_await this->db.runQuery(session_query);
+				{
+					std::string session_id = this->createId("session");
+					Query session_query = Queries::CreateSessionQuery(session_id, uid);
 
-				std::string device_id = obj.contains("device_id") ? json::value_to<std::string>(obj.at("device_id")) : "";
-				std::string os = obj.contains("os") ? json::value_to<std::string>(obj.at("os")) : "";
+					try {
+						co_await this->db.runQuery(session_query);
 
-				std::unique_lock lock(users_mutex);
-				this->loggedUsers[session_id] = MapEntry(uid, device_id, os);
+						std::string device_id = obj.contains("device_id") ? json::value_to<std::string>(obj.at("device_id")) : "";
+						std::string os = obj.contains("os") ? json::value_to<std::string>(obj.at("os")) : "";
 
-				co_return Helpers::makeResponse(http::status::ok, "user logged in", session_id);
+						std::unique_lock lock(users_mutex);
+						this->loggedUsers[session_id] = MapEntry(uid, device_id, os);
+
+						co_return Helpers::makeResponse(http::status::ok, "user logged in", session_id);
+					}
+					catch (boost::system::system_error& e)
+					{
+						std::cerr << "Database query failed " << e.what() << std::endl;
+						co_return Helpers::makeResponse(http::status::internal_server_error, "internal server error");
+					}
+				}
 			}
-			catch (boost::system::system_error& e)
-			{
-				std::cerr << "Database query failed " << e.what() << std::endl;
-				co_return Helpers::makeResponse(http::status::internal_server_error, "internal server error");
-			}
+
 		}
-
-	}
-	catch (boost::system::system_error& e)
-	{
-		std::cerr << "Database query failed " << e.what() << std::endl;
-		co_return Helpers::makeResponse(http::status::internal_server_error, "internal server error");
-	}
+		catch (boost::system::system_error& e)
+		{
+			std::cerr << "Database query failed " << e.what() << std::endl;
+			co_return Helpers::makeResponse(http::status::internal_server_error, "internal server error");
+		}
 }
 
 
@@ -151,6 +154,7 @@ Async<HttpResponse> ClientController::removeUser(json::object& obj, std::string 
 	{
 		error = std::current_exception();
 	}
+
 	if (error)
 		co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
 

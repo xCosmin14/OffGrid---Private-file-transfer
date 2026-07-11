@@ -61,7 +61,7 @@ std::vector<std::string> ClientController::appendFolders(std::vector<Query>& que
 
 					queries.push_back(Queries::InsertFolder(fd));
 				}
-				
+
 
 			}
 

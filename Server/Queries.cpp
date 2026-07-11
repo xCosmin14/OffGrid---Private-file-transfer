@@ -73,8 +73,16 @@ Query Queries::DeleteAccount(std::string uid)
 	return { "DELETE FROM offgrid_db.user WHERE uid = ?", {mysql::field(uid)} };
 }
 
+
 Query Queries::insertAccess(std::string access_id, std::string user_id, std::string granted_by, std::string id, std::string resource)
 {
+	std::vector<mysql::field> values;
+
+	values.emplace_back(access_id);
+	values.emplace_back(user_id);
+	values.emplace_back(granted_by);
+	values.emplace_back(id);
+
 	std::string query = "INSERT INTO offgrid_db.access(access_id, user_id, granted_by, ";
 
 	if (resource == "folder")
@@ -92,6 +100,8 @@ Query Queries::insertAccess(std::string access_id, std::string user_id, std::str
 Query Queries::getGeneralUserData(std::vector<std::string> const& vect, std::string uid)
 {
 	std::string query = "SELECT ";
+	std::vector<mysql::field> values;
+	values.emplace_back(uid);
 
 	for (auto& it : vect)
 	{
@@ -107,6 +117,11 @@ Query Queries::getGeneralUserData(std::vector<std::string> const& vect, std::str
 
 Query Queries::GetFile(std::string file_id, std::string uid)
 {
+	std::vector<mysql::field> values;
+	values.emplace_back(file_id);
+	values.emplace_back(uid);
+	values.emplace_back(uid);
+
 	std::string query = "SELECT file.path, file.content_type, file.creator_id from offgrid_db.file "
 		"LEFT JOIN offgrid_db.access on file.file_id = access.file_id "
 		"WHERE file.file_id = ? and (file.creator_id = ? or access.user_id = ?)";
@@ -119,6 +134,11 @@ Query Queries::GetFile(std::string file_id, std::string uid)
 
 Query Queries::GetFileMetadata(std::string file_id, std::string uid, std::vector<std::string> fields)
 {
+	std::vector<mysql::field> values;
+	values.emplace_back(file_id);
+	values.emplace_back(uid);
+	values.emplace_back(uid);
+
 	std::string query = "SELECT ";
 	for (auto& it : fields) {
 		query += it + ", ";

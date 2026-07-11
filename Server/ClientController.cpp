@@ -325,8 +325,8 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
 
 }
 
-Async<HttpResponse> ClientController::handleRequest(http::verb method, std::string_view target, std::vector<uint8_t>& body, std::string session_id) {
-	
+Async<HttpResponse> ClientController::handleRequest(http::verb method, std::string_view target, std::vector<uint8_t>& body, std::string session_id)
+{
 	
 	if (method == http::verb::post)
 	{
@@ -344,7 +344,6 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
 
 	}
 }
-
 
 Async<HttpResponse> ClientController::createEntity(json::object& obj, std::string session_id, 
 	std::unordered_set<std::string> allowed_fields, std::string entity)
@@ -438,5 +437,4 @@ Async<void> ClientController::loadLoggedUsers()
 	{
 		std::cout << it.first << " -> " << it.second.uid << std::endl;
 	}
-
 }
