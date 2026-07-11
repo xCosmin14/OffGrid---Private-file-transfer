@@ -172,7 +172,8 @@ Async<HttpResponse> ClientController::getUserData(json::object& obj, std::string
 	std::unordered_map<std::string, std::string> allowed_fields = {
 		{"username", "user.username"},
 		{"email", "user.email"},
-		{"join_date", "user.join_date"}
+		{"join_date", "user.join_date"},
+		{"preferences", "user.preferences"}
 	};
 
 	std::vector<std::string> fields;
@@ -279,13 +280,15 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
 
 		else if (target == "/create_folder")
 		{
-			co_return co_await this->createEntity(obj, session_id, { "color", "name", "type", "parent_folder_id" },
-				"folder");
+			co_return co_await this->createEntity(obj, session_id, 
+				{ "color", "name", "type", "parent_folder_id" }, "folder");
 		}
 		else if (target == "/create_file")
 		{
 			co_return co_await this->createEntity(obj, session_id, { "name", "folder_id" }, "file");
 		}
+		else if (target == "/user_data")
+			co_return co_await this->getUserData(obj, session_id);
 	}
 	else if (method == http::verb::get)
 	{
@@ -298,9 +301,8 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
 			co_return co_await this->getFile(std::string(target.substr(pos + 9)), session_id);
 		}
 		else if (target == "/get_profile_photo")
-		{
 			co_return co_await this->getProfilePhoto(session_id);
-		}
+		
 	}
 
 	else if (method == http::verb::delete_)

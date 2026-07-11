@@ -200,9 +200,22 @@ Async<HttpResponse> ClientController::changeUsername(json::object& obj, std::str
 	if (!obj.contains("username") || !obj.at("username").is_string())
 		co_return Helpers::makeResponse(http::status::bad_request, "missing username");
 
+	if (!obj.contains("password") || !obj.at("password").is_string())
+		co_return Helpers::makeResponse(http::status::bad_request, "missing password");
+
 	std::string newname = json::value_to<std::string>(obj.at("username"));
 	try {
-		this->db.runQuery(Queries::ChangeUsername(newname, session_id));
+		mysql::results results = co_await this->db.runQuery(Queries::SelectPasswordByUid(uid));
+		auto rows = results.rows();
+
+		if (rows.empty()) 
+			co_return Helpers::makeResponse(http::status::conflict, "user not found");
+
+		std::string user_password = rows[0][0].as_string();
+		if (user_password != obj.at("password").as_string())
+			co_return Helpers::makeResponse(http::status::conflict, "incorrect password");
+
+		co_await this->db.runQuery(Queries::ChangeUsername(newname, session_id));
 	}
 	catch (boost::system::system_error& e)
 	{
@@ -214,8 +227,6 @@ Async<HttpResponse> ClientController::changeUsername(json::object& obj, std::str
 	}
 
 	co_return Helpers::makeResponse(http::status::ok, "username changed successfuly");
-
-
 }
 
 
