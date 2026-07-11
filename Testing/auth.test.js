@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 
-import { getResponse, extractCookie } from "./helpers.js";
+import { getResponse, extractCookie, testChange } from "./helpers.js";
 
 let mail = `test_${crypto.randomUUID().slice(0, 8)}@gmail.com`;
 let name = `testname_${crypto.randomUUID().slice(0, 8)}`;
@@ -73,6 +73,52 @@ describe("Auth Test", () => {
         expect(data).toStrictEqual({ "status": "success", "message": "user logged in" });
         expect(response.headers.get("set-cookie")).toContain("session_id=");
 
+    })
+
+    it('should give corresponding error messages when login fails', async () => {
+        let response = await getResponse("/log_in", "POST", {
+            password: 'idk'
+        });
+
+        let data = await response.json();
+        expect(data).toStrictEqual({ "status": "error", "message": "email not provided" });
+
+        response = await getResponse("/log_in", "POST", {
+            email: mail
+        });
+
+        data = await response.json();
+        expect(data).toStrictEqual({ "status": "error", "message": "password not provided" });
+
+
+    })
+
+    it('should change its username', async () => {
+
+        await testChange("/change_username", {}, cookie, { "status": "error", "message": "missing username" });
+
+        await testChange("/change_username", {
+            username: 'newPookie'
+        }, cookie, { "status": "success", "message": "username changed successfuly" });
+    })
+
+    it('should change its password', async () => {
+
+        await testChange("/change_password", {}, cookie, { "status": "error", "message": "missing current password" });
+
+        await testChange("/change_password", {
+            current_password: 'current_pass'
+        }, cookie, { "status": "error", "message": "missing new password" })
+
+        await testChange("/change_password", {
+            current_password: 'wrong pass',
+            new_password: 'new'
+        }, cookie, { "status": "error", "message": "incorrect password" })
+
+        await testChange("/change_password", {
+            current_password: 'idk',
+            new_password: 'new'
+        }, cookie, { "status": "success", "message": "password changed successfuly" });
     })
 
     it('should remove the user', async () => {

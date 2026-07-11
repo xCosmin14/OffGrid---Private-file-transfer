@@ -1,6 +1,9 @@
 import fs from "fs"
 import path from "path"
 
+import { expect } from "vitest"
+
+
 export async function getResponse(endpoint, method, body = null, cookie = null, content_type = "application/json") {
     let isFormData = body instanceof FormData;
 
@@ -60,4 +63,12 @@ export function checkFile(dirname, expected_name) {
 
     return fs.existsSync(full_path);
 
+}
+
+export async function testChange(endpoint, body, cookie, expected) {
+
+    let response = await getResponse(endpoint, 'PATCH', body, cookie);
+
+    let data = await response.json();
+    expect(data).toStrictEqual(expected);
 }

@@ -168,6 +168,14 @@ describe("File Tests", () => {
 
     })
 
+    it('should create a folder', async()=>{
+        let response = await getResponse("/create_folder", "POST", {'color':'blue'}, cookie);
+
+        let data = await response.json();
+
+        expect(data).toStrictEqual({"status":"success", "message":"folder created successfuly"});
+    })
+
 
 
     afterAll(() => {
