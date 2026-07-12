@@ -48,6 +48,8 @@ class SessionManager : public QObject {
 
         Q_INVOKABLE bool hasActiveSession() const { return m_hasActiveSession; }
 
+        Q_INVOKABLE QJsonObject getUserData();
+
         QString serverMessage() const { return m_serverMessage; }
         QString usernameError() const { return m_usernameError; }
         QString passwordError() const { return m_passwordError; }

@@ -16,6 +16,9 @@ Item {
         width: 360
         height: 50
 
+        focus: true
+        onActiveFocusChanged: if (activeFocus) input.forceActiveFocus()
+
         property alias placeholderText: placeholder.text
         property alias text: input.text
         property alias echoMode: input.echoMode
@@ -179,6 +182,8 @@ Item {
                 placeholderText: "Email"
                 iconSource: "../assets/svg/UserIcons/Email.svg"
                 isPassword: false
+
+                KeyNavigation.tab: passwordField
             }
 
             AccountField {
@@ -186,6 +191,7 @@ Item {
                 placeholderText: "Password"
                 iconSource: "../assets/svg/UserIcons/Password.svg"
                 isPassword: true
+                KeyNavigation.tab: submitBtn
             }
 
             Text {
@@ -257,6 +263,7 @@ Item {
                     onLinkClicked: {
                         root.currentPath = "/forgotPassword"
                         pageStack.replace("ForgotPassword.qml", StackView.Immediate)
+                        sessionMgr.setServerMessage("")
                     }
                 }
 
@@ -266,6 +273,7 @@ Item {
                     onLinkClicked: {
                         root.currentPath = "/register"
                         pageStack.replace("Register.qml", StackView.Immediate)
+                        sessionMgr.setServerMessage("")
                     }
                 }
             }
@@ -283,6 +291,7 @@ Item {
         function onLoginSuccesful() {
             root.currentPath = "/"
             pageStack.replace("../Files/MyFilesPage.qml", StackView.Immediate)
+            sessionMgr.setServerMessage("")
         }
     }
 }

@@ -21,6 +21,7 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty("sessionMgr", &sessionManager);
     engine.rootContext()->setContextProperty("textFiltering", &textFilters);
     engine.rootContext()->setContextProperty("handleUploads", &handleUploads);
+    sessionManager.getUserData();
 
     engine.load(QUrl(QStringLiteral("qrc:/qt/qml/Demo1/Main.qml")));
 

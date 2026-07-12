@@ -147,37 +147,55 @@ Rectangle {
             Layout.preferredWidth: 1
             Layout.preferredHeight: 32
             color: root.text
+            Layout.alignment: Qt.AlignVCenter
         }
 
-        Item {
+        RowLayout {
             id: accountSettingsToggle
-            Layout.preferredWidth: 32
-            Layout.preferredHeight: 32
+            spacing: 12
+            Layout.alignment: Qt.AlignVCenter
 
-            Image {
-                id: profileImage
-                anchors.fill: parent
-                source: null || sessionMgr.pfp
-                fillMode: Image.PreserveAspectCrop
-                visible: false
+            HoverHandler {
+                id: accountHoverHandler
+                cursorShape: Qt.PointingHandCursor
+            }
+            TapHandler {
+                onTapped: { root.currentPath = "/settings" }
             }
 
-            Rectangle {
-                id: profileMask
-                anchors.fill: parent
-                radius: width / 2
-                visible: false
-            }
+            Item {
+                Layout.preferredWidth: 38
+                Layout.preferredHeight: 38
 
-            OpacityMask {
-                anchors.fill: parent
-                source: profileImage
-                maskSource: profileMask
-                HoverHandler {cursorShape: Qt.PointingHandCursor}
-
-                TapHandler {
-                    onTapped: {root.currentPath = "/settings"}
+                Image {
+                    id: profileImage
+                    anchors.fill: parent
+                    source: sessionMgr.pfp
+                    fillMode: Image.PreserveAspectCrop
+                    visible: false
                 }
+
+                Rectangle {
+                    id: profileMask
+                    anchors.fill: parent
+                    radius: width / 2
+                    visible: false
+                }
+
+                OpacityMask {
+                    anchors.fill: parent
+                    source: profileImage
+                    maskSource: profileMask
+                }
+            }
+
+            Text {
+                text: root.userData ? root.userData.username : ""
+                color: accountHoverHandler.hovered ? root.hoverCol : root.text
+                font.pixelSize: 18
+                font.bold: true
+                Layout.alignment: Qt.AlignVCenter
+                Behavior on color { ColorAnimation { duration: 200 } }
             }
         }
     }

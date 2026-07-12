@@ -6,6 +6,8 @@
 #include <QFileInfo>
 #include <QFile>
 
+#include <QJsonArray>
+
 #include <QHttpMultiPart>
 #include <QHttpPart>
 #include <QMimeDatabase>
@@ -97,7 +99,7 @@ void SessionManager::saveSession(bool isLoggedIn) {
 
     if (isLoggedIn) {
         if (cookiesFile.open(QIODevice::WriteOnly)) {
-            QList<QNetworkCookie> cookies = m_manager->cookieJar()->cookiesForUrl(QUrl("http://localhost:18080/"));
+            const QList<QNetworkCookie> cookies = m_manager->cookieJar()->cookiesForUrl(QUrl("http://localhost:18080/"));
 
             QDataStream out(&cookiesFile);
             out << static_cast<qint32>(cookies.size());
@@ -110,7 +112,44 @@ void SessionManager::saveSession(bool isLoggedIn) {
     checkSession();
 }
 
-Q_INVOKABLE void SessionManager::registerUser(const QString &username, const QString &email, const QString &password, const QString &confirmPassword, const QString &inviteCode) {
+QJsonObject SessionManager::getUserData() {
+    if (!SessionManager::instance() || !SessionManager::instance()->hasActiveSession()) return {};
+
+    QUrl getUserDataUrl("http://localhost:18080/user_data");
+    QNetworkRequest getUserDataRequest(getUserDataUrl);
+    getUserDataRequest.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+    QJsonObject body;
+    QJsonArray fieldsArray = {"username", "email", "preferences"};
+    body["fields"] = fieldsArray;
+
+    QNetworkReply *reply = m_manager->post(getUserDataRequest, QJsonDocument(body).toJson(QJsonDocument::Compact));
+
+    QEventLoop loop;
+    connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    loop.exec();
+
+    QJsonObject responseObj;
+
+    if (reply->error() == QNetworkReply::NoError) {
+        QByteArray responseBytes = reply->readAll();
+        responseObj = QJsonDocument::fromJson(responseBytes).object();
+
+        QJsonObject returnObj;
+        returnObj["email"] = responseObj["email"];
+        returnObj["username"] = responseObj["username"];
+        returnObj["preferences"] = responseObj["preferences"];
+
+        return returnObj;
+    } else {
+        qDebug() << "Eroare server/rețea:" << reply->errorString();
+    }
+
+    reply->deleteLater();
+    return {};
+}
+
+void SessionManager::registerUser(const QString &username, const QString &email, const QString &password, const QString &confirmPassword, const QString &inviteCode) {
     setServerMessage("");
 
     if (!(email.contains("@")) || !(email.contains(".")) || email.contains("@.")) {
@@ -172,7 +211,7 @@ Q_INVOKABLE void SessionManager::registerUser(const QString &username, const QSt
     });
 }
 
-Q_INVOKABLE void SessionManager::loginUser(const QString &email, const QString &password) {
+void SessionManager::loginUser(const QString &email, const QString &password) {
     setServerMessage("");
 
     if (!(email.contains("@")) || !(email.contains(".")) || email.contains("@.")) {
@@ -213,7 +252,7 @@ Q_INVOKABLE void SessionManager::loginUser(const QString &email, const QString &
     });
 }
 
-Q_INVOKABLE void SessionManager::logoutUser() {
+void SessionManager::logoutUser() {
     setServerMessage("");
 
     QUrl logoutUrl("http://localhost:18080/log_out");
@@ -222,18 +261,18 @@ Q_INVOKABLE void SessionManager::logoutUser() {
 
     QNetworkReply *reply = m_manager->post(logoutRequest, "{}");
 
-    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+    if (m_manager && m_manager->cookieJar())
+        m_manager->setCookieJar(new QNetworkCookieJar(this));
+
+    saveSession(false);
+
+    connect(reply, &QNetworkReply::finished, this, [reply]() {
         reply->deleteLater();
-
-        if (m_manager && m_manager->cookieJar())
-            m_manager->setCookieJar(new QNetworkCookieJar(this));
-
-        saveSession(false);
     });
 }
 
 void SessionManager::fetchPFP() {
-    if (!hasActiveSession()) return;
+    if (!SessionManager::instance() || !SessionManager::instance()->hasActiveSession()) return;
 
     QUrl getPFPLink("http://localhost:18080/get_profile_photo");
     QNetworkRequest PfpRequest(getPFPLink);
@@ -270,7 +309,7 @@ void SessionManager::fetchPFP() {
 }
 
 QString SessionManager::getPFP() {
-    if (!hasActiveSession()) return "assets/MockUserImg.jpg";
+    if (!SessionManager::instance() || !SessionManager::instance()->hasActiveSession()) return "assets/MockUserImg.jpg";
 
     QString appDataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     QString path = appDataDir + "/profile_photo.jpg";
@@ -282,7 +321,7 @@ QString SessionManager::getPFP() {
 }
 
 void SessionManager::changePFP(const QUrl &fileUrl) {
-    if (!hasActiveSession()) return;
+    if (!SessionManager::instance() || !SessionManager::instance()->hasActiveSession()) return;
 
     QUrl changeUserPhotoUrl("http://localhost:18080/upload_photo");
 

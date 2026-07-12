@@ -329,7 +329,7 @@ Rectangle {
                         ColumnLayout {
                             spacing: 10
                             Text {
-                                text: "Profile"
+                                text: "Profile - " + root.userData.username
                                 font.pixelSize: 22
                                 font.weight: Font.Bold
                                 color: root.text

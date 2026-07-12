@@ -21,6 +21,8 @@ ApplicationWindow {
     property bool lightMode: Application.styleHints.colorScheme === Qt.Light
     property string currentPath: "/"
 
+    property var userData: null
+
     property bool isUserLoggedIn: sessionMgr ? sessionMgr.hasActiveSession : false
     Connections {
         target: sessionMgr
@@ -97,8 +99,16 @@ ApplicationWindow {
     }
 
     onCurrentPathChanged: updateRoute()
-    onIsUserLoggedInChanged: updateRoute()
-    Component.onCompleted: updateRoute()
+    onIsUserLoggedInChanged: {
+        updateRoute()
+        if (isUserLoggedIn) userData = sessionMgr.getUserData()
+        else userData = null
+    }
+
+    Component.onCompleted: {
+        updateRoute()
+        userData = sessionMgr.getUserData()
+    }
 
     ColumnLayout {
         anchors.fill: parent

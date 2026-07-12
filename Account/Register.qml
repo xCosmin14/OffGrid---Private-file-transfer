@@ -16,6 +16,9 @@ Item {
         width: 360
         height: 50
 
+        focus: true
+        onActiveFocusChanged: if (activeFocus) input.forceActiveFocus()
+
         property alias placeholderText: placeholder.text
         property alias text: input.text
         property alias echoMode: input.echoMode
@@ -185,6 +188,8 @@ Item {
                 placeholderText: "Username"
                 iconSource: "../assets/svg/UserIcons/UserIcon.svg"
                 filterType: "alphaNumeric"
+
+                KeyNavigation.tab: emailField
             }
 
             AccountField {
@@ -192,6 +197,8 @@ Item {
                 placeholderText: "Email"
                 iconSource: "../assets/svg/UserIcons/Email.svg"
                 filterType: "email"
+
+                KeyNavigation.tab: passwordField
             }
 
             AccountField {
@@ -200,6 +207,8 @@ Item {
                 iconSource: "../assets/svg/UserIcons/Password.svg"
                 isPassword: true
                 filterType: "complex"
+
+                KeyNavigation.tab: confirmPasswordField
             }
 
             AccountField {
@@ -208,6 +217,8 @@ Item {
                 iconSource: "../assets/svg/UserIcons/Password.svg"
                 isPassword: true
                 filterType: "complex"
+
+                KeyNavigation.tab: inviteCodeField
             }
 
             AccountField {
@@ -215,6 +226,8 @@ Item {
                 placeholderText: "Invite code"
                 iconSource: "../assets/svg/UserIcons/Group.svg"
                 filterType: "complex"
+
+                KeyNavigation.tab: submitBtn
             }
 
             Item {
@@ -289,6 +302,7 @@ Item {
                     onLinkClicked: {
                         root.currentPath = "/login"
                         pageStack.replace("Login.qml", StackView.Immediate)
+
                     }
                 }
             }
