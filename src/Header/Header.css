@@ -129,6 +129,7 @@
     width: 32px; height: 32px;
     border-radius: 50%;
 }
+#accountSettingsToggle h3 {margin-left: 5px;}
 
 #accountSettingsToggle:hover {
     color: var(--hoverCol);

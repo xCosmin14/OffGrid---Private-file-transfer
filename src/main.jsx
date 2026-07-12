@@ -1,8 +1,9 @@
-import { StrictMode } from 'react'
+import { StrictMode, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
 
+import { UserProvider } from './UserContext'
 import isMobile from "./IsMobile.js"
 
 import Header from './Header/Header.jsx'
@@ -23,27 +24,42 @@ import PhotoAlbum from "./PhotoAlbum/PhotoAlbum.jsx"
 
 import GlobalUploadProgress from "./MyFiles/GlobalUploadProgress.jsx"
 
+export const requestData = async () => {
+    const response = await fetch("http://localhost:18080/user_data", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fields: ["username", "email", "preferences"] })
+    })
+
+    const data = await response.json()
+    return {username: data.username, email: data.email, preferences: data.preferences}
+}
+const userData = await requestData()
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <BrowserRouter>
-      <Header />
-      {isMobile() == 0 && localStorage.getItem("isLogged") === "true" && <Menu />}
-      <GlobalUploadProgress />
+    <UserProvider>
+      <BrowserRouter>
+        <Header />
+        {isMobile() == 0 && localStorage.getItem("isLogged") === "true" && <Menu username={userData.username} />}
+        <GlobalUploadProgress />
 
-      <Routes>
-        <Route path="/" element = {getUID() === null ? <Login /> : <MyFiles />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/passwordreset" element = {<ForgotPassword />}></Route>
-        <Route path="/settings" element={getUID() === null ? <Login /> : <Settings />} />
+        <Routes>
+          <Route path="/" element = {getUID() === null ? <Login /> : <MyFiles />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/passwordreset" element = {<ForgotPassword />}></Route>
+          <Route path="/settings" element={getUID() === null ? <Login /> : <Settings />} />
 
-        <Route path="/myfiles/shared" element={getUID() === null ? <Login /> : <SharedFiles />} />
-        <Route path="/myfiles/favorites" element={getUID() === null ? <Login /> : <Favorites />} />
-        <Route path="/myfiles/trash" element={getUID() === null ? <Login /> : <Trash />} />
-        <Route path="/myfiles/documents" element={getUID() === null ? <Login /> : <Documents />} />
-        <Route path="/myfiles/music" element={getUID() === null ? <Login /> : <MusicLibrary />} />
-        <Route path="/myfiles/photos" element={getUID() === null ? <Login /> : <PhotoAlbum />} />
-      </Routes>
-    </BrowserRouter>
+          <Route path="/myfiles/shared" element={getUID() === null ? <Login /> : <SharedFiles />} />
+          <Route path="/myfiles/favorites" element={getUID() === null ? <Login /> : <Favorites />} />
+          <Route path="/myfiles/trash" element={getUID() === null ? <Login /> : <Trash />} />
+          <Route path="/myfiles/documents" element={getUID() === null ? <Login /> : <Documents />} />
+          <Route path="/myfiles/music" element={getUID() === null ? <Login /> : <MusicLibrary />} />
+          <Route path="/myfiles/photos" element={getUID() === null ? <Login /> : <PhotoAlbum />} />
+        </Routes>
+      </BrowserRouter>
+    </UserProvider>
   </StrictMode>,
 )

@@ -1,8 +1,8 @@
+import { useContext } from 'react'
 import { useLocation, Link } from 'react-router-dom'
 
 import isMobile from '../IsMobile.js'
-
-import MockUserImg from "../assets/MockUserImg.jpg"
+import { UserContext } from '../UserContext.jsx'
 
 import Documents from "../assets/SVG/FileIcons/Documents.svg?react"
 import Folder from "../assets/SVG/FileIcons/Folder.svg?react"
@@ -15,15 +15,18 @@ import Trash from "../assets/SVG/FileIcons/Trash.svg?react"
 
 import "./Menu.css"
 
-export default function Menu() {
+export default function Menu(props) {
     const { pathname } = useLocation()
+    const { user, avatar } = useContext(UserContext)
+
+    if (!user) return null
 
     return (
         <div className="menu">
             {isMobile() == 1 && (
                 <Link to={getUID() === null ? "/login" : "/settings"} id="accountSettingsToggle">
-                    <img src={MockUserImg} alt="User Avatar" />
-                    <h2>Nume Prenume</h2>
+                    <img src={avatar} alt="User Avatar" />
+                    <h2>{user.username}</h2>
                 </Link>
             )}
 

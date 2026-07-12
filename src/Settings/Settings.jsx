@@ -1,12 +1,13 @@
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useContext } from "react"
 
-import { useProfilePhoto } from "../GetPFP.js"
-import { useTitle } from "../UseTitle.js"
+import { UserContext } from '../UserContext.jsx' 
+import { useTitle } from "../UseTitle.js" 
 
-import "./Settings.css"
+import "./Settings.css" 
 
 export default function Settings() {
-    useTitle("Settings - OffGrid")
+    const { user, avatar, refreshData } = useContext(UserContext)
+    useTitle("Settings - OffGrid") 
 
     const [colors, setColors] = useState({
         light: {
@@ -25,47 +26,42 @@ export default function Settings() {
             boxShadowCol: "#f0f0f0",
             boxBgCol: "#dbdbdb"
         }
-    })
+    }) 
 
-    const [username, setUsername] = useState("User123")
-    const [confirmPasswordForUser, setConfirmPasswordForUser] = useState("")
+    const [username, setUsername] = useState(user?.username || "")
+    const [confirmPasswordForUser, setConfirmPasswordForUser] = useState("") 
     
-    const [currentPassword, setCurrentPassword] = useState("")
-    const [newPassword, setNewPassword] = useState("")
+    const [currentPassword, setCurrentPassword] = useState("") 
+    const [newPassword, setNewPassword] = useState("") 
 
-    const [uError, setuError] = useState(null)
-    const [pError, setpError] = useState(null)
-    
-    const initialAvatar = useProfilePhoto()
-    const [avatar, setAvatar] = useState(initialAvatar)
+    const [uError, setuError] = useState(null) 
+    const [pError, setpError] = useState(null) 
 
     useEffect(() => {
-        if (initialAvatar) {
-            setAvatar(initialAvatar)
+        if (user?.username) {
+            setUsername(user.username)
         }
-    }, [initialAvatar])
+    }, [user])
 
     useEffect(() => {
         if (uError) {
             const timer = setTimeout(() => {
                 setuError(null)
             }, 5000)
-
             return () => clearTimeout(timer) 
         }
-    }, [uError])
+    }, [uError]) 
 
     useEffect(() => {
         if (pError) {
             const timer = setTimeout(() => {
                 setpError(null)
             }, 5000)
-
             return () => clearTimeout(timer) 
         }
-    }, [pError])
+    }, [pError]) 
 
-    const fileInputRef = useRef(null)
+    const fileInputRef = useRef(null) 
 
     const handleColorChange = (mode, key, value) => {
         setColors(prev => ({
@@ -75,26 +71,26 @@ export default function Settings() {
                 [key]: value
             }
         }))
-    }
+    } 
 
     const handleAvatarChange = async (e) => {
-        const file = e.target.files[0]
-        if (!file) return
+        const file = e.target.files[0] 
+        if (!file) return 
 
-        let formData = new FormData()
-        formData.append('photo', file, file.name)
+        let formData = new FormData() 
+        formData.append('photo', file, file.name) 
 
         try {
             let response = await fetch("http://localhost:18080/upload_photo", {
                 method: 'POST',
                 credentials: 'include',
                 body: formData
-            })
+            }) 
 
             if (response.ok) {
-                let data = await response.json()    
-                window.dispatchEvent(new Event('avatar-updated'))
-            } else console.error("Server denied upload.")
+                let data = await response.json() 
+                refreshData() 
+            }
             
         } catch (error) {}
     }
@@ -103,12 +99,12 @@ export default function Settings() {
         if (!username || !confirmPasswordForUser) {
             setuError("Please fill in all fields.")
             return
-        }
+        } 
         
         const payload = {
             username: username,
             password: confirmPasswordForUser 
-        }
+        } 
 
         try {
             let response = await fetch("http://localhost:18080/change_username", {
@@ -118,23 +114,24 @@ export default function Settings() {
                     'Content-Type': "application/json"
                 },
                 body: JSON.stringify(payload)
-            })
+            }) 
 
-            let data = await response.json()
-            setuError(data.message)
+            let data = await response.json() 
+            setuError(data.message) 
+            if (response.ok) refreshData() 
         } catch (error) {}
-    }
+    } 
 
     const handleChangePassword = async () => {
         if (!currentPassword || !newPassword) {
             setpError("Please fill in the fields.")
             return
-        }
+        } 
 
         const payload = {
             current_password: currentPassword,
             new_password: newPassword
-        }
+        } 
 
         try {
             let response = await fetch("http://localhost:18080/change_password", {
@@ -144,24 +141,22 @@ export default function Settings() {
                     'Content-Type': "application/json"
                 },
                 body: JSON.stringify(payload)
-            })
+            }) 
 
-            let data = await response.json()
-            setpError(data.message)
-        } catch (error) {
-
-        }
-    }
+            let data = await response.json() 
+            setpError(data.message) 
+        } catch (error) {}
+    } 
+    
     const logOut = () => {
-        let response = fetch("http://localhost:18080/log_out", {
+        fetch("http://localhost:18080/log_out", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include'
-        })
-        localStorage.setItem("isLogged", "false")
-        location.reload()
-        return
-    }
+        }) 
+        localStorage.setItem("isLogged", "false") 
+        location.reload() 
+    } 
 
     const colorOptions = [
         { key: "bgCol", label: "Page background", cssVar: "--bgCol" },
@@ -170,7 +165,7 @@ export default function Settings() {
         { key: "hoverCol", label: "Accent color", cssVar: "--hoverCol" },
         { key: "boxShadowCol", label: "Box shadow", cssVar: "--boxShadowCol" },
         { key: "boxBgCol", label: "Transparency effect", cssVar: "--boxBgCol" }
-    ]
+    ] 
 
     return (
         <div className="page" id="settingsPage">
@@ -183,7 +178,6 @@ export default function Settings() {
 
                         <div className="colorPickersHeader">
                             <span className="emptySpace"></span>
-
                             <div className="modeLabels">
                                 <span>Light</span>
                                 <span>Dark</span>
@@ -205,7 +199,6 @@ export default function Settings() {
                                             onChange={(e) => handleColorChange("light", option.key, e.target.value)} 
                                             title="Light Mode"
                                         />
-
                                         <input 
                                             type="color" 
                                             value={colors.dark[option.key]} 
@@ -220,13 +213,13 @@ export default function Settings() {
 
                     <div className="settingsActionButtons">
                         <button className="settingsBtn primary">Save theme</button>
-                        <button className="settingsBtn danger" onClick = {() => logOut()}>Log out</button>
+                        <button className="settingsBtn danger" onClick={logOut}>Log out</button>
                     </div>
                 </div>
 
                 <div className="settingsCard flex-column">
                     <div>
-                        <h3>Profile</h3>
+                        <h3>Profile - {username}</h3>
                         
                         <div className="avatarSection">
                             <div className="avatarWrapper" onClick={() => fileInputRef.current.click()}>
@@ -247,7 +240,6 @@ export default function Settings() {
                         <div className="settingsForm">
                             <div className="inputGroup">
                                 <label>New username</label>
-
                                 <input 
                                     type="text" 
                                     value={username} 
@@ -257,7 +249,6 @@ export default function Settings() {
 
                             <div className="inputGroup">
                                 <label>Type the password to confirm</label>
-
                                 <input 
                                     type="password" 
                                     placeholder="Current password" 
@@ -275,7 +266,6 @@ export default function Settings() {
                         <div className="settingsForm">
                             <div className="inputGroup">
                                 <label>Current password</label>
-
                                 <input 
                                     type="password" 
                                     placeholder="••••••••" 
@@ -286,7 +276,6 @@ export default function Settings() {
 
                             <div className="inputGroup">
                                 <label>New password</label>
-                                
                                 <input 
                                     type="password" 
                                     placeholder="••••••••" 
@@ -295,8 +284,8 @@ export default function Settings() {
                                 />
                             </div>
 
-                            {(pError != null) && <h3 id="settingsError">{pError}</h3>}
                             <button className="settingsBtn" onClick={handleChangePassword}>Change password</button>
+                            {(pError != null) && <h3 id="settingsError">{pError}</h3>}
                         </div>
                     </div>
                 </div>

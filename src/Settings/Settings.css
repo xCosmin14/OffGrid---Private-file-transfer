@@ -282,4 +282,13 @@ h2 {
         width: 100%;
         text-align: center;
     }
+
+    #settingsError {
+        position: relative;
+        width: 100%;
+        left: auto; right: auto;
+        margin: 0; padding: 0;
+        text-align: center;
+        top: -10px; 
+    }
 }

@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useContext } from "react"
 import { Link } from 'react-router-dom'
 
+import { UserContext } from '../UserContext.jsx' 
 import isMobile from "../IsMobile.js"
 import Menu from "../Menu/Menu.jsx"
 import Notifications from "../Notifications/Notifications.jsx"
@@ -12,8 +13,6 @@ import Notification from "../assets/SVG/Notification.svg?react"
 import Search from "../assets/SVG/Search.svg?react"
 import HamburgerToggle from "../assets/SVG/HamburgerToggle.svg?react"
 
-import { useProfilePhoto } from "../GetPFP.js"
-
 import "./Header.css"
 
 export default function Header() {
@@ -21,7 +20,7 @@ export default function Header() {
         return localStorage.getItem("theme") || "light"
     })
 
-    const avatar = useProfilePhoto()
+    const { user, avatar, refreshData } = useContext(UserContext)
 
     const [notificationsOpen, setNotificationsOpen] = useState(false)
     const [showMobileMenu, setShowMobileMenu] = useState(false)
@@ -94,6 +93,7 @@ export default function Header() {
                 {isMobile() == 0 && (
                     <Link to={getUID() === null ? "/login" : "/settings"} id="accountSettingsToggle">
                         <img src={avatar} alt="User Avatar" />
+                        <h3>{user?.username}</h3>
                     </Link>
                 )}
 

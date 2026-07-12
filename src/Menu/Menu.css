@@ -47,7 +47,7 @@ a {text-decoration: none; color: var(--text);}
         backdrop-filter: blur(5px);
     }
 
-    .menu h2 {font-size: 24px;}
+    .menu h2 {font-size: 24px; margin-left: 10px;}
 
     .menu-item {
         margin-bottom: 18px;
