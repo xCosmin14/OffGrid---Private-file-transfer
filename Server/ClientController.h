@@ -55,11 +55,16 @@ class ClientController
 	Async<HttpResponse> getFileMetadata(std::string, std::string, json::object&);
 
 	Async<HttpResponse> getUserData(json::object&, std::string);
+	Async<HttpResponse> getUserFiles(json::object&, std::string);
+
+
 	Async<HttpResponse> UpdateDb(std::vector<Query>, std::string, std::string);
 	Async<HttpResponse> cancelFolderUpload(std::string, std::string);
 
 	Async<HttpResponse> changeUsername(json::object&, std::string);
 	Async<HttpResponse> changePassword(json::object&, std::string);
+
+	Async<HttpResponse> changeData(json::object&, std::string, std::string = "user");
 
 	Async<HttpResponse> createEntity(json::object&, std::string, 
 		std::unordered_set<std::string>, std::string);

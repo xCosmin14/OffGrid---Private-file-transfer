@@ -1,11 +1,11 @@
 #include "Queries.h"
 #include <iostream>
 
-void addFields(std::string& query, json::object const& obj, std::vector<mysql::field>& values, std::string* placeholders = nullptr)
+void addFields(std::string& query, json::object const& obj, std::vector<mysql::field>& values, std::string* placeholders = nullptr, std::string sign = ", ")
 {
 	for (auto& it : obj)
 	{
-		query += std::string(it.key()) + ", ";
+		query += std::string(it.key()) + sign;
 		if (placeholders)
 			*placeholders += "?, ";
 
@@ -33,6 +33,7 @@ Query buildInsert(json::object const& obj, std::string table)
 	addFields(query, obj, values, &placeholders);
 
 	query += ") VALUES (" + placeholders + ")";
+
 
 	return { query, values };
 }
@@ -100,8 +101,6 @@ Query Queries::insertAccess(std::string access_id, std::string user_id, std::str
 Query Queries::getGeneralUserData(std::vector<std::string> const& vect, std::string uid)
 {
 	std::string query = "SELECT ";
-	std::vector<mysql::field> values;
-	values.emplace_back(uid);
 
 	for (auto& it : vect)
 	{
@@ -112,6 +111,24 @@ Query Queries::getGeneralUserData(std::vector<std::string> const& vect, std::str
 	query += " FROM offgrid_db.user WHERE uid = ?";
 
 	return { query, {mysql::field(uid)} };
+}
+
+
+Query Queries::GetUserFiles(std::vector<std::string> const& vect, std::string entity, std::string uid)
+{
+	if (entity != "file" && entity != "folder")
+		throw std::runtime_error("invalid entity");
+
+	std::string q = "SELECT ";
+
+	for (auto& it : vect)
+		q += it + ", ";
+	q.pop_back(); q.pop_back();
+
+	q += " FROM offgrid_db." + entity + " LEFT JOIN offgrid_db.access ON access." + entity + "_id=" +
+		entity + "." + entity + "_id WHERE " + entity + ".creator_id=? or access.user_id=?";
+
+	return { q, {mysql::field(uid), mysql::field(uid)} };
 }
 
 
@@ -196,6 +213,23 @@ Query Queries::VerifyFolderId(std::string id, std::string uid)
 	"WHERE folder.folder_id = ? and(folder.creator_id=? or access.user_id=?", {
 	mysql::field(id), mysql::field(uid), mysql::field(uid)} };
 
-
 }
 
+
+Query Queries::UpdateUser(json::object const& obj, std::string uid, std::string entity, std::string id_column, std::string entity_id)
+{
+
+	std::string query = "UPDATE offgrid_db." + entity + " set ";
+	std::vector<mysql::field> values;
+	addFields(query, obj, values, nullptr, "=?, ");
+
+
+	if (entity != "user")
+		query += " JOIN user on user.uid = " + entity + "." + id_column;
+
+	query += " WHERE user.uid=? and " + entity + entity + "_id=?";
+	values.emplace_back(uid); values.emplace_back(entity_id);
+	
+	std::cout << query << std::endl;
+	return { query, values };
+}

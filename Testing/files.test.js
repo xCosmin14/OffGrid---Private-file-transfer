@@ -1,13 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest"
 import fs, { fdatasync } from 'fs'
-
 import { getResponse, extractCookie, checkDirectory, checkFile } from "./helpers.js";
 import { spawn, execSync, exec } from "child_process";
-
 import dotenv from 'dotenv';
-import { exp } from "prelude-ls";
-import { check } from "zod";
-import { transformAsync } from "@babel/core";
 
 
 let mail = `pookie${crypto.randomUUID().slice(0, 8)}@gmail.com`;

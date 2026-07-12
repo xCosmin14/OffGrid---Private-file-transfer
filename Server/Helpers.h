@@ -20,7 +20,7 @@ namespace Helpers
 	FileData parseBody(std::vector<uint8_t>& body);
 	HttpResponse makeResponse(http::status status, std::string message, std::string session_id = "", json::object additional = {});
 
-	std::vector<std::string> getFields(json::object&, const std::unordered_map<std::string, std::string> & = {});
+	std::vector<std::string> getFields(json::object&, const std::unordered_map<std::string, std::string> & = {}, std::string key = "fields");
 	Async<json::object> getGeneralData(Query, DatabaseController&);
 
 	void removeFiles(std::vector<std::string>, std::string);

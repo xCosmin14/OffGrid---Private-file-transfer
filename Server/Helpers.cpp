@@ -95,13 +95,13 @@ HttpResponse Helpers::makeResponse(http::status status, std::string message, std
 }
 
 
-std::vector<std::string> Helpers::getFields(json::object& obj, const std::unordered_map<std::string, std::string>& allowed_fields)
+std::vector<std::string> Helpers::getFields(json::object& obj, const std::unordered_map<std::string, std::string>& allowed_fields, std::string key)
 {
 	std::vector<std::string> fields;
 
-	if (obj.contains("fields") && obj["fields"].is_array())
+	if (obj.contains(key) && obj[key].is_array())
 	{
-		const json::array& fields_array = obj["fields"].as_array();
+		const json::array& fields_array = obj[key].as_array();
 		for (auto const& it : fields_array)
 		{
 			if (!it.is_string())

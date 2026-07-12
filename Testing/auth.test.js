@@ -1,6 +1,8 @@
-import { describe, it, expect } from "vitest"
-
+import { describe, it, expect, beforeAll, afterAll } from "vitest"
 import { getResponse, extractCookie, testChange } from "./helpers.js";
+import dotenv from "dotenv"
+import { spawn } from "child_process";
+import fs from "fs"
 
 let mail = `test_${crypto.randomUUID().slice(0, 8)}@gmail.com`;
 let name = `testname_${crypto.randomUUID().slice(0, 8)}`;
@@ -18,6 +20,7 @@ describe("Auth Test", () => {
         });
 
         let data = await response.json();
+
         cookie = extractCookie(response.headers.get("set-cookie"));
 
         expect(data).toStrictEqual({ "status": "success", "message": "user registered" });
@@ -98,7 +101,8 @@ describe("Auth Test", () => {
         await testChange("/change_username", {}, cookie, { "status": "error", "message": "missing username" });
 
         await testChange("/change_username", {
-            username: 'newPookie'
+            username: 'newPookie',
+            password: 'idk'
         }, cookie, { "status": "success", "message": "username changed successfuly" });
     })
 
@@ -129,6 +133,27 @@ describe("Auth Test", () => {
 
         expect(data).toStrictEqual({ "status": "success", "message": "user removed" });
         expect(response.headers.get("set-cookie")).toContain("Max-Age=0");
+
+    })
+
+    afterAll(() => {
+        console.log("Cleaning up");
+
+        dotenv.config({ path: 'Testing/db_pass.env' });
+
+        new Promise((resolve, reject) => {
+            const proc = spawn(process.env.MYSQL_PATH || 'mysql', [
+                "-u", "offgrid_test",
+                `-p${process.env.DB_PASS}`,
+                "offgrid_db"
+            ], { stdio: ['pipe', 'inherit', 'inherit'] });
+
+            proc.stdin.write(fs.readFileSync("Testing/clean_db.sql", "utf-8"));
+            proc.stdin.end();
+            proc.on('close', resolve);
+            proc.on('error', reject);
+        })
+
 
     })
 });

@@ -36,6 +36,8 @@ namespace Queries
 
 	Query getGeneralUserData(std::vector<std::string> const&, std::string);
 
+	Query GetUserFiles(std::vector<std::string> const&, std::string, std::string);
+
 	Query GetFile(std::string, std::string);
 
 	Query GetFileMetadata(std::string, std::string, std::vector<std::string>);
@@ -53,5 +55,7 @@ namespace Queries
 	Query InsertFolder(json::object const&);
 
 	Query VerifyFolderId(std::string, std::string);
+
+	Query UpdateUser(json::object const&, std::string, std::string, std::string, std::string);
 
 };

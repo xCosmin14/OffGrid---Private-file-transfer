@@ -2,6 +2,7 @@
 #include "Queries.h"
 #include "Structs.h"
 #include "Helpers.h"
+#include "Crypto.h"
 
 #include <filesystem>
 
@@ -12,14 +13,17 @@ Async<HttpResponse> ClientController::registerUser(json::object& obj)
 	std::string session_id = this->createId("session");
 	obj["uid"] = uid;
 
+	if (!obj.contains("password") || !obj.at("password").is_string())
+		co_return Helpers::makeResponse(http::status::conflict, "Password not provided");
 
-
-	Query query1 = Queries::InsertUserQuery(obj);
-	Query query2 = Queries::CreateSessionQuery(session_id, uid);
 
 	mysql::diagnostics diag;
 
 	try {
+		obj["password"] = co_await Crypto::hashPasswordAsync(obj.at("password").as_string().c_str());
+
+		Query query1 = Queries::InsertUserQuery(obj);
+		Query query2 = Queries::CreateSessionQuery(session_id, uid);
 
 		co_await this->db.runTransaction({ query1, query2 }, diag);
 
@@ -49,6 +53,11 @@ Async<HttpResponse> ClientController::registerUser(json::object& obj)
 		std::cerr << "Database query failed " << e.what() << std::endl;
 		co_return Helpers::makeResponse(http::status::internal_server_error, "internal server error");
 	}
+	catch (std::exception& e)
+	{
+		std::cerr << "Registration failed: " << e.what() << std::endl;
+		co_return Helpers::makeResponse(http::status::internal_server_error, "internal server error");
+	}
 }
 
 Async<HttpResponse> ClientController::loginUser(json::object& obj)
@@ -71,10 +80,9 @@ Async<HttpResponse> ClientController::loginUser(json::object& obj)
 			std::string uid = rows[0][0].as_string();
 
 			if (obj.contains("password")) {
-				if (user_password != obj["password"].as_string())
+				if (!co_await Crypto::verifyPasswordAsync(obj["password"].as_string().c_str(), user_password))
 					co_return Helpers::makeResponse(http::status::conflict, "incorrect password");
 				else
-
 				{
 					std::string session_id = this->createId("session");
 					Query session_query = Queries::CreateSessionQuery(session_id, uid);
@@ -212,10 +220,10 @@ Async<HttpResponse> ClientController::changeUsername(json::object& obj, std::str
 			co_return Helpers::makeResponse(http::status::conflict, "user not found");
 
 		std::string user_password = rows[0][0].as_string();
-		if (user_password != obj.at("password").as_string())
+		if (! co_await Crypto::verifyPasswordAsync(obj["password"].as_string().c_str(), user_password))
 			co_return Helpers::makeResponse(http::status::conflict, "incorrect password");
 
-		co_await this->db.runQuery(Queries::ChangeUsername(newname, session_id));
+		co_await this->db.runQuery(Queries::ChangeUsername(newname, uid));
 	}
 	catch (boost::system::system_error& e)
 	{
@@ -259,9 +267,8 @@ Async<HttpResponse> ClientController::changePassword(json::object& obj, std::str
 
 		std::string user_password = rows[0][0].as_string();
 
-		if (user_password != obj.at("current_password").as_string()) {
+		if (! co_await Crypto::verifyPasswordAsync(obj["current_password"].as_string().c_str(), user_password))
 			co_return Helpers::makeResponse(http::status::conflict, "incorrect password");
-		}
 
 		std::string newPass = json::value_to<std::string>(obj.at("new_password"));
 		co_await this->db.runQuery(Queries::ChangePassword(newPass, uid));
