@@ -46,7 +46,7 @@ qt_add_qml_module(appDemo1
         Files/AddFile.qml
         Files/File.qml
         Files/FileSizeChart.qml
-        Files/UploadProgress.qml
+
         Files/Filters.qml
         Files/MenuOption.qml
         Files/CustomDatePicker.qml

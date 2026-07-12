@@ -2,9 +2,50 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import Qt5Compat.GraphicalEffects
+
 Item {
     id: pageRoot
-    property string pageTitle: "Music library"
+    property string pageTitle: "My Files"
+
+    property bool showMenu: false
+    property bool showUploadProgress: false
+    property bool uploadComplete: false
+    property int uploadProgress: 0
+    property real loadedMB: 0.0
+    property real totalMB: 0.0
+    property string currentFileName: ""
+    property int fileIndex: 1
+    property int totalFiles: 1
+
+    Timer {
+        id: hideProgressTimer
+        interval: 3000
+        onTriggered: showUploadProgress = false
+    }
+
+    Connections {
+        target: handleUploads
+
+        function onUploadProgressUpdate(isUploading, progressPercent, inLoadedMB, inTotalMB, inCurrentFile, inFileIndex, inTotalFiles) {
+
+            pageRoot.uploadProgress = progressPercent
+            pageRoot.loadedMB = inLoadedMB
+            pageRoot.totalMB = inTotalMB
+            pageRoot.currentFileName = inCurrentFile
+            pageRoot.fileIndex = inFileIndex
+            pageRoot.totalFiles = inTotalFiles
+
+            if (isUploading) {
+                pageRoot.showUploadProgress = true
+                pageRoot.uploadComplete = false
+                hideProgressTimer.stop()
+            } else {
+                pageRoot.uploadComplete = true
+                pageRoot.uploadProgress = 100
+                hideProgressTimer.restart()
+            }
+        }
+    }
 
     Rectangle {
         anchors.fill: parent
@@ -227,5 +268,78 @@ Item {
         }
 
         FileSizeChart {}
+
+        Rectangle {
+            id: uploadProgressContainer
+            visible: showUploadProgress
+
+            anchors.bottom: parent.bottom
+            anchors.right: parent.right
+            anchors.bottomMargin: 30
+            anchors.rightMargin: parent.width * 0.05
+
+            width: 250
+            height: uploadColumn.implicitHeight + 20
+
+            color: root.menuBgCol
+            radius: 10
+            border.color: root.boxShadowCol
+            border.width: 1
+
+            Column {
+                id: uploadColumn
+                anchors.centerIn: parent
+                width: parent.width - 40
+                spacing: 8
+
+                Text {
+                    text: uploadComplete ? "Upload complete!" : "Uploading: " + uploadProgress + "%"
+                    color: root.text
+                    font.pixelSize: 14
+                    font.bold: true
+                }
+
+                Text {
+                    text: uploadComplete
+                          ? "All files were successfully saved."
+                          : "Processing (" + fileIndex + "/" + totalFiles + "): <b>" + currentFileName + "</b>"
+                    color: root.text
+                    font.pixelSize: 12
+                    opacity: 0.8
+                    width: parent.width
+                    elide: Text.ElideRight
+                    textFormat: Text.RichText
+                }
+
+                ProgressBar {
+                    width: parent.width
+                    value: uploadProgress / 100
+
+                    background: Rectangle {
+                        implicitHeight: 10
+                        color: root.boxShadowCol
+                        radius: 8
+                    }
+                    contentItem: Item {
+                        implicitHeight: 10
+                        Rectangle {
+                            width: parent.parent.visualPosition * parent.width
+                            height: parent.height
+                            radius: 8
+                            color: root.hoverCol
+                        }
+                    }
+                }
+
+                Text {
+                    text: loadedMB.toFixed(1) + " of " + totalMB.toFixed(1) + " MB"
+                    color: root.text
+                    font.pixelSize: 12
+                    opacity: 0.7
+                    width: parent.width
+                    horizontalAlignment: Text.AlignRight
+                }
+            }
+        }
     }
 }

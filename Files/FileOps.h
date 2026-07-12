@@ -22,4 +22,5 @@ class FileOps : public QObject {
 
     signals:
         void uploadProgressChanged(bool isUploading, int progress, double loaded, double total, const QString &currentFile, int fileIndex, int totalFiles);
+        void uploadProgressUpdate(bool isUploading, int progressPercent, double loadedMB, double totalMB, QString currentFile, int fileIndex, int totalFiles);
 };

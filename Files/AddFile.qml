@@ -91,7 +91,30 @@ Item {
 
             fileMode: FileDialog.OpenFile
 
-            nameFilters: ["All file types (*)"]
+            nameFilters: {
+                if (root.currentPath === "/") return ["All files (*)"]
+                else if (root.currentPath === "/myfiles/documents")
+                    return [
+                        "All Documents (*.pdf *.txt *.rtf *.md *.markdown *.doc *.docx *.odt *.xls *.xlsx *.ods *.csv *.ppt *.pptx *.odp)",
+
+                        "PDF Documents (*.pdf)",
+                        "Text & Markdown (*.txt *.md *.markdown *.rtf *.log)",
+                        "Word Processing (*.doc *.docx *.odt *.pages)",
+                        "Spreadsheets & Data (*.xls *.xlsx *.ods *.numbers *.csv)",
+                        "Presentations (*.ppt *.pptx *.odp *.key)"
+                    ]
+                else if (root.currentPath === "/myfiles/music")
+                    return [
+                        "Audio (*.mp3 *.wav *.ogg *.flac *.aac *.alac *.m4a *.opus)"
+                    ]
+                else if (root.currentPath === "/myfiles/photos")
+                    return [
+                        "Video (*.mp4 *.mov *.avi *.wmv *.mkv *.webm *.flv *.gif *.m4v)",
+                        "Pictures (*.bmp *.gif *.jpeg *.jpg *.png *.psd *.webp *.dng *.svg)"
+                    ]
+
+                return ["All files (*)"]
+            }
 
             onAccepted: handleUploads.uploadFile(fileDialog.selectedFile)
             onRejected: {return}

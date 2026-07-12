@@ -1,4 +1,4 @@
-import QtQuick
+mport QtQuick
 
 Item {
 

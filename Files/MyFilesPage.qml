@@ -26,24 +26,23 @@ Item {
     Connections {
         target: handleUploads
 
-        function onUploadProgressChanged(isUploading, progress, loaded, total, currentFile, fIndex, tFiles) {
-            if (isUploading) {
-                hideProgressTimer.stop()
-                showUploadProgress = true
-                uploadComplete = false
+        function onUploadProgressUpdate(isUploading, progressPercent, inLoadedMB, inTotalMB, inCurrentFile, inFileIndex, inTotalFiles) {
 
-                uploadProgress = progress
-                loadedMB = loaded
-                totalMB = total
-                currentFileName = currentFile
-                fileIndex = fIndex !== undefined ? fIndex : 1
-                totalFiles = tFiles !== undefined ? tFiles : 1
+            pageRoot.uploadProgress = progressPercent
+            pageRoot.loadedMB = inLoadedMB
+            pageRoot.totalMB = inTotalMB
+            pageRoot.currentFileName = inCurrentFile
+            pageRoot.fileIndex = inFileIndex
+            pageRoot.totalFiles = inTotalFiles
+
+            if (isUploading) {
+                pageRoot.showUploadProgress = true
+                pageRoot.uploadComplete = false
+                hideProgressTimer.stop()
             } else {
-                if (showUploadProgress) {
-                    uploadComplete = true
-                    uploadProgress = 100
-                    hideProgressTimer.restart()
-                }
+                pageRoot.uploadComplete = true
+                pageRoot.uploadProgress = 100
+                hideProgressTimer.restart()
             }
         }
     }
@@ -277,7 +276,7 @@ Item {
             anchors.bottom: parent.bottom
             anchors.right: parent.right
             anchors.bottomMargin: 30
-            anchors.rightMargin: parent.width * 0.06
+            anchors.rightMargin: parent.width * 0.05
 
             width: 250
             height: uploadColumn.implicitHeight + 20
