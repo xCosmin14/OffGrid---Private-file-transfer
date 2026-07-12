@@ -222,14 +222,15 @@ Query Queries::UpdateUser(json::object const& obj, std::string uid, std::string 
 	std::string query = "UPDATE offgrid_db." + entity + " set ";
 	std::vector<mysql::field> values;
 	addFields(query, obj, values, nullptr, "=?, ");
+	values.emplace_back(uid);
 
-
-	if (entity != "user")
+	if (entity == "user")
+		query += " WHERE uid=?";
+	else {
 		query += " JOIN user on user.uid = " + entity + "." + id_column;
+		query += " WHERE user.uid=? and " + entity + "." + entity + "_id=?";
+		values.emplace_back(entity_id);
+	}
 
-	query += " WHERE user.uid=? and " + entity + entity + "_id=?";
-	values.emplace_back(uid); values.emplace_back(entity_id);
-	
-	std::cout << query << std::endl;
 	return { query, values };
 }

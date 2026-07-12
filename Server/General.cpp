@@ -261,16 +261,20 @@ Async<HttpResponse> ClientController::changeData(json::object& obj, std::string 
 	if (entity.starts_with("/"))
 		id = entity.substr(entity.find("/", 1) + 1);
 
-	if (entity != "/user")
+	if (entity != "user")
 		id_column = "creator_id"; // i have to change this
 
+
 	try {
-		co_await this->db.runQuery(Queries::UpdateUser(obj, uid, entity.substr(1), id_column, id));
+		co_await this->db.runQuery(Queries::UpdateUser(obj, uid, entity, id_column, id));
 	}
 	catch (boost::system::system_error& e)
 	{
 		std::cout << "Failed updating: " << e.what();
 		co_return Helpers::makeResponse(http::status::internal_server_error, "Failed updating db");
 	}
+
+	co_return Helpers::makeResponse(http::status::ok, "Updated successfuly");
+
 
 }

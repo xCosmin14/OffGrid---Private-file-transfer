@@ -86,8 +86,13 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
 		if (target.starts_with("/change_username")) co_return co_await this->changeUsername(obj, session_id); // tested
 		else if (target.starts_with("/change_password")) co_return co_await this->changePassword(obj, session_id); // tested
 		else if (target.starts_with("/change_data")) {
-			auto pos = target.find("/change_data");
-			co_return co_await this->changeData(obj, session_id, (std::string)target.substr(pos + 12));  // not done yet -- might work for user updates tho ^^
+
+			auto pos = target.find("/change_data/");
+			if (pos == std::string::npos)
+				co_return co_await this->changeData(obj, session_id);
+
+			co_return co_await this->changeData(obj, session_id, (std::string)target.substr(pos + 12)); 
+			// not done yet -- might work for user updates tho ^^
 		}
 	}
 
