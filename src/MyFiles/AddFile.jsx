@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react"
-import fs from "fs"
+
+import { customFetch } from "../UserContext.jsx"
 
 import Add from "../assets/SVG/FileIcons/Add.svg?react"
 import Folder from "../assets/SVG/FileIcons/Folder.svg?react"
@@ -131,7 +132,7 @@ export default function AddFile(props) {
 
         const folderName = files[0].webkitRelativePath.split('/')[0]
 
-        let response = await fetch("http://localhost:18080/upload_folder", {
+        const response = await customFetch("http://localhost:18080/upload_folder", {
             method: "POST",
             credentials: "include",
             headers: { "Content-Type": "application/json" },

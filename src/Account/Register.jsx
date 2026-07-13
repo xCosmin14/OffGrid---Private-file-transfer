@@ -55,8 +55,9 @@ export default function Register() {
                  setShowError(data.message) 
                  return
             }
+            setShowError(null)
         } catch (error) {
-            setShowError("Network error. Please try again.")
+            setShowError(error.message)
         }
     }
 

@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 
 import { UserContext } from '../UserContext.jsx' 
 import isMobile from "../IsMobile.js"
+import { getUID } from "../ColorScheme.js"
+
 import Menu from "../Menu/Menu.jsx"
 import Notifications from "../Notifications/Notifications.jsx"
 import Logo from "../assets/Logo.png"

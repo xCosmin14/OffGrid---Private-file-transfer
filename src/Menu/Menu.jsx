@@ -3,9 +3,9 @@ import { useLocation, Link } from 'react-router-dom'
 
 import isMobile from '../IsMobile.js'
 import { UserContext } from '../UserContext.jsx'
+import { getUID } from '../ColorScheme.js'
 
 import Documents from "../assets/SVG/FileIcons/Documents.svg?react"
-import Folder from "../assets/SVG/FileIcons/Folder.svg?react"
 import MusicLibrary from "../assets/SVG/FileIcons/MusicLibrary.svg?react"
 import MyFiles from "../assets/SVG/FileIcons/MyFiles.svg?react"
 import PhotoAlbum from "../assets/SVG/FileIcons/PhotoAlbum.svg?react"
@@ -15,7 +15,7 @@ import Trash from "../assets/SVG/FileIcons/Trash.svg?react"
 
 import "./Menu.css"
 
-export default function Menu(props) {
+export default function Menu() {
     const { pathname } = useLocation()
     const { user, avatar } = useContext(UserContext)
 

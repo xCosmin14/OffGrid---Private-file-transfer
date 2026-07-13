@@ -8,27 +8,15 @@ import User from "../assets/SVG/UserIcons/UserIcon.svg?react"
 
 import "./Account.css"
 
-export default function Register() {
-    const [showError, setShowError] = useState(-1) //0 - nu exista cont cu informatiile alea   1 - nu se potrivesc   null - e ok
+export default function ForgotPassword() {
+    useTitle("Reset your password")
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        e.preventDefault()
 
-        const formData = new FormData(e.currentTarget); 
-        formData.set("username", formData.get("username").replace(/['`"/{};?,#$%^&*()]+/g, ''))
-        formData.set("registerEmail", formData.get("registerEmail").replace(/['`"/{};?,#$%^&*()]+/g, ''))
-        
-        if (formData.get("inviteCode")) formData.set("inviteCode", code.replace(/['`"<>a-zA-Z]+/g, ''))
-        
-        var formularFinal = {}
-        formData.forEach((valoare, cheie) => formularFinal[cheie] = valoare)
-
-        formularFinal = JSON.stringify(formularFinal)
-        //verificare dacă username-ul / mailul e luat și invite code-ul e bun
-        return
+        const formData = new FormData(e.target)
+        const data = Object.fromEntries(formData.entries())
     }
-
-    useTitle("OffGrid - Register")
 
     return (
         <div className="page centered">
@@ -48,7 +36,7 @@ export default function Register() {
                 </div>
 
                 <div id="accountFormField">
-                    <input type="email" name="registerEmail" placeholder="Email" 
+                    <input type="email" name="email" placeholder="Email" 
                         pattern="[a-zA-Z0-9@.]+" required
                         onBeforeInput={(e) => {
                             if (!/[a-zA-Z0-9@.]/.test(e.data)) {

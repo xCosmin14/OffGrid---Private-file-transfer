@@ -1,10 +1,10 @@
-import { StrictMode, useEffect } from 'react'
+import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
-
-import { UserProvider } from './UserContext'
+import { UserProvider } from './UserContext.jsx' 
 import isMobile from "./IsMobile.js"
+import { getUID } from "./ColorScheme.js"
 
 import Header from './Header/Header.jsx'
 import Menu from './Menu/Menu.jsx'
@@ -24,32 +24,19 @@ import PhotoAlbum from "./PhotoAlbum/PhotoAlbum.jsx"
 
 import GlobalUploadProgress from "./MyFiles/GlobalUploadProgress.jsx"
 
-export const requestData = async () => {
-    const response = await fetch("http://localhost:18080/user_data", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fields: ["username", "email", "preferences"] })
-    })
-
-    const data = await response.json()
-    return {username: data.username, email: data.email, preferences: data.preferences}
-}
-const userData = await requestData()
-
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <UserProvider>
       <BrowserRouter>
         <Header />
-        {isMobile() == 0 && localStorage.getItem("isLogged") === "true" && <Menu username={userData.username} />}
+        {isMobile() == 0 && localStorage.getItem("isLogged") === "true" && <Menu />}
         <GlobalUploadProgress />
 
         <Routes>
           <Route path="/" element = {getUID() === null ? <Login /> : <MyFiles />} />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/passwordreset" element = {<ForgotPassword />}></Route>
+          <Route path="/passwordreset" element={<ForgotPassword />} />
           <Route path="/settings" element={getUID() === null ? <Login /> : <Settings />} />
 
           <Route path="/myfiles/shared" element={getUID() === null ? <Login /> : <SharedFiles />} />

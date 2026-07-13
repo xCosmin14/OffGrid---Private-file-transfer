@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useContext } from "react"
 
 import { UserContext } from '../UserContext.jsx' 
 import { useTitle } from "../UseTitle.js" 
+import { customFetch } from '../UserContext.jsx'
 
 import "./Settings.css" 
 
@@ -81,7 +82,7 @@ export default function Settings() {
         formData.append('photo', file, file.name) 
 
         try {
-            let response = await fetch("http://localhost:18080/upload_photo", {
+            const response = await customFetch("http://localhost:18080/upload_photo", {
                 method: 'POST',
                 credentials: 'include',
                 body: formData
@@ -107,14 +108,11 @@ export default function Settings() {
         } 
 
         try {
-            let response = await fetch("http://localhost:18080/change_username", {
+            const response = await customFetch("http://localhost:18080/change_username", {
                 method: 'PATCH',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': "application/json"
-                },
+                headers: { 'Content-Type': "application/json" },
                 body: JSON.stringify(payload)
-            }) 
+            })
 
             let data = await response.json() 
             setuError(data.message) 
@@ -134,26 +132,28 @@ export default function Settings() {
         } 
 
         try {
-            let response = await fetch("http://localhost:18080/change_password", {
+            const response = await customFetch("http://localhost:18080/change_password", {
                 method: 'PATCH',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': "application/json"
-                },
+                headers: { 'Content-Type': "application/json" },
                 body: JSON.stringify(payload)
-            }) 
+            })
 
             let data = await response.json() 
-            setpError(data.message) 
+            setpError(data.message)
+            if (response.ok) {
+                setCurrentPassword("") 
+                setNewPassword("") 
+            }
         } catch (error) {}
     } 
     
-    const logOut = () => {
-        fetch("http://localhost:18080/log_out", {
+    const logOut = async () => {
+        const response = await customFetch("http://localhost:18080/log_out", {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': "application/json" },
+            keepalive: true,
             credentials: 'include'
-        }) 
+        })
         localStorage.setItem("isLogged", "false") 
         location.reload() 
     } 
