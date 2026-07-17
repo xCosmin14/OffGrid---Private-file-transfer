@@ -152,8 +152,8 @@ Async<json::array> Helpers::getGeneralData(Query q, DatabaseController& db)
 				else if (value.is_string()) response_obj[column] = value.as_string();
 				else if (value.is_int64()) response_obj[column] = value.as_int64();
 
-				response_arr.push_back(response_obj);
 			}
+			response_arr.push_back(response_obj);
 		}
 
 		co_return response_arr;

@@ -40,9 +40,9 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
 
 		else if (target == "/create_file") co_return co_await this->createEntity(obj, session_id, { "name", "folder_id" }, "file"); // tested
 
-		else if (target == "/user_data") co_return co_await this->getUserData(obj, session_id);
+		else if (target == "/user_data") co_return co_await this->getUserData(obj, session_id); // tested
 
-		else if (target == "/user_files") co_return co_await this->getUserFiles(obj, session_id);
+		else if (target == "/user_files") co_return co_await this->getUserFiles(obj, session_id); // tested
 
 		else if (target.starts_with("/get_file_metadata"))
 		{
