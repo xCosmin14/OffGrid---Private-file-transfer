@@ -35,7 +35,9 @@ Async<HttpResponse> ClientController::getUserData(json::object& obj, std::string
 	}
 
 	try {
-		json::object response_obj = co_await Helpers::getGeneralData(Queries::getGeneralUserData(fields, uid), this->db);
+		json::array response_arr = co_await Helpers::getGeneralData(Queries::getGeneralUserData(fields, uid), this->db);
+		json::object response_obj;
+		response_obj["data"] = response_arr;
 		co_return Helpers::makeResponse(http::status::ok, "User found", "", response_obj);
 	}
 	catch (boost::system::system_error& e)
@@ -161,8 +163,9 @@ Async<HttpResponse> ClientController::getFileMetadata(std::string file_id, std::
 	}
 
 	try {
-		json::object response_obj = co_await Helpers::getGeneralData(Queries::GetFileMetadata(file_id, uid, fields), this->db);
-
+		json::array response_arr = co_await Helpers::getGeneralData(Queries::GetFileMetadata(file_id, uid, fields), this->db);
+		json::object response_obj;
+		response_obj["data"] = response_arr;
 		co_return Helpers::makeResponse(http::status::ok, "file found", "", response_obj);
 	}
 	catch (boost::system::system_error& e)
