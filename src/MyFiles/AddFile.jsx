@@ -10,12 +10,39 @@ import ArrowUp from "../assets/SVG/ArrowUp.svg?react"
 
 import "./AddFile.css"
 
+let transaction_id = "", currentXhr = null
+
+export async function cancelUpload() {
+    if (currentXhr) {
+        currentXhr.abort()
+        currentXhr = null
+    }
+
+    if (!transaction_id) {
+        window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
+        return
+    }
+    
+    try {
+        const res = await customFetch(`http://localhost:18080/cancel_upload?transaction_id=${transaction_id}`, {
+            method: "DELETE",
+            credentials: "include"
+        })
+        const data = await res.json();
+    } catch (err) {
+        console.error("Eroare la trimiterea cancel către server:", err)
+    } finally {
+        transaction_id = "";
+        window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
+    }
+}
+
 export default function AddFile(props) {
     const [show, setShow] = useState(false)
     const menuRef = useRef(null)
 
     const [uploadProgress, setUploadProgress] = useState(0)
-    const [uploadStats, setUploadStats] = useState({ loaded: 0, total: 0 })
+    const [uploadStats, setUploadStats] = useState({ loaded: 0, total: 0})
     const [isUploading, setIsUploading] = useState(false)
     
     let types=""
@@ -79,6 +106,7 @@ export default function AddFile(props) {
         try {
             await new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest()
+                currentXhr = xhr
 
                 xhr.upload.addEventListener("progress", (event) => {
                     if (event.lengthComputable) {
@@ -145,7 +173,8 @@ export default function AddFile(props) {
             throw new Error(data.message || `upload_folder failed: ${response.status}`)
         }
 
-        let transaction_Id = data.transaction_id
+        setUploadStats({ loaded: 0, total: totalMB })
+        transaction_id = data.transaction_id
 
         let uploadedBytes = 0
 
@@ -155,10 +184,11 @@ export default function AddFile(props) {
             let formData = new FormData()
             formData.append('file', file, file.name)
             formData.append('path', file.webkitRelativePath)
-            formData.append('transaction_Id', transaction_Id)
+            formData.append('transaction_Id', transaction_id)
 
             await new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest()
+                currentXhr = xhr
 
                 xhr.upload.addEventListener("progress", (event) => {
                     if (event.lengthComputable) {
@@ -191,7 +221,7 @@ export default function AddFile(props) {
 
                 xhr.addEventListener("error", () => reject(new Error("Network error")))
 
-                xhr.open("POST", `http://localhost:18080/upload_file?transaction_id=${transaction_Id}`)
+                xhr.open("POST", `http://localhost:18080/upload_file?transaction_id=${transaction_id}`)
                 xhr.withCredentials = true 
                 xhr.send(formData)
             })

@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react"
 
+import {cancelUpload} from "./AddFile.jsx"
+
 export default function GlobalUploadProgress() {
     const [uploadData, setUploadData] = useState({ 
         isUploading: false, 
@@ -50,6 +52,7 @@ export default function GlobalUploadProgress() {
             
             <progress value={uploadData.progress} min="0" max="100" />
             
+            <p id="cancelUpload" onClick={() => cancelUpload()}>Cancel</p>
             <p>{uploadData.loaded} of {uploadData.total} MB</p>
         </div>
     )

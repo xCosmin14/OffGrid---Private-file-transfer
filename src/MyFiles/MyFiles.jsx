@@ -21,7 +21,7 @@ export default function MyFiles() {
     useTitle("OffGrid - Private file transfer")
     const [showPathMenu, setShowPathMenu] = useState(false)
     const pathMenuRef = useRef(null)
-
+    
     const [appliedFilters, setAppliedFilters] = useState({});
     const handleFilterChange = (filters) => {setAppliedFilters(filters);};
 

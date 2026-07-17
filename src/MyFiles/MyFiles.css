@@ -185,13 +185,9 @@
     padding-right: 15px;
 }
 
-#music .fileTableHeader div:not(:nth-child(4)):not(:nth-child(7)) {
-    text-align: left;
-}
+#music .fileTableHeader div:not(:nth-child(4)):not(:nth-child(7)) {text-align: left;}
 
-.mobileExpandBtn, .mobileLabel {
-    display: none;
-}
+.mobileExpandBtn, .mobileLabel {display: none;}
 
 @media screen and (max-width: 500px) {
     #fileSearchFilters {

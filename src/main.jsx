@@ -3,7 +3,9 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 import { UserProvider } from './UserContext.jsx' 
+import { FileProvider } from './GetFiles.jsx' 
 import isMobile from "./IsMobile.js"
+
 import { getUID } from "./ColorScheme.js"
 
 import Header from './Header/Header.jsx'
@@ -27,26 +29,28 @@ import GlobalUploadProgress from "./MyFiles/GlobalUploadProgress.jsx"
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <UserProvider>
-      <BrowserRouter>
-        <Header />
-        {isMobile() == 0 && localStorage.getItem("isLogged") === "true" && <Menu />}
-        <GlobalUploadProgress />
+      <FileProvider> 
+        <BrowserRouter>
+          <Header />
+          {isMobile() == 0 && localStorage.getItem("isLogged") === "true" && <Menu />}
+          <GlobalUploadProgress />
 
-        <Routes>
-          <Route path="/" element = {getUID() === null ? <Login /> : <MyFiles />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/passwordreset" element={<ForgotPassword />} />
-          <Route path="/settings" element={getUID() === null ? <Login /> : <Settings />} />
+          <Routes>
+            <Route path="/" element = {getUID() === null ? <Login /> : <MyFiles />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/passwordreset" element={<ForgotPassword />} />
+            <Route path="/settings" element={getUID() === null ? <Login /> : <Settings />} />
 
-          <Route path="/myfiles/shared" element={getUID() === null ? <Login /> : <SharedFiles />} />
-          <Route path="/myfiles/favorites" element={getUID() === null ? <Login /> : <Favorites />} />
-          <Route path="/myfiles/trash" element={getUID() === null ? <Login /> : <Trash />} />
-          <Route path="/myfiles/documents" element={getUID() === null ? <Login /> : <Documents />} />
-          <Route path="/myfiles/music" element={getUID() === null ? <Login /> : <MusicLibrary />} />
-          <Route path="/myfiles/photos" element={getUID() === null ? <Login /> : <PhotoAlbum />} />
-        </Routes>
-      </BrowserRouter>
+            <Route path="/myfiles/shared" element={getUID() === null ? <Login /> : <SharedFiles />} />
+            <Route path="/myfiles/favorites" element={getUID() === null ? <Login /> : <Favorites />} />
+            <Route path="/myfiles/trash" element={getUID() === null ? <Login /> : <Trash />} />
+            <Route path="/myfiles/documents" element={getUID() === null ? <Login /> : <Documents />} />
+            <Route path="/myfiles/music" element={getUID() === null ? <Login /> : <MusicLibrary />} />
+            <Route path="/myfiles/photos" element={getUID() === null ? <Login /> : <PhotoAlbum />} />
+          </Routes>
+        </BrowserRouter>
+      </FileProvider>
     </UserProvider>
   </StrictMode>,
 )

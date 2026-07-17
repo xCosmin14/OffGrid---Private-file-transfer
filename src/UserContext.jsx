@@ -38,7 +38,7 @@ export const UserProvider = ({ children }) => {
             })
             
             const data = await res.json()
-            setUser({ username: data.username, email: data.email, preferences: data.preferences })
+            setUser({ username: data.data[0].username, email: data.data[0].email, preferences: data.data[0].preferences })
 
             const photoRes = await customFetch("http://localhost:18080/get_profile_photo", { method: 'GET' })
             if (photoRes.ok) {
