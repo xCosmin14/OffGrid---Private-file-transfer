@@ -79,17 +79,21 @@ Async<HttpResponse> ClientController::getUserFiles(json::object& obj, std::strin
 			{"name", "file.name"},
 			{"extension", "file.extension"},
 			{"favourite", "file.favourite"},
-			{"inTrash", "file.inTrash"}
+			{"inTrash", "file.inTrash"},
+			{"created", "file.created" },
+			{"modified", "file.modified" }
 			}, "file_fields");
 
 		folder_fields = Helpers::getFields(obj, {
 			{"path", "folder.path"},
-			{"content_type", "folder.content_type"},
 			{"size", "folder.size"},
+			{"type", "folder.type"},
 			{"name", "folder.name"},
 			{"color", "folder.color"},
 			{"favourite", "folder.favourite"},
-			{"inTrash", "folder.inTrash"}
+			{"inTrash", "folder.inTrash"},
+			{"created", "folder.created" },
+			{"modified", "folder.modified" }
 			}, "folder_fields");
 
 	}
@@ -99,8 +103,8 @@ Async<HttpResponse> ClientController::getUserFiles(json::object& obj, std::strin
 	}
 
 	try {
-		json::object file_obj = co_await Helpers::getGeneralData(Queries::GetUserFiles(file_fields, "file", uid), this->db);
-		json::object folder_obj = co_await Helpers::getGeneralData(Queries::GetUserFiles(folder_fields, "folder", uid), this->db);
+		json::array file_obj = co_await Helpers::getGeneralData(Queries::GetUserFiles(file_fields, "file", uid), this->db);
+		json::array folder_obj = co_await Helpers::getGeneralData(Queries::GetUserFiles(folder_fields, "folder", uid), this->db);
 
 		json::object result;
 		result["files"] = file_obj;
@@ -114,7 +118,7 @@ Async<HttpResponse> ClientController::getUserFiles(json::object& obj, std::strin
 	}
 	catch (std::exception& e)
 	{
-		co_return Helpers::makeResponse(http::status::not_found, e.what());
+		//co_return Helpers::makeResponse(http::status::not_found, e.what());
 	}
 }
 

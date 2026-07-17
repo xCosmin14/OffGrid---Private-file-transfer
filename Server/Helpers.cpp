@@ -116,7 +116,7 @@ std::vector<std::string> Helpers::getFields(json::object& obj, const std::unorde
 				auto found = allowed_fields.find(name);
 
 				if (found == allowed_fields.end())
-					throw std::runtime_error("unkown field");
+					throw std::runtime_error("unkown field: " + name);
 				else
 					fields.push_back(found->second);
 			}
@@ -126,7 +126,7 @@ std::vector<std::string> Helpers::getFields(json::object& obj, const std::unorde
 	return fields;
 }
 
-Async<json::object> Helpers::getGeneralData(Query q, DatabaseController& db)
+Async<json::array> Helpers::getGeneralData(Query q, DatabaseController& db)
 {
 
 
@@ -136,22 +136,27 @@ Async<json::object> Helpers::getGeneralData(Query q, DatabaseController& db)
 
 		auto rows = results.rows();
 
-		if (rows.empty())
-			throw std::runtime_error("not found");
+		if (rows.empty()) 
+			co_return json::array({});
 
-
-		json::object response_obj;
-		for (int i = 0; i < rows[0].size(); i++)
+		json::array response_arr;
+		for (auto const& row : rows) 
 		{
-			std::string column = results.meta()[i].column_name();
-			auto value = rows[0][i];
+			json::object response_obj;
+			for (int i = 0; i < row.size(); i++)
+			{
+				std::string column = results.meta()[i].column_name();
+				auto value = row[i];
 
-			if (value.is_null()) response_obj[column] = nullptr;
-			else if (value.is_string()) response_obj[column] = value.as_string();
-			else if (value.is_int64()) response_obj[column] = value.as_int64();
+				if (value.is_null()) response_obj[column] = nullptr;
+				else if (value.is_string()) response_obj[column] = value.as_string();
+				else if (value.is_int64()) response_obj[column] = value.as_int64();
+
+				response_arr.push_back(response_obj);
+			}
 		}
 
-		co_return response_obj;
+		co_return response_arr;
 
 
 	}
