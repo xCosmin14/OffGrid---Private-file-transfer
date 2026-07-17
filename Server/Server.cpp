@@ -4,6 +4,7 @@
 #include <boost/asio/detached.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/beast/websocket.hpp>
 
 #include <string>
 #include <coroutine>
@@ -16,6 +17,33 @@ using Async = boost::asio::awaitable<T>;
 
 namespace http = boost::beast::http;
 namespace err = boost::asio::error;
+namespace websocket = boost::beast::websocket;
+
+Async<void> handle_websocket_session(boost::asio::ip::tcp::socket socket, ClientController& c)
+{
+	auto ws = std::make_shared<websocket::stream<boost::asio::ip::tcp::socket>>(std::move(socket));
+	try {
+
+		co_await ws->async_accept(boost::asio::use_awaitable);
+
+		for (;;)
+		{
+			boost::beast::flat_buffer buffer;
+			co_await ws->async_read(buffer, boost::asio::use_awaitable);
+
+			std::string msg = boost::beast::buffers_to_string(buffer.data());
+			json::object obj = json::parse(msg).as_object();
+
+
+		}
+	}
+	catch (boost::system::system_error& e)
+	{
+		if (e.code() != websocket::error::closed)
+			std::cerr << "WS session error: " << e.what();
+	}
+	
+}
 
 
 Async<void> handle_session(boost::asio::ip::tcp::socket socket, ClientController& c)
@@ -30,6 +58,12 @@ Async<void> handle_session(boost::asio::ip::tcp::socket socket, ClientController
 			http::request_parser<http::vector_body<uint8_t>> req_parser;
 			req_parser.body_limit(100000ULL * 1024 * 1024);
 			co_await http::async_read(stream, buffer, req_parser, boost::asio::use_awaitable);
+
+			if (websocket::is_upgrade(req_parser.get()))
+			{
+				co_await handle_websocket_session(stream.release_socket(), c);
+				co_return;  
+			}
 
 			auto& vec = req_parser.get().body();
 			std::string target = req_parser.get().target();

@@ -77,7 +77,7 @@ Async<HttpResponse> ClientController::getUserFiles(json::object& obj, std::strin
 			{"content_type", "file.content_type"},
 			{"size", "file.size"},
 			{"name", "file.name"},
-			{"extention", "file.extention"},
+			{"extension", "file.extension"},
 			{"favourite", "file.favourite"},
 			{"inTrash", "file.inTrash"}
 			}, "file_fields");
@@ -141,7 +141,7 @@ Async<HttpResponse> ClientController::getFileMetadata(std::string file_id, std::
 		{"content_type", "file.content_type"},
 		{"size", "file.size"},
 		{"name", "file.name"},
-		{"extention", "file.extention"},
+		{"extension", "file.extention"},
 		{"favourite", "file.favourite"},
 		{"inTrash", "file.inTrash"}
 	};
@@ -257,12 +257,51 @@ Async<HttpResponse> ClientController::changeData(json::object& obj, std::string 
 	if (error)
 		co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
 
-	std::string id = "", id_column="";
-	if (entity.starts_with("/"))
-		id = entity.substr(entity.find("/", 1) + 1);
 
-	if (entity != "user")
-		id_column = "creator_id"; // i have to change this
+	std::unordered_map<std::string, std::unordered_set<std::string>> allowed_fields = {
+		{"user", {"preferences"}},
+		{"access", {"type"}},
+		{"notification", {"type", "seen", "answered", "info", "response"}},
+		{"file", {"name", "path", "size", "favourite", "inTrash"}},
+		{"folder", {"name", "path", "modified", "color", "favourite", "inTrash"}}
+	};
+
+	std::string id = "", id_column = "";
+
+	if (entity.starts_with("access/")) {
+		entity = entity.substr(entity.find("/") + 1);
+		id_column = entity.substr(0, entity.find("/")) + "_id";
+		id = entity.substr(entity.find("/") + 1);
+		entity = "access";
+		if (id_column != "receiver_id" && id_column != "sender_id")
+			co_return Helpers::makeResponse(http::status::bad_request, "unknown id: " + id_column);
+	}
+	else if(entity != "user"){
+		auto pos = entity.find("/");
+		if (pos == std::string::npos)
+			co_return Helpers::makeResponse(http::status::bad_request, "missing id");
+
+		id = entity.substr(pos + 1);
+		entity = entity.substr(0, pos);
+
+		if (entity == "file" || entity == "folder")
+			id_column = "creator_id";
+		else if (entity == "notification")
+			id_column = entity + "_id";
+		else 
+			co_return Helpers::makeResponse(http::status::bad_request, "unknown entity: " + entity);
+	}
+
+	auto entity_fields = allowed_fields.find(entity);
+	if (entity_fields == allowed_fields.end())
+		co_return Helpers::makeResponse(http::status::bad_request, "unknown entity: " + entity);
+
+	for (auto& it : obj)
+	{
+		if (!entity_fields->second.count(it.key()))
+			co_return Helpers::makeResponse(http::status::bad_request, "unknown field: " + std::string(it.key()));
+
+	}
 
 
 	try {
@@ -278,3 +317,4 @@ Async<HttpResponse> ClientController::changeData(json::object& obj, std::string 
 
 
 }
+

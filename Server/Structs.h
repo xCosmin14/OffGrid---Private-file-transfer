@@ -60,7 +60,7 @@ struct FileData
 	std::string filename;
 	std::string path;
 	std::string content_type;
-	std::string extention;
+	std::string extension;
 	size_t size;
 	std::string file_id = "";
 	std::string folder_id = "";
@@ -74,7 +74,7 @@ struct FileData
 		obj["folder_id"] = folder_id.empty() ? json::value(nullptr) : json::value(folder_id);
 		obj["creator_id"] = creator_id;
 		obj["name"] = filename;
-		obj["extention"] = extention;
+		obj["extension"] = extension;
 		obj["path"] = path;
 		obj["size"] = static_cast<int64_t>(size);
 		obj["content_type"] = content_type;

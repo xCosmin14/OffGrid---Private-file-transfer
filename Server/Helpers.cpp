@@ -72,11 +72,11 @@ FileData Helpers::parseBody(std::vector<uint8_t>& body)
 	size_t size = content.size();
 
 	auto pos = filename.find_first_of(".");
-	std::string extention = "unknown extension";
+	std::string extension = "unknown extension";
 	if (pos != std::string::npos)
-		extention = filename.substr(pos + 1);
+		extension = filename.substr(pos + 1);
 
-	return { content, filename, path, content_type, extention, size };
+	return { content, filename, path, content_type, extension, size };
 }
 
 

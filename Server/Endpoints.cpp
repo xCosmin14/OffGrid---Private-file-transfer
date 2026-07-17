@@ -36,9 +36,9 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
 
 		else if (target == "/upload_folder") co_return co_await this->uploadFolder(obj, session_id); // tested
 
-		else if (target == "/create_folder") co_return co_await this->createEntity(obj, session_id, { "color", "name", "type", "parent_folder_id" }, "folder");
+		else if (target == "/create_folder") co_return co_await this->createEntity(obj, session_id, { "color", "name", "type", "parent_folder_id" }, "folder"); // tested
 
-		else if (target == "/create_file") co_return co_await this->createEntity(obj, session_id, { "name", "folder_id" }, "file");
+		else if (target == "/create_file") co_return co_await this->createEntity(obj, session_id, { "name", "folder_id" }, "file"); // tested
 
 		else if (target == "/user_data") co_return co_await this->getUserData(obj, session_id);
 
@@ -51,7 +51,7 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
 				co_return Helpers::makeResponse(http::status::bad_request, "missing file id");
 
 			co_return co_await this->getFileMetadata(std::string(target.substr(pos + 9)), session_id, obj);
-		}
+		} // tested
 
 	}
 	else if (method == http::verb::get)
@@ -91,7 +91,7 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
 			if (pos == std::string::npos)
 				co_return co_await this->changeData(obj, session_id);
 
-			co_return co_await this->changeData(obj, session_id, (std::string)target.substr(pos + 12)); 
+			co_return co_await this->changeData(obj, session_id, (std::string)target.substr(pos + 13)); 
 			// not done yet -- might work for user updates tho ^^
 		}
 	}

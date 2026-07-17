@@ -112,6 +112,11 @@ Async<HttpResponse> ClientController::loginUser(json::object& obj)
 			std::cerr << "Database query failed " << e.what() << std::endl;
 			co_return Helpers::makeResponse(http::status::internal_server_error, "internal server error");
 		}
+		catch (std::exception& e)
+		{
+			std::cerr << "Log in failed: " << e.what() << std::endl;
+			co_return Helpers::makeResponse(http::status::internal_server_error, "internal server error");
+		}
 }
 
 
