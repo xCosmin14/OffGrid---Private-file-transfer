@@ -44,7 +44,7 @@ FileData Helpers::parseBody(std::vector<uint8_t>& body)
 			std::filesystem::path p(raw_path);
 
 			filename = p.filename().string();
-			path = p.parent_path().string();
+			path = raw_path.empty() ? filename : raw_path;
 			if (path == "") path = filename;
 		}
 
