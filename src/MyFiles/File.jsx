@@ -10,6 +10,7 @@ import Trash from "../assets/SVG/FileIcons/Trash.svg?react"
 import StarFull from "../assets/SVG/StarFull.svg?react"
 import Group from "../assets/SVG/UserIcons/Group.svg?react"
 import ArrowDown from "../assets/SVG/ArrowDown.svg?react" 
+
 export default function File(props) {
     const { pathname } = useLocation()
     const displayOwner = (pathname.includes("shared") || pathname.includes("favorites") || pathname.includes("trash"))
@@ -61,7 +62,10 @@ export default function File(props) {
             
             {/* Informațiile ascunse pe mobil până la expandare */}
             <h3 className="fileDetail"><span className="mobileLabel">Type: </span>{isFolder ? "Folder" : props.extension}</h3>
-            <h3 className="fileDetail"><span className="mobileLabel">Size: </span>{props.size ? props.size : "-"}</h3>
+            <h3 className="fileDetail"><span className="mobileLabel">Size: </span>{
+                props.size ? props.size > 1073741824 ? `${Number.parseFloat(props.size/1000000.0).toFixed(2)} GB` : `${Number.parseFloat(props.size/1048576.0).toFixed(2)} MB` : "-"
+            }</h3>
+            <h3 className="fileDetail"><span className="mobileLabel">Created: </span>{props.created}</h3>
             <h3 className="fileDetail"><span className="mobileLabel">Modified: </span>{props.lastModified}</h3>
             {displayOwner && <h3 className="fileDetail"><span className="mobileLabel">Owner: </span>{props.owner}</h3>}
 

@@ -97,8 +97,9 @@ export default function AddFile(props) {
         const file = e.target.files[0]
         if (!file) return
 
-        let formData = new FormData()
-        formData.append('file', file, file.name)
+        const formData = new FormData() 
+        const finalPath = props.currentPath ? `${props.currentPath}/${file.name}` : file.name
+        formData.append("file", file, finalPath)
 
         const totalBytes = file.size
         const totalMB = (totalBytes / (1024 * 1024)).toFixed(1)
@@ -139,6 +140,7 @@ export default function AddFile(props) {
                 xhr.send(formData)
             })
             
+            if (props.onUploadSuccess) props.onUploadSuccess()
             window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
         } catch (error) {
             window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
@@ -153,12 +155,12 @@ export default function AddFile(props) {
         const files = Array.from(e.target.files)
         if (files.length === 0) return
 
-        const paths = files.map(file => file.webkitRelativePath)
+        const paths = files.map(file => 
+            props.currentPath ? `${props.currentPath}/${file.webkitRelativePath}` : file.webkitRelativePath
+        )
 
         const totalBytes = files.reduce((acc, file) => acc + file.size, 0)
         const totalMB = (totalBytes / (1024 * 1024)).toFixed(1)
-
-        const folderName = files[0].webkitRelativePath.split('/')[0]
 
         const response = await customFetch("http://localhost:18080/upload_folder", {
             method: "POST",
@@ -183,8 +185,6 @@ export default function AddFile(props) {
 
             let formData = new FormData()
             formData.append('file', file, file.name)
-            formData.append('path', file.webkitRelativePath)
-            formData.append('transaction_Id', transaction_id)
 
             await new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest()
@@ -227,6 +227,7 @@ export default function AddFile(props) {
             })
         }
 
+        if (props.onUploadSuccess) props.onUploadSuccess()
         window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
     }
 

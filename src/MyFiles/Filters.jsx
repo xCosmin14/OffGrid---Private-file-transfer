@@ -1,12 +1,20 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useContext } from "react"
 import { useLocation } from "react-router-dom"
 
+import { FileContext } from "../GetFiles.jsx"
 import isMobile from "../IsMobile.js"
 
 import "../Header/Header.css"
 
 export default function Filters( {onFilterChange} ) {
     const { pathname } = useLocation()
+
+    const { files, folders, isLoading, refreshFiles } = useContext(FileContext)
+    let extensions = []
+
+    !isLoading && files.forEach(file => {
+        if (file.extension && !extensions.includes(file.extension)) extensions.push(file.extension)
+    })
 
     const [localFilters, setLocalFilters] = useState({
         dateFilterLowerBound: "",
@@ -26,7 +34,7 @@ export default function Filters( {onFilterChange} ) {
     }
 
     useEffect(() => {
-        if (!onFilterChange) return;
+        if (!onFilterChange) return
 
         const delayDebounceFn = setTimeout(() => {
             onFilterChange(localFilters)
@@ -84,9 +92,12 @@ export default function Filters( {onFilterChange} ) {
                     value={localFilters.extensionFilter}
                     onChange={handleInputChange}
                 >
-                    <option value=".pptx">.pptx</option>
-                    <option value=".png">.png</option>
-                    {/* SE VOR CITI TOATE FIȘIERELE ȘI SE VOR OBȚINE EXTENSIILE */}
+                    <option value="">All extensions</option>
+                    {extensions.map((ext) => (
+                        <option key={ext} value={ext}>
+                            {"." + ext}
+                        </option>
+                    ))}
                 </select>
             </div>
 

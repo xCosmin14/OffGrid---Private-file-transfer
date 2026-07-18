@@ -71,7 +71,7 @@
 .fileTableHeader,
 .fileRow {
     display: grid;
-    grid-template-columns: 2fr 0.8fr 0.8fr 1.5fr 1.5fr;
+    grid-template-columns: 3fr 0.8fr 1fr 1fr 1fr 1fr;
     align-items: center; box-sizing: border-box;
     border: 1px solid transparent;
     min-width: 800px;
@@ -113,6 +113,7 @@
     border-color: var(--hoverCol);
     box-shadow: 0 4px 12px var(--boxShadowCol);
 }
+.fileRow:hover svg {color: var(--hoverCol); fill: var(--hoverCol);}
 
 .fileRow h3 {
     font-size: 16px; font-weight: 500;
@@ -188,6 +189,12 @@
 #music .fileTableHeader div:not(:nth-child(4)):not(:nth-child(7)) {text-align: left;}
 
 .mobileExpandBtn, .mobileLabel {display: none;}
+
+#emptyMessage {
+    position: relative;
+    margin: auto; bottom: 15%;
+    opacity: .6;
+}
 
 @media screen and (max-width: 500px) {
     #fileSearchFilters {
