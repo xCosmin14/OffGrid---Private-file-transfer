@@ -151,6 +151,24 @@ Async<json::array> Helpers::getGeneralData(Query q, DatabaseController& db)
 				if (value.is_null()) response_obj[column] = nullptr;
 				else if (value.is_string()) response_obj[column] = value.as_string();
 				else if (value.is_int64()) response_obj[column] = value.as_int64();
+				else if (value.is_datetime())
+				{
+					std::ostringstream oss;
+					oss << value.as_datetime();
+					response_obj[column] = oss.str();
+				}
+				else if (value.is_date())
+				{
+					std::ostringstream oss;
+					oss << value.as_date();
+					response_obj[column] = oss.str();
+				}
+				else if (value.is_time())
+				{
+					std::ostringstream oss;
+					oss << value.as_time();
+					response_obj[column] = oss.str();
+				}
 
 			}
 			response_arr.push_back(response_obj);
