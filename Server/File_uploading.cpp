@@ -8,21 +8,34 @@
 
 #include <set>
 
-std::vector<std::string> ClientController::appendFolders(std::vector<Query>& queries, const std::vector<std::string>& paths, std::string uid, std::string transaction_id)
+Async<std::vector<std::string>> ClientController::appendFolders(std::vector<Query>& queries, const std::vector<std::string>& paths, std::string uid, std::string transaction_id)
 {
 	std::unordered_map<std::string, std::string> existingFolders;
-
 	std::set<std::string> folders_set;
-	std::vector<std::string> ids(paths.size(), "");
 
+	try {
+		mysql::results results = co_await this->db.runQuery(Queries::GetUserFolders(uid));
+		for (const auto& row : results.rows())
+		{
+			std::string folder_id = row.at(0).as_string();
+			std::string path = row.at(1).as_string();
+
+			existingFolders[path] = folder_id;
+			folders_set.insert(path);
+		}
+	}
+	catch (boost::system::system_error& e)
+	{
+		std::cerr << "Failed loading existing folders: " << e.what() << std::endl;
+	}
+
+	std::vector<std::string> ids(paths.size(), "");
 	for (int i = 0; i < paths.size(); i++)
 	{
 		std::string path = paths[i];
 		int start = 0;
 		auto pos = path.find_first_of("/");
-
 		std::string deepest_folder_id = "";
-
 		while (pos != std::string::npos)
 		{
 			if (start != pos)
@@ -30,12 +43,9 @@ std::vector<std::string> ClientController::appendFolders(std::vector<Query>& que
 				FolderData fd;
 				std::string folder_name = path.substr(start, pos - start);
 				std::string full_path = path.substr(0, pos);
-
 				fd.folder_name = folder_name;
 				fd.creator_id = uid;
-
 				auto [it, exists] = folders_set.insert(full_path);
-
 				if (!exists) {
 					deepest_folder_id = existingFolders[full_path];
 				}
@@ -45,7 +55,6 @@ std::vector<std::string> ClientController::appendFolders(std::vector<Query>& que
 					fd.creator_id = uid;
 					fd.path = full_path;
 					fd.folder_id = this->createId("folder");
-
 					if (start == 0) {
 						fd.parent_folder_id = "";
 					}
@@ -55,27 +64,18 @@ std::vector<std::string> ClientController::appendFolders(std::vector<Query>& que
 						auto pit = existingFolders.find(parent);
 						fd.parent_folder_id = (pit == existingFolders.end()) ? "" : pit->second;
 					}
-
 					existingFolders[full_path] = fd.folder_id;
 					deepest_folder_id = fd.folder_id;
-
 					queries.push_back(Queries::InsertFolder(fd));
 				}
-
-
 			}
-
 			start = path.find_first_not_of("/", pos + 1);
 			if (start == std::string::npos) break;
 			pos = path.find_first_of("/", start);
 		}
-
 		ids[i] = deepest_folder_id;
-
 	}
-
-	return ids;
-
+	co_return ids;
 }
 
 
