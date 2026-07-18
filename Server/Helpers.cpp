@@ -28,11 +28,13 @@ FileData Helpers::parseBody(std::vector<uint8_t>& body)
 	std::string header_section = body_str.substr(0, header);
 
 
-	std::string filename = "unknown_file", path = "unknown_path";
+	std::string filename = "none", path = "none";
 	auto filename_pos = header_section.find("filename=\"");
 
+	if(filename_pos == std::string::npos || filename_pos >= header)
+		throw std::runtime_error("missing filename in multipart body");
 
-	if (filename_pos != std::string::npos && filename_pos < header)
+	else 
 	{
 		auto start = filename_pos + 10;
 		auto end = body_str.find("\"", start);
@@ -44,7 +46,7 @@ FileData Helpers::parseBody(std::vector<uint8_t>& body)
 			std::filesystem::path p(raw_path);
 
 			filename = p.filename().string();
-			path = p.parent_path().string();
+			path = raw_path.empty() ? filename : raw_path;
 			if (path == "") path = filename;
 		}
 
