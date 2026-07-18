@@ -70,14 +70,32 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
 
 	}
 
-	else if (method == http::verb::delete_) // fully tested
+	else if (method == http::verb::delete_) 
 	{
 
-		if (target.starts_with("/cancel_upload"))
+		if (target.starts_with("/delete"))
+		{
+			auto pos = target.find("_");
+			if (pos == std::string::npos)
+				co_return Helpers::makeResponse(http::status::bad_request, "missing entity");
+
+			auto id_pos = target.find("?");
+			if (id_pos == std::string::npos)
+				co_return Helpers::makeResponse(http::status::bad_request, "missing id");
+
+			std::string entity = (std::string)target.substr(pos + 1, id_pos - pos - 1);
+			if (entity != "file" && entity != "folder")
+				co_return Helpers::makeResponse(http::status::bad_request, "entity must be file or folder");
+
+			std::string entity_id = (std::string)target.substr(id_pos + 1);
+			co_return co_await this->deleteFile(entity, entity_id, session_id);
+		}
+
+		else if (target.starts_with("/cancel_upload")) // tested
 		{
 			auto pos = target.find("?transaction_id=");
 			if (pos == std::string::npos)
-				co_return Helpers::makeResponse(http::status::bad_request, "missing transaction_id");
+				co_return Helpers::makeResponse(http::status::bad_request, "missing transaction id");
 
 			co_return co_await this->cancelFolderUpload(std::string(target.substr(pos + 16)), session_id);
 		} 

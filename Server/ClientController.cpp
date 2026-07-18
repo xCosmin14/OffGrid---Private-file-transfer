@@ -57,6 +57,7 @@ Async<HttpResponse> ClientController::UpdateDb(std::vector<Query> queries, std::
 	}
 }
 
+
 Async<HttpResponse> ClientController::createEntity(json::object& obj, std::string session_id, 
 	std::unordered_set<std::string> allowed_fields, std::string entity)
 
@@ -121,8 +122,11 @@ Async<HttpResponse> ClientController::createEntity(json::object& obj, std::strin
 		co_return Helpers::makeResponse(http::status::internal_server_error, "failed creating folder");
 	}
 
-	co_return Helpers::makeResponse(http::status::ok, "folder created successfuly");
+	json::object res;
+	res[entity + "_id"] = obj[entity + "_id"];
+	co_return Helpers::makeResponse(http::status::ok, "folder created successfuly", "", res);
 }
+
 
 Async<void> ClientController::loadLoggedUsers()
 {

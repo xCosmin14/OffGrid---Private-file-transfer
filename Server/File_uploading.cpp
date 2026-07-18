@@ -78,6 +78,7 @@ std::vector<std::string> ClientController::appendFolders(std::vector<Query>& que
 
 }
 
+
 Async<HttpResponse> ClientController::cancelFolderUpload(std::string transaction_id, std::string session_id)
 {
 	std::string uid;
@@ -265,4 +266,72 @@ Async<HttpResponse> ClientController::uploadFolder(json::object& obj, std::strin
 
 
 	co_return Helpers::makeResponse(http::status::ok, "ready to receive files", "", res);
+}
+
+
+Async<HttpResponse> ClientController::deleteFile(std::string entity, std::string entity_id, std::string session_id)
+{
+	std::string uid;
+	std::exception_ptr error;
+
+
+	try {
+		uid = this->getUserId(session_id);
+	}
+	catch (std::exception& e)
+	{
+		error = std::current_exception();
+	}
+
+	if (error)
+		co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
+
+	try {
+		Query q;
+		if (entity == "file") q = Queries::GetFile(entity_id, uid);
+		else q = Queries::GetFolder(entity_id, uid);
+
+		mysql::results results = co_await this->db.runQuery(q);
+		auto rows = results.rows();
+		if(rows.empty())
+			co_return Helpers::makeResponse(http::status::unauthorized, entity + " does not belong to the user");
+
+		std::string path = "";
+		if(rows[0][0].is_string())
+			path = rows[0][0].as_string();
+
+		mysql::results delete_results = co_await this->db.runQuery(Queries::DeleteFile_(entity_id, entity, uid));
+
+		if(delete_results.affected_rows() == 0)
+			co_return Helpers::makeResponse(http::status::not_found, "not found or access denied");
+
+
+		if(path.empty())
+			std::cout << "No " + entity + " to delete from the disk";
+		else {
+			std::filesystem::path full_path = "FileSystem/files/" + uid + "/" + path;
+			std::error_code err;
+
+			if (!path.empty()) {
+				if (entity == "file") std::filesystem::remove(full_path, err);
+				else if (entity == "folder") std::filesystem::remove_all(full_path, err);
+
+				if (err)
+					std::cerr << "Failed removing " << entity << " from disk: " << full_path << " (" << err.message() << ")" << std::endl;
+			}
+		}
+
+	}
+	catch (boost::system::system_error& e)
+	{
+		std::cout << "Failed query: " << e.what() << std::endl;
+		co_return Helpers::makeResponse(http::status::internal_server_error, "internal server error");
+	}
+	catch (std::exception& e)
+	{
+		std::cerr << "error: " << e.what() << std::endl;
+
+	}
+	co_return Helpers::makeResponse(http::status::ok, entity + " deleted successfuly");
+
 }

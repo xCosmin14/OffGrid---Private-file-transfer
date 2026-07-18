@@ -71,9 +71,9 @@ FileData Helpers::parseBody(std::vector<uint8_t>& body)
 	std::string content = body_str.substr(data_start, data_end - data_start);
 	size_t size = content.size();
 
-	auto pos = filename.find_first_of(".");
-	std::string extension = "unknown extension";
-	if (pos != std::string::npos)
+	auto pos = filename.find_last_of(".");
+	std::string extension = "none";
+	if (pos != std::string::npos && pos)
 		extension = filename.substr(pos + 1);
 
 	return { content, filename, path, content_type, extension, size };

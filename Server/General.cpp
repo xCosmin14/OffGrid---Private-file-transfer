@@ -123,6 +123,7 @@ Async<HttpResponse> ClientController::getUserFiles(json::object& obj, std::strin
 	}
 }
 
+
 Async<HttpResponse> ClientController::getFileMetadata(std::string file_id, std::string session_id, json::object& obj)
 {
 	std::string uid;
@@ -220,6 +221,7 @@ Async<HttpResponse> ClientController::getFile(std::string file_id, std::string s
 	}
 
 }
+
 
 Async<HttpResponse> ClientController::getProfilePhoto(std::string session_id)
 {

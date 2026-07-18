@@ -134,17 +134,24 @@ Query Queries::GetUserFiles(std::vector<std::string> const& vect, std::string en
 
 Query Queries::GetFile(std::string file_id, std::string uid)
 {
-	std::vector<mysql::field> values;
-	values.emplace_back(file_id);
-	values.emplace_back(uid);
-	values.emplace_back(uid);
-
 	std::string query = "SELECT file.path, file.content_type, file.creator_id from offgrid_db.file "
 		"LEFT JOIN offgrid_db.access on file.file_id = access.file_id "
 		"WHERE file.file_id = ? and (file.creator_id = ? or access.user_id = ?)";
 
 	return { query, {
 		mysql::field(file_id),
+		mysql::field(uid),
+		mysql::field(uid) } };
+}
+
+Query Queries::GetFolder(std::string folder_id, std::string uid)
+{
+	std::string query = "SELECT folder.path from offgrid_db.folder "
+		"LEFT JOIN offgrid_db.access on folder.folder_id = access.folder_id "
+		"WHERE folder.folder_id = ? and (folder.creator_id = ? or access.user_id = ?)";
+
+	return { query, {
+		mysql::field(folder_id),
 		mysql::field(uid),
 		mysql::field(uid) } };
 }
@@ -233,4 +240,13 @@ Query Queries::UpdateUser(json::object const& obj, std::string uid, std::string 
 	}
 
 	return { query, values };
+}
+
+
+Query Queries::DeleteFile_(std::string file_id, std::string entity, std::string uid)
+{
+	return { "DELETE " + entity + " FROM offgrid_db." + entity +
+		" LEFT JOIN offgrid_db.access ON access." + entity + "_id = " + entity + "." + entity + "_id"
+		" WHERE " + entity + "." + entity + "_id = ? AND (" + entity + ".creator_id = ? OR (access.user_id = ? AND access.type = 'edit'))",
+		{mysql::field(file_id), mysql::field(uid), mysql::field(uid)}};
 }

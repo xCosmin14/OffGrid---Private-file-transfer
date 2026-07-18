@@ -49,6 +49,8 @@ class ClientController
 	Async<HttpResponse> uploadFile(std::vector<uint8_t>&, std::string, std::string, std::string folder_id = "");
 	Async<HttpResponse> uploadFolder(json::object& obj, std::string);
 
+	Async<HttpResponse> deleteFile(std::string, std::string, std::string);
+
 	Async<HttpResponse> getFile(std::string, std::string);
 	Async<HttpResponse> getProfilePhoto(std::string);
 
@@ -56,6 +58,7 @@ class ClientController
 
 	Async<HttpResponse> getUserData(json::object&, std::string);
 	Async<HttpResponse> getUserFiles(json::object&, std::string);
+
 
 
 	Async<HttpResponse> UpdateDb(std::vector<Query>, std::string, std::string);
