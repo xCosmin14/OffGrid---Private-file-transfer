@@ -7,6 +7,8 @@ export const FileProvider = ({ children }) => {
     const [files, setFiles] = useState([])
     const [folders, setFolders] = useState([])
     const [isLoading, setIsLoading] = useState(true)
+    const [searchQuery, setSearchQuery] = useState("")
+    const [sentBy, setSentBy] = useState("")
 
     const fetchFiles = async () => {
         try {
@@ -37,7 +39,10 @@ export const FileProvider = ({ children }) => {
     }, [])
 
     return (
-        <FileContext.Provider value={{ files, folders, isLoading, refreshFiles: fetchFiles }}>
+        <FileContext.Provider value={
+            { files, folders, isLoading, searchQuery, sentBy,
+                setSearchQuery, setSentBy, refreshFiles: fetchFiles 
+            }}>
             {children}
         </FileContext.Provider>
     );

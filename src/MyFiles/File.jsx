@@ -14,7 +14,7 @@ import ArrowDown from "../assets/SVG/ArrowDown.svg?react"
 export default function File(props) {
     const { pathname } = useLocation()
     const displayOwner = (pathname.includes("shared") || pathname.includes("favorites") || pathname.includes("trash"))
-    const isFolder = props.extension === "folder"
+    const isFolder = props.extension === "Folder"
 
     const [showMenu, setShowMenu] = useState(false)
     const [isExpanded, setIsExpanded] = useState(false) 
@@ -41,10 +41,14 @@ export default function File(props) {
         setShowMenu(false)
     }
 
+    const handleRowClick = (e) => {
+        if (window.innerWidth <= 500) setIsExpanded(p => !p)
+        else if (isFolder && props.onFolderClick) props.onFolderClick()
+    }
+
     return (
-        <div className={`fileRow ${isExpanded ? "expanded" : ""}`} onClick={() => setIsExpanded(p => !p)}>
+        <div className={`fileRow ${isExpanded ? "expanded" : ""}`} onClick={() => setIsExpanded(p => !p), handleRowClick}>
             <div className="fileNameCell">
-                {/* Butonul de expandare (vizibil doar pe mobil) */}
                 <div className="mobileExpandBtn" onClick={(e) => { e.stopPropagation(); setIsExpanded(p => !p) }}>
                     <ArrowDown className={`expandIcon ${isExpanded ? "rotated" : ""}`} />
                 </div>
@@ -53,14 +57,13 @@ export default function File(props) {
                     {isFolder ? (
                         <Folder />
                     ) : (
-                        <FileIcon extension={props.extension} {...(defaultStyles[props.extension] || {})} />
+                        <FileIcon extension={props.extension} {...(defaultStyles[props.extension.toLowerCase()] || {})} />
                     )}
                 </div>
 
                 <h3 className="itemName">{props.name}</h3>
             </div>
             
-            {/* Informațiile ascunse pe mobil până la expandare */}
             <h3 className="fileDetail"><span className="mobileLabel">Type: </span>{isFolder ? "Folder" : props.extension}</h3>
             <h3 className="fileDetail"><span className="mobileLabel">Size: </span>{
                 props.size ? props.size > 1073741824 ? `${Number.parseFloat(props.size/1000000.0).toFixed(2)} GB` : `${Number.parseFloat(props.size/1048576.0).toFixed(2)} MB` : "-"
@@ -69,14 +72,12 @@ export default function File(props) {
             <h3 className="fileDetail"><span className="mobileLabel">Modified: </span>{props.lastModified}</h3>
             {displayOwner && <h3 className="fileDetail"><span className="mobileLabel">Owner: </span>{props.owner}</h3>}
 
-            <div className="fileOptionsContainer" ref={menuRef}>
-                <Dots 
-                    className="fileDots" 
-                    onClick={(e) => {
-                        e.stopPropagation()
-                        setShowMenu(p => !p)
-                    }} 
-                />
+            <div className="fileOptionsContainer" ref={menuRef} 
+                onClick={(e) => {
+                    e.stopPropagation()
+                    setShowMenu(p => !p)
+                }}>
+                <Dots className="fileDots" />
 
                 {showMenu && <div className="fileDropdownMenu">
                     <div className="pathMenuOption" onClick={(e) => handleAction(e, "download")}>

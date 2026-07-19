@@ -41,6 +41,11 @@ export default function AddFile(props) {
     const [show, setShow] = useState(false)
     const menuRef = useRef(null)
 
+    const [displayCreateFolder, setDisplayCreateFolder] = useState(false)
+    const createFolderRef = useRef(null)
+    const [newFolderName, setNewFolderName] = useState("")
+    const [newFolderColor, setNewFolderColor] = useState("#000000")
+
     const [uploadProgress, setUploadProgress] = useState(0)
     const [uploadStats, setUploadStats] = useState({ loaded: 0, total: 0})
     const [isUploading, setIsUploading] = useState(false)
@@ -70,6 +75,24 @@ export default function AddFile(props) {
         default:
             types = "" 
     }
+
+    useEffect(() => {
+        const handleClickOutsideFolder = (event) => {
+            if (createFolderRef.current && !createFolderRef.current.contains(event.target)) {
+                setDisplayCreateFolder(false)
+            }
+        }
+
+        if (displayCreateFolder) {
+            document.addEventListener("mousedown", handleClickOutsideFolder)
+            document.addEventListener("touchstart", handleClickOutsideFolder)
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutsideFolder)
+            document.removeEventListener("touchstart", handleClickOutsideFolder)
+        }
+    }, [displayCreateFolder])
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -111,15 +134,19 @@ export default function AddFile(props) {
 
                 xhr.upload.addEventListener("progress", (event) => {
                     if (event.lengthComputable) {
-                        const percentage = Math.round((event.loaded / totalBytes) * 100)
+                        const percentage = Math.round((event.loaded / event.total) * 100)
+                        
                         const loadedMB = (event.loaded / (1024 * 1024)).toFixed(1)
+                        const networkTotalMB = (event.total / (1024 * 1024)).toFixed(1)
+
+                        const finalPercentage = Math.min(percentage, 100)
 
                         window.dispatchEvent(new CustomEvent('upload-progress', { 
                             detail: { 
                                 isUploading: true, 
-                                progress: percentage, 
+                                progress: finalPercentage, 
                                 loaded: loadedMB, 
-                                total: totalMB,
+                                total: networkTotalMB, 
                                 currentFile: file.name,
                                 fileIndex: 1,
                                 totalFiles: 1
@@ -148,7 +175,12 @@ export default function AddFile(props) {
     }
 
     const handleCreateFolder = () => {
-        
+        setDisplayCreateFolder(true)
+        setShow(false)
+    }
+
+    const createFolder = () => {
+
     }
 
     const handleFolderUpload = async (e) => {
@@ -192,8 +224,13 @@ export default function AddFile(props) {
 
                 xhr.upload.addEventListener("progress", (event) => {
                     if (event.lengthComputable) {
-                        const currentTotalLoaded = uploadedBytes + event.loaded
-                        const percentage = Math.round((currentTotalLoaded / totalBytes) * 100)
+                        const currentFileProgress = event.loaded / event.total
+                        const scaledLoadedForCurrentFile = currentFileProgress * file.size
+                        const currentTotalLoaded = uploadedBytes + scaledLoadedForCurrentFile
+                        
+                        let percentage = Math.round((currentTotalLoaded / totalBytes) * 100)
+                        percentage = Math.min(percentage, 100) 
+
                         const loadedMB = (currentTotalLoaded / (1024 * 1024)).toFixed(1)
 
                         window.dispatchEvent(new CustomEvent('upload-progress', { 
@@ -201,7 +238,7 @@ export default function AddFile(props) {
                                 isUploading: true, 
                                 progress: percentage, 
                                 loaded: loadedMB, 
-                                total: totalMB,
+                                total: totalMB, 
                                 currentFile: file.name,
                                 fileIndex: i + 1,
                                 totalFiles: files.length
@@ -237,6 +274,32 @@ export default function AddFile(props) {
 
     const handleCreateMarkdown = () => {
         
+    }
+
+    const renderCreateFolder = () => {
+        if (!displayCreateFolder) return null
+
+        return (
+            <div id="createFolder" ref={createFolderRef}>
+                <h2>Create folder</h2>
+                
+                <input type="text" name="newFolderName" placeholder="Name" value={newFolderName}
+                    onChange={(e) => setNewFolderName(e.target.value)}
+                />
+
+                <div id="newFolderColor">
+                    <h3>Color:  {newFolderColor}</h3>
+                    <input type="color" name="newFolderColor" value={newFolderColor}
+                        minLength="1" onChange={(e) => setNewFolderColor(e.target.value)}
+                    />
+                </div>
+                
+                <div className="createFolderActions">
+                    <button onClick={() => setDisplayCreateFolder(false)}>Cancel</button>
+                    <button onClick={() => createFolder}>Create</button>
+                </div>
+            </div>
+        )
     }
 
     return (
@@ -294,6 +357,8 @@ export default function AddFile(props) {
                     <h3>Create markdown file</h3>
                 </div>
             </div>}
+            
+            {renderCreateFolder()}
         </div>
     )
 }

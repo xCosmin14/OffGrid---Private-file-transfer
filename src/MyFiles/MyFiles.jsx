@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef, useContext } from "react"
-import { Link, useSearchParams } from 'react-router-dom' 
+import { useState, useEffect, useRef, useContext, useMemo } from "react"
+import { Link, useSearchParams, useNavigate } from 'react-router-dom' 
 
 import { useTitle } from "../UseTitle.js"
 import { FileContext } from "../GetFiles.jsx"
+import { getFileColor } from "./FileColors.js"
 
 import AddFile from "./AddFile.jsx"
 import Filters from "./Filters.jsx"
@@ -28,21 +29,16 @@ const getParentPath = (fullPath) => {
 const calculateFolderSize = (folderPath, allFiles) => {
     if (!allFiles || allFiles.length === 0) return 0
 
-    const totalSize = allFiles
+    return allFiles
         .filter(file => file.inTrash == 0 && file.path.startsWith(folderPath + "/"))
-        .reduce((accumulator, file) => {
-            const fileSizeNum = parseFloat(file.size) || 0
-            return accumulator + fileSizeNum
-        }, 0)
-
-    return totalSize > 0 ? totalSize.toFixed(2) : 0
+        .reduce((accumulator, file) => accumulator + (parseFloat(file.size) || 0), 0)
 }
 
 const formatDate = (dateString) => {
     if (dateString) dateString = dateString.slice(0, dateString.length - 7)
     const d = new Date(dateString)
     
-    return d.toLocaleDateString("ro-RO", { 
+    return d.toLocaleDateString("en-UK", { 
         day: '2-digit', 
         month: 'short', 
         year: 'numeric', 
@@ -54,9 +50,10 @@ const formatDate = (dateString) => {
 export default function MyFiles() {
     useTitle("OffGrid - Private file transfer")
 
-    const { files, folders, isLoading, refreshFiles } = useContext(FileContext)
+    const { files, folders, isLoading, refreshFiles, searchQuery, setSearchQuery } = useContext(FileContext)
 
     const [searchParams] = useSearchParams()
+    const navigate = useNavigate()
     const currentPathStr = searchParams.get("dir") || ""
     const currentPath = currentPathStr ? currentPathStr.split("/") : []
 
@@ -64,7 +61,39 @@ export default function MyFiles() {
     const pathMenuRef = useRef(null)
     
     const [appliedFilters, setAppliedFilters] = useState({})
-    const handleFilterChange = (filters) => { setAppliedFilters(filters) }
+    const handleFilterChange = (filters) => { 
+        setAppliedFilters(filters) 
+    }
+
+    const { sizeByTypes, totalFileSize } = useMemo(() => {
+        const sizes = {}
+        let total = 0 
+
+        if (!files || files.length === 0) {
+            return { sizeByTypes: [], totalFileSize: 0 }
+        }
+
+        files.forEach(file => {
+            if (file.inTrash == 1) return 
+
+            const fileSizeNum = parseFloat(file.size) || 0
+            const fileSizeMB = fileSizeNum / 1048576.0 
+
+            const ext = file.extension ? file.extension.charAt(0).toUpperCase() + file.extension.slice(1).toLowerCase() : "Unknown"
+
+            sizes[ext] = (sizes[ext] || 0) + fileSizeMB
+            total += fileSizeMB 
+        })
+
+        const sortedTypes = Object.entries(sizes)
+            .map(([extension, size]) => ({ extension, size }))
+            .sort((a, b) => b.size - a.size)
+
+        return {
+            sizeByTypes: sortedTypes,
+            totalFileSize: total
+        }
+    }, [files])
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -88,16 +117,42 @@ export default function MyFiles() {
         console.log(`Action trigged: ${action}`)
     }
 
-    const visibleFolders = (folders || []).filter(
-        folder => folder.inTrash == 0 && getParentPath(folder.path) === currentPathStr
-    )
-    const visibleFiles = (files || []).filter(
-        file => file.inTrash == 0 && getParentPath(file.path) === currentPathStr
-    )
+    const visibleFolders = (folders || []).filter(folder => {
+        if (folder.inTrash == 1 || getParentPath(folder.path) !== currentPathStr) return false
+
+        if (appliedFilters.extensionFilter && appliedFilters.extensionFilter != "Folder") return false
+        
+        if (searchQuery && !folder.name.toLowerCase().includes(searchQuery.toLowerCase())) return false
+        
+        if (appliedFilters.sizeFilterLowerBound && folder.size < parseFloat(appliedFilters.sizeFilterLowerBound)) return false
+        if (appliedFilters.sizeFilterUpperBound && folder.size > parseFloat(appliedFilters.sizeFilterUpperBound)) return false
+        if (appliedFilters.dateFilterLowerBound && folder.created < appliedFilters.dateFilterLowerBound) return false
+        if (appliedFilters.dateFilterUpperBound && folder.created > appliedFilters.dateFilterUpperBound + "T23:59:59") return false
+        if (appliedFilters.sentBy && (!folder.sentBy || !folder.sentBy.toLowerCase().includes(appliedFilters.sentBy.toLowerCase()))) return false
+
+        return true
+    })
+    const visibleFiles = (files || []).filter(file => {
+        if (file.inTrash == 1 || getParentPath(file.path) !== currentPathStr) return false
+
+        if (appliedFilters.extensionFilter && file.extension !== appliedFilters.extensionFilter) return false
+
+        if (searchQuery && !file.name.toLowerCase().includes(searchQuery.toLowerCase())) return false
+        
+        const fileMB = file.size / 1048576.0
+        if (appliedFilters.sizeFilterLowerBound && fileMB < parseFloat(appliedFilters.sizeFilterLowerBound)) return false
+        if (appliedFilters.sizeFilterUpperBound && fileMB > parseFloat(appliedFilters.sizeFilterUpperBound)) return false
+        if (appliedFilters.dateFilterLowerBound && file.created < appliedFilters.dateFilterLowerBound) return false
+        if (appliedFilters.dateFilterUpperBound && file.created > appliedFilters.dateFilterUpperBound + "T23:59:59") return false
+        if (appliedFilters.sentBy && (!file.sentBy || !file.sentBy.toLowerCase().includes(appliedFilters.sentBy.toLowerCase()))) return false
+
+        return true
+    })
 
     const renderPathMenu = () => {
         if (!showPathMenu) return null
-        return (
+
+        if (currentPathStr) return (
             <div id="pathDropdownMenu">
                 <div className="pathMenuOption" onClick={() => handlePathAction("download")}>
                     <Download />
@@ -136,19 +191,20 @@ export default function MyFiles() {
                 currentPath={currentPathStr} 
                 onUploadSuccess={refreshFiles}
             />
-            <Filters />
+            <Filters onFilterChange = {handleFilterChange}/>
 
             <div id="currentPathDisplay">
                 {currentPath.length === 0 ? (
                     <div style={{ position: "relative", display: "inline-block" }} ref={pathMenuRef}>
-                        <Link onClick={() => setShowPathMenu(prev => !prev)} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                        <a onClick={() => setShowPathMenu(prev => !prev)} 
+                            style={{ display: "flex", alignItems: "center", gap: "5px", cursor: "pointer" }}>
                             My files
-                            <ArrowDown id="arrowDown"/>
-                        </Link>
+                            {currentPathStr && <ArrowDown id="arrowDown"/>}
+                        </a>
                         {renderPathMenu()}
                     </div>
                 ) : (
-                    <Link to="/">My files</Link>
+                    <Link to="/" onClick={() => setSearchQuery("")}>My files</Link>
                 )}
 
                 {currentPath.map((folderName, index) => {
@@ -160,14 +216,21 @@ export default function MyFiles() {
                             <ArrowRight id="arrowRight"/>
                             {isLast ? (
                                 <div style={{ position: "relative", display: "inline-block" }} ref={pathMenuRef}>
-                                    <Link onClick={() => setShowPathMenu(prev => !prev)} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                                    <a onClick={() => {
+                                        setShowPathMenu(prev => !prev);
+                                        setSearchQuery("")
+                                    }}
+                                        style={{ display: "flex", alignItems: "center", gap: "5px", cursor: "pointer" }}
+                                    >
                                         {folderName}
                                         <ArrowDown id="arrowDown"/>
-                                    </Link>
+                                    </a>
                                     {renderPathMenu()}
                                 </div>
                             ) : (
-                                <Link to={`/?dir=${encodeURIComponent(breadcrumbPath)}`}>
+                                <Link to={`/?dir=${encodeURIComponent(breadcrumbPath)}`}
+                                    onClick={() => setSearchQuery("")} 
+                                >
                                     {folderName}
                                 </Link>
                             )}
@@ -176,7 +239,27 @@ export default function MyFiles() {
                 })}
             </div>
 
-            <div className="fileSizeChart"></div>
+            <div className="fileSizeChart">
+                {totalFileSize > 0 && sizeByTypes.map((entry) => (
+                    <div 
+                        key={entry.extension}
+                        className="chartBar" 
+                        style={{
+                            backgroundColor: getFileColor(entry.extension), 
+                            width: `${(entry.size / totalFileSize) * 100}%`
+                        }}
+                    />
+                ))}
+            </div>
+
+            <div className="fileExtensionChart">
+                {totalFileSize > 0 && sizeByTypes.map((entry) => (
+                    <div key={entry.extension} className="chartItem" >
+                        <div id="square" style={{backgroundColor: getFileColor(entry.extension)}}></div>
+                        <h5>{entry.extension}</h5>
+                    </div>
+                ))}
+            </div>
 
             <div className="fileContainer">
                 <div className="fileTableHeader">
@@ -193,7 +276,7 @@ export default function MyFiles() {
                     {isLoading ? (
                         <div>Loading...</div>
                     ) : visibleFolders.length === 0 && visibleFiles.length === 0 ? (
-                        <h2 id="emptyMessage">You have no files here</h2>
+                        <h2 id="emptyMessage">No files to show</h2>
                     ) : (
                         <>
                             {visibleFolders.map(folder => {
@@ -203,22 +286,23 @@ export default function MyFiles() {
                                 const pathForLink = `/?dir=${encodeURIComponent(nextPath)}`
                                 
                                 return (
-                                    <Link 
+                                    <div 
                                         to={pathForLink}
                                         key={`folder-${folder.path}`} 
+                                        onClick={() => {setSearchQuery(""); navigate(pathForLink)}}
                                         style={{ display: "contents", textDecoration: "none", color: "inherit", cursor: "pointer" }}
                                     >
                                         <File 
                                             name={folder.name} 
-                                            extension="folder" 
+                                            extension="Folder" 
                                             size={calculatedSize} 
                                             created={!isLoading && formatDate(folder.created)}
                                             lastModified={!isLoading && formatDate(folder.modified)}
                                         />
-                                    </Link>
+                                    </div   >
                                 )
                             })}
-
+                            
                             {visibleFiles.map(file => (
                                 <File 
                                     id={file.file_id} 

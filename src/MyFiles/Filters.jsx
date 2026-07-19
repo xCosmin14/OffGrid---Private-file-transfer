@@ -12,6 +12,7 @@ export default function Filters( {onFilterChange} ) {
     const { files, folders, isLoading, refreshFiles } = useContext(FileContext)
     let extensions = []
 
+    if (folders) extensions.push("Folder")
     !isLoading && files.forEach(file => {
         if (file.extension && !extensions.includes(file.extension)) extensions.push(file.extension)
     })
@@ -72,13 +73,25 @@ export default function Filters( {onFilterChange} ) {
                     <h3>from:</h3>
                     <input type="number" name="sizeFilterLowerBound"
                         value={localFilters.sizeFilterLowerBound}
+                        pattern="[0-9]+"
                         onChange={handleInputChange}
+                        onBeforeInput={(e) => {
+                            if (!/[0-9]/.test(e.data)) {
+                                e.preventDefault()
+                            }
+                        }} 
                     />
 
                     <h3>to:</h3>
                     <input type="number" name="sizeFilterUpperBound"
                         value={localFilters.sizeFilterUpperBound}
+                        pattern="[0-9]+"
                         onChange={handleInputChange}
+                        onBeforeInput={(e) => {
+                            if (!/[0-9]/.test(e.data)) {
+                                e.preventDefault()
+                            }
+                        }} 
                     />
                 </div>
             </div>
@@ -92,11 +105,9 @@ export default function Filters( {onFilterChange} ) {
                     value={localFilters.extensionFilter}
                     onChange={handleInputChange}
                 >
-                    <option value="">All extensions</option>
+                    <option value="">All</option>
                     {extensions.map((ext) => (
-                        <option key={ext} value={ext}>
-                            {"." + ext}
-                        </option>
+                        <option key={ext} value={ext}>{ext}</option>
                     ))}
                 </select>
             </div>

@@ -2,6 +2,8 @@ import { useState, useEffect, useContext } from "react"
 import { Link } from 'react-router-dom'
 
 import { UserContext } from '../UserContext.jsx' 
+import { FileContext } from "../GetFiles.jsx"
+
 import isMobile from "../IsMobile.js"
 import { getUID } from "../ColorScheme.js"
 
@@ -23,6 +25,7 @@ export default function Header() {
     })
 
     const { user, avatar, refreshData } = useContext(UserContext)
+    const { searchQuery, setSearchQuery } = useContext(FileContext)
 
     const [notificationsOpen, setNotificationsOpen] = useState(false)
     const [showMobileMenu, setShowMobileMenu] = useState(false)
@@ -70,7 +73,10 @@ export default function Header() {
                 {(isMobile() == 1 && showMobileMenu) && <Menu />}
 
                 {localStorage.getItem("isLogged") === "true" && <div id="headerFileSearch">
-                    <input type="text" placeholder="Search files and folders..." />
+                    <input type="text" placeholder="Search files and folders..." 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                     <Search id="filtersIcon" />
                 </div>}
             </div>
