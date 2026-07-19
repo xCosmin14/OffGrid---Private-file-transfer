@@ -57,8 +57,7 @@ Async<HttpResponse> ClientController::UpdateDb(std::vector<Query> queries, std::
 	}
 }
 
-
-Async<HttpResponse> ClientController::createEntity(json::object& obj, std::string session_id, 
+Async<HttpResponse> ClientController::createEntity(json::object& obj, std::string session_id,
 	std::unordered_set<std::string> allowed_fields, std::string entity)
 
 {
@@ -77,7 +76,7 @@ Async<HttpResponse> ClientController::createEntity(json::object& obj, std::strin
 
 	for (auto& it : obj)
 	{
-		if(!allowed_fields.count(it.key()))
+		if (!allowed_fields.count(it.key()))
 			co_return Helpers::makeResponse(http::status::bad_request, "unkown field");
 
 	}
@@ -89,7 +88,7 @@ Async<HttpResponse> ClientController::createEntity(json::object& obj, std::strin
 		std::string field; Query q;
 
 		if (entity == "file") {
-			q = Queries::InsertFile(obj); 
+			q = Queries::InsertFile(obj);
 			field = "folder_id";
 		}
 		else if (entity == "folder") {
@@ -104,7 +103,7 @@ Async<HttpResponse> ClientController::createEntity(json::object& obj, std::strin
 
 			mysql::results results = co_await this->db.runQuery(Queries::VerifyFolderId(folder_id, uid));
 
-			if(results.rows().empty())
+			if (results.rows().empty())
 				co_return Helpers::makeResponse(http::status::bad_request, "nonexistent parent folder");
 
 		}
@@ -122,11 +121,8 @@ Async<HttpResponse> ClientController::createEntity(json::object& obj, std::strin
 		co_return Helpers::makeResponse(http::status::internal_server_error, "failed creating folder");
 	}
 
-	json::object res;
-	res[entity + "_id"] = obj[entity + "_id"];
-	co_return Helpers::makeResponse(http::status::ok, "folder created successfuly", "", res);
+	co_return Helpers::makeResponse(http::status::ok, "folder created successfuly");
 }
-
 
 Async<void> ClientController::loadLoggedUsers()
 {
