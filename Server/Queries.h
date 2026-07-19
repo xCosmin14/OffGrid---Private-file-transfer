@@ -38,6 +38,8 @@ namespace Queries
 
 	Query GetUserFiles(std::vector<std::string> const&, std::string, std::string);
 
+	Query GetUserFolders(std::string);
+
 	Query GetFile(std::string, std::string);
 
 	Query GetFileMetadata(std::string, std::string, std::vector<std::string>);

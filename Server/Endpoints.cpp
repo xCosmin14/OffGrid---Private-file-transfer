@@ -24,6 +24,8 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
 
 	}
 
+	if (method == http::verb::options) co_return Helpers::makeResponse(http::status::no_content, "");
+
 	if (method == http::verb::post) // fully tested
 	{
 		if (target == "/register") co_return co_await this->registerUser(obj);
@@ -122,6 +124,7 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
 
 Async<HttpResponse> ClientController::handleRequest(http::verb method, std::string_view target, std::vector<uint8_t>& body, std::string session_id)
 {
+	if (method == http::verb::options) co_return Helpers::makeResponse(http::status::no_content, "");
 
 	if (method == http::verb::post) // fully tested
 	{

@@ -131,6 +131,10 @@ Query Queries::GetUserFiles(std::vector<std::string> const& vect, std::string en
 	return { q, {mysql::field(uid), mysql::field(uid)} };
 }
 
+Query Queries::GetUserFolders(std::string uid)
+{
+	return { "SELECT folder_id, path FROM offgrid_db.folder WHERE creator_id = ?", {mysql::field(uid)} };
+}
 
 Query Queries::GetFile(std::string file_id, std::string uid)
 {

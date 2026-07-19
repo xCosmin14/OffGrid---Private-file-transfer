@@ -19,9 +19,10 @@ namespace http = boost::beast::http;
 namespace err = boost::asio::error;
 namespace websocket = boost::beast::websocket;
 
-Async<void> handle_websocket_session(boost::asio::ip::tcp::socket socket, ClientController& c)
+Async<void> handle_websocket_session(boost::asio::ip::tcp::socket socket, std::string cookie, ClientController& c)
 {
 	auto ws = std::make_shared<websocket::stream<boost::asio::ip::tcp::socket>>(std::move(socket));
+
 	try {
 
 		co_await ws->async_accept(boost::asio::use_awaitable);
@@ -31,10 +32,13 @@ Async<void> handle_websocket_session(boost::asio::ip::tcp::socket socket, Client
 			boost::beast::flat_buffer buffer;
 			co_await ws->async_read(buffer, boost::asio::use_awaitable);
 
-			std::string msg = boost::beast::buffers_to_string(buffer.data());
-			json::object obj = json::parse(msg).as_object();
+			if (co_await c.isAuthenticated(cookie)) {
 
+				std::string msg = boost::beast::buffers_to_string(buffer.data());
+				json::object obj = json::parse(msg).as_object();
 
+				co_await c.handleWsMessage(ws, obj, cookie);
+			}
 		}
 	}
 	catch (boost::system::system_error& e)
@@ -61,7 +65,8 @@ Async<void> handle_session(boost::asio::ip::tcp::socket socket, ClientController
 
 			if (websocket::is_upgrade(req_parser.get()))
 			{
-				co_await handle_websocket_session(stream.release_socket(), c);
+				std::string cookie{ req_parser.get()[http::field::cookie] };
+				co_await handle_websocket_session(stream.release_socket(), cookie, c);
 				co_return;  
 			}
 

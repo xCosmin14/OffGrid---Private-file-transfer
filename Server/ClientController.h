@@ -3,6 +3,7 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <boost/beast/websocket.hpp>
 #include <boost/json.hpp>
 #include <string>
 #include <unordered_map>
@@ -18,6 +19,8 @@
 
 namespace http = boost::beast::http;
 namespace json = boost::json;
+namespace websocket = boost::beast::websocket;
+
 
 template <typename T>
 using Async = boost::asio::awaitable<T>;
@@ -72,11 +75,13 @@ class ClientController
 	Async<HttpResponse> createEntity(json::object&, std::string, 
 		std::unordered_set<std::string>, std::string);
 
-	std::vector<std::string> appendFolders(std::vector<Query>&, const std::vector<std::string>&, 
+	Async<std::vector<std::string>> appendFolders(std::vector<Query>&, const std::vector<std::string>&, 
 		std::string, std::string);
 
 
 	void cleanUpCache();
+
+
 
 public:
 
@@ -95,4 +100,8 @@ public:
 	Async<HttpResponse> handleRequest(http::verb, std::string_view, std::string, std::string);
 	Async<HttpResponse> handleRequest(http::verb method, std::string_view target, std::vector<uint8_t>& body, std::string session_id);
 	Async<void> loadLoggedUsers();
+
+	Async<bool> isAuthenticated(std::string);
+	Async<void> handleWsMessage(std::shared_ptr<websocket::stream<boost::asio::ip::tcp::socket>>, json::object&, std::string);
+
 };
