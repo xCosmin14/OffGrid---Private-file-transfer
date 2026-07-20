@@ -16,8 +16,8 @@ export const FileProvider = ({ children }) => {
                 method: "POST",
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    'file_fields': ["path", "content_type", "size", "name", "extension", "favourite", "inTrash", "created", "modified"], 
-                    'folder_fields': ["path", "type", "size", "name", "color", "favourite", "inTrash", "created", "modified"]
+                    'file_fields': ["path", "content_type", "size", "name", "extension", "favourite", "created", "modified"], 
+                    'folder_fields': ["path", "type", "size", "name", "color", "favourite", "created", "modified"]
                 })
             })
             const data = await response.json()

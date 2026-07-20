@@ -283,22 +283,23 @@ export default function Favorites() {
                         <>
                             {visibleFolders.map(folder => {
                                 const calculatedSize = calculateFolderSize(folder.path, files)
-                                
                                 const nextPath = currentPathStr ? `${currentPathStr}/${folder.name}` : folder.name
                                 const pathForLink = `/?dir=${encodeURIComponent(nextPath)}`
                                 
                                 return (
                                     <div 
-                                        to={pathForLink}
                                         key={`folder-${folder.path}`} 
                                         onClick={() => {setSearchQuery(""); navigate(pathForLink)}}
                                         style={{ display: "contents", textDecoration: "none", color: "inherit", cursor: "pointer" }}
                                     >
                                         <File 
+                                            id={folder.folder_id}          
+                                            path={folder.path}
                                             name={folder.name} 
                                             extension="Folder" 
                                             color={folder.color}
                                             size={calculatedSize} 
+                                            favourite={folder.favourite}  
                                             created={!isLoading && formatDate(folder.created)}
                                             lastModified={!isLoading && formatDate(folder.modified)}
                                         />
@@ -309,10 +310,12 @@ export default function Favorites() {
                             {visibleFiles.map(file => (
                                 <File 
                                     id={file.file_id} 
+                                    path={file.path}
                                     key={`file-${file.path}`}
                                     name={file.name} 
                                     extension={file.extension ? file.extension.charAt(0).toUpperCase() + file.extension.slice(1) : ""} 
                                     size={file.size}
+                                    favourite={file.favourite}   
                                     created={!isLoading && formatDate(file.created)}
                                     lastModified={!isLoading && formatDate(file.modified)}
                                 />
