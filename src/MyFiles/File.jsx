@@ -57,6 +57,24 @@ export default function File(props) {
                 if (response.ok) await refreshFiles()
                 break
             }
+
+            case "download": {
+                const response = await customFetch(`http://localhost:18080/get_file?file_id=${props.id}`, {
+                    method: "GET",
+                    headers: { 'Content-Type': 'application/json' },
+                })
+
+                let buffer = await response.arrayBuffer()
+                const bytes = new Uint8Array(buffer), url = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }))
+                const a = document.createElement('a')
+                a.href = url;
+                a.download = props.name
+                document.body.appendChild(a)
+                a.click()
+
+                document.body.removeChild(a)
+                URL.revokeObjectURL(url)
+            }
             default: 
                 return
         }

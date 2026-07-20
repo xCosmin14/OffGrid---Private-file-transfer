@@ -295,6 +295,7 @@ export default function MyFiles() {
                                         style={{ display: "contents", textDecoration: "none", color: "inherit", cursor: "pointer" }}
                                     >
                                         <File 
+                                            path={folder.path}
                                             id={folder.folder_id}
                                             name={folder.name} 
                                             extension="Folder" 
@@ -309,6 +310,7 @@ export default function MyFiles() {
                             
                             {visibleFiles.map(file => (
                                 <File 
+                                    path={file.path}
                                     id={file.file_id} 
                                     key={`file-${file.path}`}
                                     name={file.name} 
