@@ -121,7 +121,6 @@ export default function MyFiles() {
     }
 
     const visibleFolders = (folders || []).filter(folder => {
-        console.log(folder.color)
         if (folder.inTrash == 1 || getParentPath(folder.path) !== currentPathStr) return false
 
         if (appliedFilters.extensionFilter && appliedFilters.extensionFilter != "Folder") return false
@@ -296,6 +295,7 @@ export default function MyFiles() {
                                         style={{ display: "contents", textDecoration: "none", color: "inherit", cursor: "pointer" }}
                                     >
                                         <File 
+                                            id={folder.folder_id}
                                             name={folder.name} 
                                             extension="Folder" 
                                             color={folder.color}

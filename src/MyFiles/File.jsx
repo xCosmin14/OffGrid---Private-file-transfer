@@ -1,6 +1,9 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useContext } from "react"
 import { useLocation } from "react-router-dom"
 import { FileIcon, defaultStyles } from 'react-file-icon'
+
+import { customFetch } from "../UserContext.jsx"
+import { FileContext } from "../GetFiles.jsx"
 
 import Dots from "../assets/SVG/Dots.svg?react"
 import Folder from "../assets/SVG/FileIcons/Folder.svg?react"
@@ -15,6 +18,7 @@ export default function File(props) {
     const { pathname } = useLocation()
     const displayOwner = (pathname.includes("shared") || pathname.includes("favorites") || pathname.includes("trash"))
     const isFolder = props.extension === "Folder"
+    const { refreshFiles } = useContext(FileContext)
 
     const [showMenu, setShowMenu] = useState(false)
     const [isExpanded, setIsExpanded] = useState(false) 
@@ -36,9 +40,26 @@ export default function File(props) {
         }
     }, [showMenu])
 
-    const handleAction = (e, action) => {
+    const handleAction = async (e, action) => {
         e.stopPropagation()
         setShowMenu(false)
+
+        switch(action) {
+            case "delete": {
+                const endpoint = props.extension == "Folder" ? "delete_folder" : "delete_file"
+                const url = `http://localhost:18080/${endpoint}?${props.id}`
+
+                const response = await customFetch(url, {
+                    method: "DELETE",
+                    headers: { 'Content-Type': 'application/json' },
+                })
+
+                if (response.ok) await refreshFiles()
+                break
+            }
+            default: 
+                return
+        }
     }
 
     const handleRowClick = (e) => {
