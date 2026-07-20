@@ -297,6 +297,7 @@ export default function Favorites() {
                                         <File 
                                             name={folder.name} 
                                             extension="Folder" 
+                                            color={folder.color}
                                             size={calculatedSize} 
                                             created={!isLoading && formatDate(folder.created)}
                                             lastModified={!isLoading && formatDate(folder.modified)}

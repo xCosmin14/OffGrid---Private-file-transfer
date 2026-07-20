@@ -296,6 +296,7 @@ export default function Trash() {
                                     >
                                         <File 
                                             name={folder.name} 
+                                            color={folder.color}
                                             extension="Folder" 
                                             size={calculatedSize} 
                                             created={!isLoading && formatDate(folder.created)}

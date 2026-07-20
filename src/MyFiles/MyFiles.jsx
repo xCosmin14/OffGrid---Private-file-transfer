@@ -57,6 +57,9 @@ export default function MyFiles() {
     const currentPathStr = searchParams.get("dir") || ""
     const currentPath = currentPathStr ? currentPathStr.split("/") : []
 
+    const currentFolderObj = (folders || []).find(f => f.path === currentPathStr)
+    const currentFolderID = currentFolderObj ? currentFolderObj.folder_id : ""
+
     const [showPathMenu, setShowPathMenu] = useState(false)
     const pathMenuRef = useRef(null)
     
@@ -118,6 +121,7 @@ export default function MyFiles() {
     }
 
     const visibleFolders = (folders || []).filter(folder => {
+        console.log(folder.color)
         if (folder.inTrash == 1 || getParentPath(folder.path) !== currentPathStr) return false
 
         if (appliedFilters.extensionFilter && appliedFilters.extensionFilter != "Folder") return false
@@ -189,6 +193,7 @@ export default function MyFiles() {
         <div className="page">
             <AddFile 
                 currentPath={currentPathStr} 
+                parentFolderID={currentFolderID}
                 onUploadSuccess={refreshFiles}
             />
             <Filters onFilterChange = {handleFilterChange}/>
@@ -281,25 +286,24 @@ export default function MyFiles() {
                         <>
                             {visibleFolders.map(folder => {
                                 const calculatedSize = calculateFolderSize(folder.path, files)
-                                
                                 const nextPath = currentPathStr ? `${currentPathStr}/${folder.name}` : folder.name
                                 const pathForLink = `/?dir=${encodeURIComponent(nextPath)}`
                                 
                                 return (
                                     <div 
-                                        to={pathForLink}
                                         key={`folder-${folder.path}`} 
-                                        onClick={() => {setSearchQuery(""); navigate(pathForLink)}}
+                                        onClick={() => {setSearchQuery(""); navigate(pathForLink);}} // Am scos setarea de parentFolderID de aici
                                         style={{ display: "contents", textDecoration: "none", color: "inherit", cursor: "pointer" }}
                                     >
                                         <File 
                                             name={folder.name} 
                                             extension="Folder" 
+                                            color={folder.color}
                                             size={calculatedSize} 
                                             created={!isLoading && formatDate(folder.created)}
                                             lastModified={!isLoading && formatDate(folder.modified)}
                                         />
-                                    </div   >
+                                    </div>
                                 )
                             })}
                             

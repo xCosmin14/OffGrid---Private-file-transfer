@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom"
 import { FileIcon, defaultStyles } from 'react-file-icon'
 
 import Dots from "../assets/SVG/Dots.svg?react"
-import Folder from "../assets/SVG/FileIcons/UserFiles.svg?react"
+import Folder from "../assets/SVG/FileIcons/Folder.svg?react"
 import Download from "../assets/SVG/FileIcons/Download.svg?react"
 import Rename from "../assets/SVG/FileIcons/Rename.svg?react"
 import Trash from "../assets/SVG/FileIcons/Trash.svg?react"
@@ -53,20 +53,18 @@ export default function File(props) {
                     <ArrowDown className={`expandIcon ${isExpanded ? "rotated" : ""}`} />
                 </div>
 
-                <div className="fileIconWrapper">
                     {isFolder ? (
-                        <Folder />
+                        <Folder style={{ color: props.color, fill: props.color }} />
                     ) : (
                         <FileIcon extension={props.extension} {...(defaultStyles[props.extension.toLowerCase()] || {})} />
                     )}
-                </div>
 
                 <h3 className="itemName">{props.name}</h3>
             </div>
             
             <h3 className="fileDetail"><span className="mobileLabel">Type: </span>{isFolder ? "Folder" : props.extension}</h3>
             <h3 className="fileDetail"><span className="mobileLabel">Size: </span>{
-                props.size ? props.size > 1073741824 ? `${Number.parseFloat(props.size/1000000.0).toFixed(2)} GB` : `${Number.parseFloat(props.size/1048576.0).toFixed(2)} MB` : "-"
+                props.size ? props.size > 1073741824 ? `${Number.parseFloat(props.size/1000000.0).toFixed(2)} GB` : `${Number.parseFloat(props.size/1048576.0).toFixed(2)} MB` : "0 MB"
             }</h3>
             <h3 className="fileDetail"><span className="mobileLabel">Created: </span>{props.created}</h3>
             <h3 className="fileDetail"><span className="mobileLabel">Modified: </span>{props.lastModified}</h3>

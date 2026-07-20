@@ -28,11 +28,11 @@ export async function cancelUpload() {
             method: "DELETE",
             credentials: "include"
         })
-        const data = await res.json();
+        const data = await res.json()
     } catch (err) {
         console.error("Eroare la trimiterea cancel către server:", err)
     } finally {
-        transaction_id = "";
+        transaction_id = ""
         window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
     }
 }
@@ -179,8 +179,28 @@ export default function AddFile(props) {
         setShow(false)
     }
 
-    const createFolder = () => {
+    const createFolder = async () => {
+        if (!newFolderColor || !newFolderName) return
 
+        const body = { 
+            name: newFolderName, 
+            color: newFolderColor,
+            parent_folder_id: props.parentFolderID || null 
+        }
+
+        const response = await customFetch("http://localhost:18080/create_folder", {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+        })
+        
+        let data = await response.json()
+        if (response.ok) {
+            setNewFolderColor("#000000")
+            setNewFolderName("")
+            props.onUploadSuccess()
+        }
     }
 
     const handleFolderUpload = async (e) => {
@@ -194,78 +214,84 @@ export default function AddFile(props) {
         const totalBytes = files.reduce((acc, file) => acc + file.size, 0)
         const totalMB = (totalBytes / (1024 * 1024)).toFixed(1)
 
-        const response = await customFetch("http://localhost:18080/upload_folder", {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ fields: paths })
-        })
-        let data = await response.json()
-        
-        if (!response.ok || !data.transaction_id) {
-            window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
-            throw new Error(data.message || `upload_folder failed: ${response.status}`)
-        }
-
-        setUploadStats({ loaded: 0, total: totalMB })
-        transaction_id = data.transaction_id
-
-        let uploadedBytes = 0
-
-        for (let i = 0; i < files.length; i++) {
-            let file = files[i]
-
-            let formData = new FormData()
-            formData.append('file', file, file.name)
-
-            await new Promise((resolve, reject) => {
-                const xhr = new XMLHttpRequest()
-                currentXhr = xhr
-
-                xhr.upload.addEventListener("progress", (event) => {
-                    if (event.lengthComputable) {
-                        const currentFileProgress = event.loaded / event.total
-                        const scaledLoadedForCurrentFile = currentFileProgress * file.size
-                        const currentTotalLoaded = uploadedBytes + scaledLoadedForCurrentFile
-                        
-                        let percentage = Math.round((currentTotalLoaded / totalBytes) * 100)
-                        percentage = Math.min(percentage, 100) 
-
-                        const loadedMB = (currentTotalLoaded / (1024 * 1024)).toFixed(1)
-
-                        window.dispatchEvent(new CustomEvent('upload-progress', { 
-                            detail: { 
-                                isUploading: true, 
-                                progress: percentage, 
-                                loaded: loadedMB, 
-                                total: totalMB, 
-                                currentFile: file.name,
-                                fileIndex: i + 1,
-                                totalFiles: files.length
-                            } 
-                        }))
-                    }
-                })
-
-                xhr.addEventListener("load", () => {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        uploadedBytes += file.size
-                        resolve()
-                    } else {
-                        reject(new Error(xhr.status))
-                    }
-                })
-
-                xhr.addEventListener("error", () => reject(new Error("Network error")))
-
-                xhr.open("POST", `http://localhost:18080/upload_file?transaction_id=${transaction_id}`)
-                xhr.withCredentials = true 
-                xhr.send(formData)
+        try {
+            const response = await customFetch("http://localhost:18080/upload_folder", {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ fields: paths })
             })
-        }
+            let data = await response.json()
+            
+            if (!response.ok || !data.transaction_id) {
+                throw new Error(data.message || `upload_folder failed: ${response.status}`)
+            }
 
-        if (props.onUploadSuccess) props.onUploadSuccess()
-        window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
+            setUploadStats({ loaded: 0, total: totalMB })
+            transaction_id = data.transaction_id
+
+            let uploadedBytes = 0
+
+            for (let i = 0; i < files.length; i++) {
+                let file = files[i]
+                let currentPathForFile = paths[i] 
+
+                let formData = new FormData()
+                formData.append('file', file, currentPathForFile) 
+
+                await new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest()
+                    currentXhr = xhr
+
+                    xhr.upload.addEventListener("progress", (event) => {
+                        if (event.lengthComputable) {
+                            const currentFileProgress = event.loaded / event.total
+                            const scaledLoadedForCurrentFile = currentFileProgress * file.size
+                            const currentTotalLoaded = uploadedBytes + scaledLoadedForCurrentFile
+                            
+                            let percentage = Math.round((currentTotalLoaded / totalBytes) * 100)
+                            percentage = Math.min(percentage, 100) 
+
+                            const loadedMB = (currentTotalLoaded / (1024 * 1024)).toFixed(1)
+
+                            window.dispatchEvent(new CustomEvent('upload-progress', { 
+                                detail: { 
+                                    isUploading: true, 
+                                    progress: percentage, 
+                                    loaded: loadedMB, 
+                                    total: totalMB, 
+                                    currentFile: file.name,
+                                    fileIndex: i + 1,
+                                    totalFiles: files.length
+                                } 
+                            }))
+                        }
+                    })
+
+                    xhr.addEventListener("load", () => {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            uploadedBytes += file.size
+                            resolve()
+                        } else {
+                            reject(new Error(`Server responded with status: ${xhr.status}`))
+                        }
+                    })
+
+                    xhr.addEventListener("error", () => reject(new Error("Network error")))
+
+                    xhr.open("POST", `http://localhost:18080/upload_file?transaction_id=${transaction_id}`)
+                    xhr.withCredentials = true 
+                    xhr.send(formData)
+                })
+            }
+
+            if (props.onUploadSuccess) props.onUploadSuccess()
+
+        } catch (error) {
+            
+        } finally {
+            window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
+        }
     }
 
     const handleCreateText = () => {
@@ -295,8 +321,15 @@ export default function AddFile(props) {
                 </div>
                 
                 <div className="createFolderActions">
-                    <button onClick={() => setDisplayCreateFolder(false)}>Cancel</button>
-                    <button onClick={() => createFolder}>Create</button>
+                    <button onClick={() => {
+                        setDisplayCreateFolder(false)
+                        setNewFolderColor(""), setNewFolderColor("#000000")
+                    }}>Cancel</button>
+                    <button  onClick={() => {
+                        createFolder()
+                        setDisplayCreateFolder(false)
+                        setNewFolderColor(""), setNewFolderColor("#000000")
+                    }}>Create</button>
                 </div>
             </div>
         )
