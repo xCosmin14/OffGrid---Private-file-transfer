@@ -219,7 +219,7 @@ Query Queries::InsertFolder(json::object const& obj)
 
 Query Queries::VerifyFolderId(std::string id, std::string uid)
 {
-	return { "SELECT folder_id FROM offgrid_db.folder "
+	return { "SELECT path FROM offgrid_db.folder "
 	"LEFT JOIN offgrid_db.access on access.folder_id = folder.folder_id "
 	"WHERE folder.folder_id = ? and(folder.creator_id=? or access.user_id=?", {
 	mysql::field(id), mysql::field(uid), mysql::field(uid)} };

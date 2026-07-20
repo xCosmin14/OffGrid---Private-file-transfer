@@ -8,7 +8,7 @@
 
 #include <set>
 
-Async<std::vector<std::string>> ClientController::appendFolders(std::vector<Query>& queries, const std::vector<std::string>& paths, std::string uid, std::string transaction_id)
+Async<std::pair<std::vector<std::string>, std::string>> ClientController::appendFolders(std::vector<Query>& queries, const std::vector<std::string>& paths, std::string uid, std::string transaction_id)
 {
 	std::unordered_map<std::string, std::string> existingFolders;
 	std::set<std::string> folders_set;
@@ -17,6 +17,8 @@ Async<std::vector<std::string>> ClientController::appendFolders(std::vector<Quer
 		mysql::results results = co_await this->db.runQuery(Queries::GetUserFolders(uid));
 		for (const auto& row : results.rows())
 		{
+			if (!row.at(0).is_string() || !row.at(1).is_string()) continue;
+
 			std::string folder_id = row.at(0).as_string();
 			std::string path = row.at(1).as_string();
 
@@ -30,12 +32,17 @@ Async<std::vector<std::string>> ClientController::appendFolders(std::vector<Quer
 	}
 
 	std::vector<std::string> ids(paths.size(), "");
+	std::string root_folder_id;
+
 	for (int i = 0; i < paths.size(); i++)
 	{
 		std::string path = paths[i];
 		int start = 0;
 		auto pos = path.find_first_of("/");
 		std::string deepest_folder_id = "";
+		bool first_segment = true;
+
+
 		while (pos != std::string::npos)
 		{
 			if (start != pos)
@@ -46,6 +53,7 @@ Async<std::vector<std::string>> ClientController::appendFolders(std::vector<Quer
 				fd.folder_name = folder_name;
 				fd.creator_id = uid;
 				auto [it, exists] = folders_set.insert(full_path);
+
 				if (!exists) {
 					deepest_folder_id = existingFolders[full_path];
 				}
@@ -66,8 +74,13 @@ Async<std::vector<std::string>> ClientController::appendFolders(std::vector<Quer
 					}
 					existingFolders[full_path] = fd.folder_id;
 					deepest_folder_id = fd.folder_id;
+
 					queries.push_back(Queries::InsertFolder(fd));
 				}
+
+				if (first_segment && root_folder_id.empty())
+					root_folder_id = fd.folder_id;
+				first_segment = false;
 			}
 			start = path.find_first_not_of("/", pos + 1);
 			if (start == std::string::npos) break;
@@ -75,7 +88,8 @@ Async<std::vector<std::string>> ClientController::appendFolders(std::vector<Quer
 		}
 		ids[i] = deepest_folder_id;
 	}
-	co_return ids;
+
+	co_return std::make_pair(ids, root_folder_id);
 }
 
 
@@ -226,7 +240,7 @@ Async<HttpResponse> ClientController::uploadFile(std::vector<uint8_t>& body, std
 	}
 
 	if (isLastFile)
-		co_return co_await this->UpdateDb(queries_to_run, transaction_id, uid);
+		co_return co_await this->UpdateDb(queries_to_run, transaction_id, uid, filedata.file_id);
 
 	co_return Helpers::makeResponse(http::status::ok, "file uploaded successfuly", "", { { "file_id", filedata.file_id } });
 }
@@ -249,23 +263,37 @@ Async<HttpResponse> ClientController::uploadFolder(json::object& obj, std::strin
 	if (error)
 		co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
 
-	std::vector<std::string> paths = Helpers::getFields(obj);
-	std::string transaction_id = this->createId("transaction");
+	try {
 
-	FileMapEntry local_entry(uid, paths);
-	local_entry.folder_ids = co_await this->appendFolders(local_entry.preparedQueries, local_entry.file_paths, uid, transaction_id);
+		std::vector<std::string> paths = Helpers::getFields(obj);
+		std::string transaction_id = this->createId("transaction");
 
+
+		FileMapEntry local_entry(uid, paths);
+		auto [folder_ids, root_folder_id] = co_await this->appendFolders(local_entry.preparedQueries, local_entry.file_paths, uid, transaction_id);
+		local_entry.folder_ids = folder_ids;
+
+		{
+			std::unique_lock lock(files_mutex);
+			this->files_cache[transaction_id] = std::move(local_entry);
+		}
+
+		json::object res;
+		res["transaction_id"] = transaction_id;
+		res["folder_id"] = root_folder_id;
+		co_return Helpers::makeResponse(http::status::ok, "ready to receive files", "", res);
+	}
+	catch (boost::system::system_error& e)
 	{
-		std::unique_lock lock(files_mutex);
-		this->files_cache[transaction_id] = std::move(local_entry);
+		std::cerr << "Query failed: " << e.what() << std::endl;
+		co_return Helpers::makeResponse(http::status::internal_server_error, "internal server error");
+	}
+	catch (std::exception& e)
+	{
+		std::cerr << "Failed uploading folder: " << e.what() << std::endl;
+		co_return Helpers::makeResponse(http::status::bad_request, e.what());
 	}
 
-	json::object res;
-	FileMapEntry* entry;
-	res["transaction_id"] = transaction_id;
-
-
-	co_return Helpers::makeResponse(http::status::ok, "ready to receive files", "", res);
 }
 
 

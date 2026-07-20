@@ -103,6 +103,9 @@ std::vector<std::string> Helpers::getFields(json::object& obj, const std::unorde
 
 	if (obj.contains(key) && obj[key].is_array())
 	{
+		if (!obj[key].is_array()) 
+			throw std::runtime_error("not given an array");
+		
 		const json::array& fields_array = obj[key].as_array();
 		for (auto const& it : fields_array)
 		{
@@ -110,6 +113,7 @@ std::vector<std::string> Helpers::getFields(json::object& obj, const std::unorde
 				throw std::runtime_error("unkown field");
 
 			std::string name = it.as_string().c_str();
+
 			if (allowed_fields.empty())
 			{
 				fields.push_back(name);
@@ -123,6 +127,7 @@ std::vector<std::string> Helpers::getFields(json::object& obj, const std::unorde
 					fields.push_back(found->second);
 			}
 		}
+
 	}
 
 	return fields;

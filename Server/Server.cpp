@@ -32,13 +32,13 @@ Async<void> handle_websocket_session(boost::asio::ip::tcp::socket socket, std::s
 			boost::beast::flat_buffer buffer;
 			co_await ws->async_read(buffer, boost::asio::use_awaitable);
 
-			if (co_await c.isAuthenticated(cookie)) {
+			/*if (co_await c.isAuthenticated(cookie)) {
 
 				std::string msg = boost::beast::buffers_to_string(buffer.data());
 				json::object obj = json::parse(msg).as_object();
 
 				co_await c.handleWsMessage(ws, obj, cookie);
-			}
+			}*/
 		}
 	}
 	catch (boost::system::system_error& e)

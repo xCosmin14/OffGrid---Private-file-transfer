@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/asio/co_spawn.hpp>
@@ -23,7 +23,7 @@ using Async = boost::asio::awaitable<T>;
 template <typename RequestBody, typename ResponseBody>
 class Handler
 {
-	const std::vector<std::string> allowed_origins = { "http://localhost:5173", "http://192.168.1.176:5173" };
+	const std::vector<std::string> allowed_origins = { "http://localhost:5173", "http://192.168.1.176:5173", "http://127.0.0.1:5173"};
 	http::request<RequestBody> req;
 	ClientController& c;
 
@@ -129,6 +129,7 @@ public:
 				json = req.body();
 
 			auto [stat, body, session_id] = co_await c.handleRequest(req.method(), req.target(), json, this->getSessionId());
+
 			res.result(stat);
 			res.body() = body;
 			set_cookie(session_id);
@@ -144,23 +145,22 @@ public:
 	{
 		http::response<ResponseBody> res;
 
-		bool error = false;
-
 		try {
 			this->setHeaders(res, "application/octet-stream");
 		}
-		catch (std::exception& e)
-		{
-			error = true;
-		}
-
-		if (error)
-		{
+		catch (std::exception& e) {
 			res.result(http::status::forbidden);
+			res.prepare_payload();
 			co_return res;
 		}
 
-		std::string json = req.body();
+		if (req.method() == http::verb::options)
+		{
+			res.result(http::status::no_content);
+			res.prepare_payload();
+			co_return res;
+		}
+
 		auto [stat, body, session_id] = co_await c.handleRequest(req.method(), req.target(), "", this->getSessionId());
 
 		res.result(stat);
@@ -170,9 +170,9 @@ public:
 			json::object meta = json::parse(body).as_object();
 			std::string file_path = json::value_to<std::string>(meta["path"]);
 			std::string content_type = json::value_to<std::string>(meta["content_type"]);
+
 			std::string full_path;
-			if (req.target() == "/get_profile_photo")
-			{
+			if (req.target() == "/get_profile_photo") {
 				full_path = "FileSystem/profile_photos/" + file_path;
 			}
 			else {
@@ -180,26 +180,19 @@ public:
 				full_path = "FileSystem/files/" + uid + "/" + file_path;
 			}
 
-			if (!std::filesystem::exists(full_path))
-			{
-				std::cerr << "File missing from disk assets: " << full_path << std::endl;
-
+			if (!std::filesystem::exists(full_path)) {
 				res.result(http::status::not_found);
 				co_return res;
 			}
 
 			boost::beast::error_code e;
 			res.body().open(full_path.c_str(), boost::beast::file_mode::read, e);
-
-			if (e)
-			{
+			if (e) {
 				res.result(http::status::internal_server_error);
 				co_return res;
 			}
-
 			res.result(http::status::ok);
 			res.set(http::field::content_type, content_type);
-
 		}
 		else {
 			co_return res;

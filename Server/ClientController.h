@@ -64,7 +64,7 @@ class ClientController
 
 
 
-	Async<HttpResponse> UpdateDb(std::vector<Query>, std::string, std::string);
+	Async<HttpResponse> UpdateDb(std::vector<Query>, std::string, std::string, std::string);
 	Async<HttpResponse> cancelFolderUpload(std::string, std::string);
 
 	Async<HttpResponse> changeUsername(json::object&, std::string);
@@ -75,8 +75,8 @@ class ClientController
 	Async<HttpResponse> createEntity(json::object&, std::string, 
 		std::unordered_set<std::string>, std::string);
 
-	Async<std::vector<std::string>> appendFolders(std::vector<Query>&, const std::vector<std::string>&, 
-		std::string, std::string);
+	Async<std::pair<std::vector<std::string>, std::string>> appendFolders(std::vector<Query>&, 
+		const std::vector<std::string>&, std::string, std::string);
 
 
 	void cleanUpCache();
@@ -101,7 +101,7 @@ public:
 	Async<HttpResponse> handleRequest(http::verb method, std::string_view target, std::vector<uint8_t>& body, std::string session_id);
 	Async<void> loadLoggedUsers();
 
-	Async<bool> isAuthenticated(std::string);
-	Async<void> handleWsMessage(std::shared_ptr<websocket::stream<boost::asio::ip::tcp::socket>>, json::object&, std::string);
+	//Async<bool> isAuthenticated(std::string);
+	//Async<void> handleWsMessage(std::shared_ptr<websocket::stream<boost::asio::ip::tcp::socket>>, json::object&, std::string);
 
 };
