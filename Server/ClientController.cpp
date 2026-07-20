@@ -128,7 +128,6 @@ Async<HttpResponse> ClientController::createEntity(json::object& obj, std::strin
 		if (entity == "file") q = Queries::InsertFile(obj);
 		else if (entity == "folder") q = Queries::InsertFolder(obj);
 
-		std::cout << "idk\n";
 		for (auto it : obj)
 		{
 			std::cout << it.key() << ":" << it.value() << "\n";

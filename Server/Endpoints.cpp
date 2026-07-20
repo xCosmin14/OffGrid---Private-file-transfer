@@ -84,6 +84,10 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
                 co_return Helpers::makeResponse(http::status::bad_request, "entity must be file or folder");
 
             std::string entity_id = (std::string)target.substr(id_pos + 1);
+
+            if(entity_id.find("=") != std::string::npos)
+                co_return Helpers::makeResponse(http::status::bad_request, "invalid id");
+
             co_return co_await this->deleteFile(entity, entity_id, session_id);
         }
     }
@@ -95,7 +99,7 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
             auto pos = target.find("/change_data/");
             if (pos == std::string::npos)
                 co_return co_await this->changeData(obj, session_id);
-            co_return co_await this->changeData(obj, session_id, (std::string)target.substr(pos + 12));
+            co_return co_await this->changeData(obj, session_id, (std::string)target.substr(pos + 13));
         }
     }
 

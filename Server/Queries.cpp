@@ -229,20 +229,31 @@ Query Queries::VerifyFolderId(std::string id, std::string uid)
 
 Query Queries::UpdateUser(json::object const& obj, std::string uid, std::string entity, std::string id_column, std::string entity_id)
 {
-
-	std::string query = "UPDATE offgrid_db." + entity + " set ";
+	std::string query = "UPDATE offgrid_db." + entity;
 	std::vector<mysql::field> values;
-	addFields(query, obj, values, nullptr, "=?, ");
-	values.emplace_back(uid);
 
 	if (entity == "user")
-		query += " WHERE uid=?";
+	{
+		query += " SET ";
+		addFields(query, obj, values, nullptr, "=?, ");
+
+		if (query.ends_with(", ")) {
+			query.resize(query.length() - 2);
+		}
+
+		query += " WHERE user.uid=?";
+		values.emplace_back(uid);
+	}
 	else {
 		query += " JOIN user on user.uid = " + entity + "." + id_column;
+		query += " SET ";
+		addFields(query, obj, values, nullptr, "=?, ");
+		values.emplace_back(uid);
 		query += " WHERE user.uid=? and " + entity + "." + entity + "_id=?";
 		values.emplace_back(entity_id);
 	}
-
+	std::cout << query << std::endl;
+	for (auto& it : values) std::cout << it << " ";
 	return { query, values };
 }
 
