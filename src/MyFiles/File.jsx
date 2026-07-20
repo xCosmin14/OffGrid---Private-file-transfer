@@ -67,7 +67,7 @@ export default function File(props) {
                 let buffer = await response.arrayBuffer()
                 const bytes = new Uint8Array(buffer), url = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }))
                 const a = document.createElement('a')
-                a.href = url;
+                a.href = url
                 a.download = props.name
                 document.body.appendChild(a)
                 a.click()
@@ -75,14 +75,34 @@ export default function File(props) {
                 document.body.removeChild(a)
                 URL.revokeObjectURL(url)
             }
-            default: 
-                return
+
+            case "favorites": {
+                const type = props.extension == "Folder" ? "folder" : "file"
+                const response = await customFetch(`http://localhost:18080/change_data/${type}/${props.id}`, {
+                    method: "PATCH",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({favourite: props.favourite ? 0 : 1})
+                })
+                
+                if (response.ok) await refreshFiles()
+                break
+            }
+
+            default: return
         }
     }
 
-    const handleRowClick = (e) => {
+    const handleRowClick = async (e) => {
         if (window.innerWidth <= 500) setIsExpanded(p => !p)
         else if (isFolder && props.onFolderClick) props.onFolderClick()
+
+        const response = await customFetch(`http://localhost:18080/get_file?file_id=${props.id}`, {
+            method: "GET",
+            headers: { 'Content-Type': 'application/json' },
+        })
+
+        let buffer = await response.arrayBuffer()
+        const bytes = new Uint8Array(buffer), url = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }))
     }
 
     return (
@@ -129,7 +149,8 @@ export default function File(props) {
                         <Trash /><h5>Delete</h5>
                     </div>
                     <div className="pathMenuOption" onClick={(e) => handleAction(e, "favorites")}>
-                        <StarFull /><h5>Favorites</h5>
+                        <StarFull style={{color: props.favourite ? "var(--hoverCol)" : "var(--text)"}}/>
+                        <h5>{props.favourite ? "Remove from " : "Add to "}favorites</h5>
                     </div>
                     <hr />
                     <div className="pathMenuOption" onClick={(e) => handleAction(e, "access")}>

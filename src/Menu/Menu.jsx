@@ -61,13 +61,6 @@ export default function Menu() {
                 <PhotoAlbum />
                 <Link to="/myfiles/photos">Photos</Link>
             </div>
-
-            <span></span>
-
-            <div className={`menu-item ${pathname === "/myfiles/trash" ? "active" : ""}`} id="bigSVG">
-                <Trash />
-                <Link to="/myfiles/trash">Trash</Link>
-            </div>
         </div>
     )
 }

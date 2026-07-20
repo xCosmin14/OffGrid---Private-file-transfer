@@ -301,6 +301,7 @@ export default function MyFiles() {
                                             extension="Folder" 
                                             color={folder.color}
                                             size={calculatedSize} 
+                                            favourite={folder.favourite}
                                             created={!isLoading && formatDate(folder.created)}
                                             lastModified={!isLoading && formatDate(folder.modified)}
                                         />
@@ -316,6 +317,7 @@ export default function MyFiles() {
                                     name={file.name} 
                                     extension={file.extension ? file.extension.charAt(0).toUpperCase() + file.extension.slice(1) : ""} 
                                     size={file.size}
+                                    favourite={file.favourite}
                                     created={!isLoading && formatDate(file.created)}
                                     lastModified={!isLoading && formatDate(file.modified)}
                                 />
