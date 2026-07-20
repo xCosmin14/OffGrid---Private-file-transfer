@@ -66,7 +66,6 @@ struct FileData
 	std::string folder_id = "";
 	std::string creator_id = "";
 
-
 	operator json::object() const {
 		json::object obj;
 
@@ -91,7 +90,6 @@ struct FolderData
 	std::string creator_id;
 	std::string folder_name;
 	std::string path;
-
 
 	operator json::object() const {
 		json::object obj;

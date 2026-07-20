@@ -79,7 +79,7 @@ Async<std::pair<std::vector<std::string>, std::string>> ClientController::append
 				}
 
 				if (first_segment && root_folder_id.empty())
-					root_folder_id = fd.folder_id;
+					root_folder_id = deepest_folder_id;
 				first_segment = false;
 			}
 			start = path.find_first_not_of("/", pos + 1);

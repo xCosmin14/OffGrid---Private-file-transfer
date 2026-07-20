@@ -119,10 +119,21 @@ Async<HttpResponse> ClientController::createEntity(json::object& obj, std::strin
 			obj["path"] = path;
 
 		}
+		else
+		{
+			if(obj.contains("name") && obj.at("name").is_string())
+				obj["path"] = obj["name"];
+		}
 
 		if (entity == "file") q = Queries::InsertFile(obj);
 		else if (entity == "folder") q = Queries::InsertFolder(obj);
 
+		std::cout << "idk\n";
+		for (auto it : obj)
+		{
+			std::cout << it.key() << ":" << it.value() << "\n";
+		}
+	
 		co_await this->db.runQuery(q);
 	}
 	catch (boost::system::system_error& e)
@@ -136,7 +147,8 @@ Async<HttpResponse> ClientController::createEntity(json::object& obj, std::strin
 		co_return Helpers::makeResponse(http::status::internal_server_error, "failed creating " + entity);
 	}
 
-	co_return Helpers::makeResponse(http::status::ok, entity + " created successfuly");
+	co_return Helpers::makeResponse(http::status::ok, entity + " created successfuly",
+		"", {{entity+"_id", obj[entity + "_id"]}});
 }
 
 Async<void> ClientController::loadLoggedUsers()

@@ -73,7 +73,6 @@ asio::awaitable<mysql::results> DatabaseController::runQuery(Query query)
 	{
 		throw;
 	}
-
 	co_return result;
 }
 
