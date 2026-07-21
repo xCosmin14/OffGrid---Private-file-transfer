@@ -11,6 +11,7 @@
 
 #include <iostream>
 #include "Handler.h"
+#include "Helpers.h"
 
 template <typename T>
 using Async = boost::asio::awaitable<T>;
@@ -19,32 +20,42 @@ namespace http = boost::beast::http;
 namespace err = boost::asio::error;
 namespace websocket = boost::beast::websocket;
 
-Async<void> handle_websocket_session(boost::asio::ip::tcp::socket socket, std::string cookie, ClientController& c)
+Async<void> handle_websocket_session(boost::asio::ip::tcp::socket socket, http::request<http::vector_body<uint8_t>> req, std::string cookie, ClientController& c)
 {
 	auto ws = std::make_shared<websocket::stream<boost::asio::ip::tcp::socket>>(std::move(socket));
 
 	try {
 
-		co_await ws->async_accept(boost::asio::use_awaitable);
+		co_await ws->async_accept(req, boost::asio::use_awaitable);
 
 		for (;;)
 		{
 			boost::beast::flat_buffer buffer;
 			co_await ws->async_read(buffer, boost::asio::use_awaitable);
 
-			/*if (co_await c.isAuthenticated(cookie)) {
+			std::string session_id = Helpers::extractSessionId(cookie);
+			std::string uid = co_await c.isAuthenticated(session_id);
+
+			//if (!uid.empty()) {
 
 				std::string msg = boost::beast::buffers_to_string(buffer.data());
 				json::object obj = json::parse(msg).as_object();
+				
+				WsSession ws_session(ws, uid);
 
-				co_await c.handleWsMessage(ws, obj, cookie);
-			}*/
+				co_await c.handleWsMessage(ws_session, obj);
+			//}
 		}
 	}
 	catch (boost::system::system_error& e)
 	{
-		if (e.code() != websocket::error::closed)
+		if (e.code() != websocket::error::closed &&
+			e.code() != boost::asio::error::connection_reset)
 			std::cerr << "WS session error: " << e.what();
+	}
+	catch (std::exception& e)
+	{
+		std::cerr << "Unexpected error: " << e.what() << std::endl;
 	}
 	
 }
@@ -66,7 +77,7 @@ Async<void> handle_session(boost::asio::ip::tcp::socket socket, ClientController
 			if (websocket::is_upgrade(req_parser.get()))
 			{
 				std::string cookie{ req_parser.get()[http::field::cookie] };
-				co_await handle_websocket_session(stream.release_socket(), cookie, c);
+				co_await handle_websocket_session(stream.release_socket(), req_parser.release(), cookie, c);
 				co_return;  
 			}
 

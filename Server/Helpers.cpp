@@ -215,3 +215,22 @@ void Helpers::removeFiles(std::vector<std::string> paths_to_clean, std::string u
 		}
 	}
 }
+
+
+std::string Helpers::extractSessionId(std::string cookie)
+{
+	if (cookie.empty()) return "";
+
+	std::string key = "session_id=";
+	auto pos = cookie.find(key);
+
+	if (pos == std::string::npos) return "";
+
+	auto start = pos + key.size();
+	auto end = cookie.find(";", start);
+
+	if (end == std::string::npos)
+		return cookie.substr(start);
+	else
+		return cookie.substr(start, end - start);
+}

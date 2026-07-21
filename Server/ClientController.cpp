@@ -82,6 +82,9 @@ Async<HttpResponse> ClientController::createEntity(json::object& obj, std::strin
 		co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
 
 
+	if (!obj.contains("name") || !obj.at("name").is_string())
+		co_return Helpers::makeResponse(http::status::bad_request, "name is required");
+
 	for (auto& it : obj)
 	{
 		if (!allowed_fields.count(it.key()))
@@ -110,28 +113,24 @@ Async<HttpResponse> ClientController::createEntity(json::object& obj, std::strin
 
 			auto path_field = results.rows()[0][0];
 			std::string path = path_field.is_null() ? "" : path_field.as_string();
-			if (obj.contains("name") && obj.at("name").is_string())
-			{
-				std::string name = json::value_to<std::string>(obj.at("name"));
-				path = path.empty() ? name : (path + "/" + name);
-			}
+			
+			std::string name = json::value_to<std::string>(obj.at("name"));
+			path = path.empty() ? name : (path + "/" + name);
+			
 
 			obj["path"] = path;
 
 		}
 		else
 		{
-			if(obj.contains("name") && obj.at("name").is_string())
-				obj["path"] = obj["name"];
+			std::string name = json::value_to<std::string>(obj.at("name"));
+			obj["path"] = name;
 		}
 
 		if (entity == "file") q = Queries::InsertFile(obj);
 		else if (entity == "folder") q = Queries::InsertFolder(obj);
 
-		for (auto it : obj)
-		{
-			std::cout << it.key() << ":" << it.value() << "\n";
-		}
+		
 	
 		co_await this->db.runQuery(q);
 	}

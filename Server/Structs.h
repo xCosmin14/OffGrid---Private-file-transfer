@@ -2,6 +2,8 @@
 #include <boost/beast/http.hpp>
 #include <boost/mysql.hpp>
 #include <boost/json.hpp>
+#include <boost/beast/websocket.hpp>
+
 #include <string>
 #include <vector>
 #include <chrono>
@@ -102,4 +104,10 @@ struct FolderData
 
 		return obj;
 	}
+};
+
+struct WsSession
+{
+	std::shared_ptr<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>> ws;
+	std::string uid;
 };

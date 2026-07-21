@@ -25,4 +25,5 @@ namespace Helpers
 
 	void removeFiles(std::vector<std::string>, std::string);
 
+	std::string extractSessionId(std::string);
 };

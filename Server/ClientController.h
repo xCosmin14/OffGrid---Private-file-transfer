@@ -72,10 +72,10 @@ class ClientController
 
 	Async<HttpResponse> changeData(json::object&, std::string, std::string = "user");
 
-	Async<HttpResponse> createEntity(json::object&, std::string, 
+	Async<HttpResponse> createEntity(json::object&, std::string,
 		std::unordered_set<std::string>, std::string);
 
-	Async<std::pair<std::vector<std::string>, std::string>> appendFolders(std::vector<Query>&, 
+	Async<std::pair<std::vector<std::string>, std::string>> appendFolders(std::vector<Query>&,
 		const std::vector<std::string>&, std::string, std::string);
 
 
@@ -101,7 +101,7 @@ public:
 	Async<HttpResponse> handleRequest(http::verb method, std::string_view target, std::vector<uint8_t>& body, std::string session_id);
 	Async<void> loadLoggedUsers();
 
-	//Async<bool> isAuthenticated(std::string);
-	//Async<void> handleWsMessage(std::shared_ptr<websocket::stream<boost::asio::ip::tcp::socket>>, json::object&, std::string);
+	Async<std::string> isAuthenticated(std::string);
+	Async<void> handleWsMessage(WsSession&, json::object&);
 
 };

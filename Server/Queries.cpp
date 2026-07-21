@@ -248,12 +248,12 @@ Query Queries::UpdateUser(json::object const& obj, std::string uid, std::string 
 		query += " JOIN user on user.uid = " + entity + "." + id_column;
 		query += " SET ";
 		addFields(query, obj, values, nullptr, "=?, ");
+
 		values.emplace_back(uid);
 		query += " WHERE user.uid=? and " + entity + "." + entity + "_id=?";
 		values.emplace_back(entity_id);
 	}
-	std::cout << query << std::endl;
-	for (auto& it : values) std::cout << it << " ";
+
 	return { query, values };
 }
 
