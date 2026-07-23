@@ -354,4 +354,10 @@
         top: 26px; 
         transform: none;
     }
+
+    .fileExtensionChart {
+        top: 40px; left: 15px;
+        width: calc(100% - 30px); height: 24px;
+
+    }
 }

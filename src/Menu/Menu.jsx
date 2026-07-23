@@ -11,7 +11,6 @@ import MyFiles from "../assets/SVG/FileIcons/MyFiles.svg?react"
 import PhotoAlbum from "../assets/SVG/FileIcons/PhotoAlbum.svg?react"
 import UserFiles from "../assets/SVG/FileIcons/UserFiles.svg?react"
 import StarFull from "../assets/SVG/StarFull.svg?react"
-import Trash from "../assets/SVG/FileIcons/Trash.svg?react"
 
 import "./Menu.css"
 

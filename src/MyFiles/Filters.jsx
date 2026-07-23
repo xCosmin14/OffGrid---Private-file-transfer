@@ -9,7 +9,7 @@ import "../Header/Header.css"
 export default function Filters( {onFilterChange} ) {
     const { pathname } = useLocation()
 
-    const { files, folders, isLoading, refreshFiles } = useContext(FileContext)
+    const { files, folders, isLoading } = useContext(FileContext)
     let extensions = []
 
     if (folders) extensions.push("Folder")

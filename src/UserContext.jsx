@@ -28,6 +28,7 @@ export const customFetch = async (url, options = {}) => {
 export const UserProvider = ({ children }) => {
     const [user, setUser] = useState(null)
     const [avatar, setAvatar] = useState(MockUserImg)
+    const [isLogged, setIsLogged] = useState(localStorage.getItem("isLogged") === "true")
 
     const loadData = async () => {
         try {
@@ -51,13 +52,28 @@ export const UserProvider = ({ children }) => {
     }
 
     useEffect(() => {
-        if (localStorage.getItem("isLogged") === "true") {
-            loadData()
-        }
-    }, [])
+        if (isLogged) loadData()
+    }, [isLogged])
+
+    useEffect(() => {
+        if (!user?.preferences) return
+        let prefs = user.preferences
+        
+        if (typeof prefs === "string") prefs = JSON.parse(prefs)
+        if (!prefs.light || !prefs.dark) return
+
+        const root = document.documentElement
+
+        Object.keys(prefs.light).forEach((key) => {
+            const lightValue = prefs.light[key], darkValue = prefs.dark[key]
+
+            if (lightValue && darkValue) 
+                root.style.setProperty(`--${key}`, `light-dark(${lightValue}, ${darkValue})`)
+        })
+    }, [user?.preferences])
 
     return (
-        <UserContext.Provider value={{ user, avatar, refreshData: loadData }}>
+        <UserContext.Provider value={{ user, avatar, refreshData: loadData, isLogged, setIsLogged }}>
             {children}
         </UserContext.Provider>
     )

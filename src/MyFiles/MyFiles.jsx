@@ -8,6 +8,7 @@ import { getFileColor } from "./FileColors.js"
 import AddFile from "./AddFile.jsx"
 import Filters from "./Filters.jsx"
 import File from "./File.jsx"
+import FileViewer from "../FileViewer/FileViewer.jsx"
 
 import ArrowRight from "../assets/SVG/ArrowRight.svg?react"
 import ArrowDown from "../assets/SVG/ArrowDown.svg?react"
@@ -67,6 +68,8 @@ export default function MyFiles() {
     const handleFilterChange = (filters) => { 
         setAppliedFilters(filters) 
     }
+
+    const [openFile, setOpenFile] = useState(null)
 
     const { sizeByTypes, totalFileSize } = useMemo(() => {
         const sizes = {}
@@ -221,7 +224,7 @@ export default function MyFiles() {
                             {isLast ? (
                                 <div style={{ position: "relative", display: "inline-block" }} ref={pathMenuRef}>
                                     <a onClick={() => {
-                                        setShowPathMenu(prev => !prev);
+                                        setShowPathMenu(prev => !prev)
                                         setSearchQuery("")
                                     }}
                                         style={{ display: "flex", alignItems: "center", gap: "5px", cursor: "pointer" }}
@@ -265,6 +268,8 @@ export default function MyFiles() {
                 ))}
             </div>
 
+            {openFile !== null && <FileViewer file={openFile} onExit={() => setOpenFile(null)} />}
+
             <div className="fileContainer">
                 <div className="fileTableHeader">
                     <div>Name</div>
@@ -291,7 +296,7 @@ export default function MyFiles() {
                                 return (
                                     <div 
                                         key={`folder-${folder.path}`} 
-                                        onClick={() => {setSearchQuery(""); navigate(pathForLink);}} // Am scos setarea de parentFolderID de aici
+                                        onClick={() => {setSearchQuery(""); navigate(pathForLink);}}
                                         style={{ display: "contents", textDecoration: "none", color: "inherit", cursor: "pointer" }}
                                     >
                                         <File 
@@ -320,6 +325,7 @@ export default function MyFiles() {
                                     favourite={file.favourite}
                                     created={!isLoading && formatDate(file.created)}
                                     lastModified={!isLoading && formatDate(file.modified)}
+                                    onFileClick = {() => setOpenFile(file)}
                                 />
                             ))}
                         </>

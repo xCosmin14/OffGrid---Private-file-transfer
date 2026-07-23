@@ -35,7 +35,7 @@ export const FileProvider = ({ children }) => {
 
     useEffect(() => {
         if (localStorage.getItem("isLogged") === "true") fetchFiles()
-        else setIsLoading(false);
+        else setIsLoading(false)
     }, [])
 
     return (

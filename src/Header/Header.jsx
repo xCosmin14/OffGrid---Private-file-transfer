@@ -24,7 +24,7 @@ export default function Header() {
         return localStorage.getItem("theme") || "light"
     })
 
-    const { user, avatar, refreshData } = useContext(UserContext)
+    const { user, avatar } = useContext(UserContext)
     const { searchQuery, setSearchQuery } = useContext(FileContext)
 
     const [notificationsOpen, setNotificationsOpen] = useState(false)

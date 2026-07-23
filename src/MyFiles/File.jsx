@@ -73,7 +73,6 @@ export default function File(props) {
                 setNewName(props.name || "")
                 setNewFolderColor(props.color || "#000000")
                 setDisplayRename(true)
-
                 break
             }
 
@@ -149,48 +148,52 @@ export default function File(props) {
         }
     }
 
-    const handleRowClick = async (e) => {
-        if (window.innerWidth <= 500) setIsExpanded(p => !p)
-        else if (isFolder && props.onFolderClick) props.onFolderClick()
+    const handleRowClick = () => {
+        if (!isFolder) props.onFileClick()
     }
 
     const renderRenameModal = () => {
         if (!displayRename) return null
 
         return (
-            <div id="createFolder" ref={renameRef} onClick={(e) => e.stopPropagation()}>
-                <h2>{isFolder ? "Edit folder" : "Rename file"}</h2>
-                
-                <input 
-                    type="text" 
-                    name="newFileName" 
-                    placeholder="Name" 
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                />
+            <div className="modalOverlay" onClick={(e) => {
+                e.stopPropagation()
+                setDisplayRename(false)
+            }}>
+                <div id="createFolder" ref={renameRef} onClick={(e) => e.stopPropagation()}>
+                    <h2>{isFolder ? "Edit folder" : "Rename file"}</h2>
+                    
+                    <input 
+                        type="text" 
+                        name="newFileName" 
+                        placeholder="Name" 
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
+                    />
 
-                {isFolder && (
-                    <div id="newFolderColor">
-                        <h3>Color: {newFolderColor}</h3>
-                        <input 
-                            type="color" 
-                            name="newFolderColor" 
-                            value={newFolderColor}
-                            onChange={(e) => setNewFolderColor(e.target.value)}
-                        />
+                    {isFolder && (
+                        <div id="newFolderColor">
+                            <h3>Color: {newFolderColor}</h3>
+                            <input 
+                                type="color" 
+                                name="newFolderColor" 
+                                value={newFolderColor}
+                                onChange={(e) => setNewFolderColor(e.target.value)}
+                            />
+                        </div>
+                    )}
+                    
+                    <div className="createFolderActions">
+                        <button onClick={(e) => {
+                            e.stopPropagation()
+                            setDisplayRename(false)
+                        }}>Cancel</button>
+
+                        <button onClick={(e) => {
+                            e.stopPropagation()
+                            submitRename()
+                        }}>Save</button>
                     </div>
-                )}
-                
-                <div className="createFolderActions">
-                    <button onClick={(e) => {
-                        e.stopPropagation()
-                        setDisplayRename(false)
-                    }}>Cancel</button>
-
-                    <button onClick={(e) => {
-                        e.stopPropagation()
-                        submitRename()
-                    }}>Save</button>
                 </div>
             </div>
         )
@@ -199,7 +202,11 @@ export default function File(props) {
     return (
         <div className={`fileRow ${isExpanded ? "expanded" : ""}`} onClick={handleRowClick}>
             <div className="fileNameCell">
-                <div className="mobileExpandBtn" onClick={(e) => { e.stopPropagation(); setIsExpanded(p => !p) }}>
+                
+                <div className="mobileExpandBtn" onClick={(e) => { 
+                    e.stopPropagation() 
+                    setIsExpanded(p => !p) 
+                }}>
                     <ArrowDown className={`expandIcon ${isExpanded ? "rotated" : ""}`} />
                 </div>
 

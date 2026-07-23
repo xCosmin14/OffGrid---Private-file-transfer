@@ -1,11 +1,10 @@
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useContext } from 'react'
 
-import { UserProvider } from './UserContext.jsx' 
+import { UserProvider, UserContext } from './UserContext.jsx' 
 import { FileProvider } from './GetFiles.jsx' 
 import isMobile from "./IsMobile.js"
-
-import { getUID } from "./ColorScheme.js"
 
 import Header from './Header/Header.jsx'
 import Menu from './Menu/Menu.jsx'
@@ -24,28 +23,36 @@ import PhotoAlbum from "./PhotoAlbum/PhotoAlbum.jsx"
 
 import GlobalUploadProgress from "./MyFiles/GlobalUploadProgress.jsx"
 
+function AppContent() {
+  const { isLogged } = useContext(UserContext)
+
+  return (
+    <BrowserRouter>
+      <Header />
+      {isMobile() == 0 && isLogged && <Menu />}
+      <GlobalUploadProgress />
+
+      <Routes>
+        <Route path="/" element={!isLogged ? <Login /> : <MyFiles />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={!isLogged ? <Login /> : <Navigate to="/" replace />} />
+        <Route path="/passwordreset" element={<ForgotPassword />} />
+        
+        <Route path="/settings" element={!isLogged ? <Login /> : <Settings />} />
+        <Route path="/myfiles/shared" element={!isLogged ? <Login /> : <SharedFiles />} />
+        <Route path="/myfiles/favorites" element={!isLogged ? <Login /> : <Favorites />} />
+        <Route path="/myfiles/documents" element={!isLogged ? <Login /> : <Documents />} />
+        <Route path="/myfiles/music" element={!isLogged ? <Login /> : <MusicLibrary />} />
+        <Route path="/myfiles/photos" element={!isLogged ? <Login /> : <PhotoAlbum />} />
+      </Routes>
+    </BrowserRouter>
+  )
+}
+
 createRoot(document.getElementById('root')).render(
   <UserProvider>
     <FileProvider> 
-      <BrowserRouter>
-        <Header />
-        {isMobile() == 0 && localStorage.getItem("isLogged") === "true" && <Menu />}
-        <GlobalUploadProgress />
-
-        <Routes>
-          <Route path="/" element = {getUID() === null ? <Login /> : <MyFiles />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/passwordreset" element={<ForgotPassword />} />
-          <Route path="/settings" element={getUID() === null ? <Login /> : <Settings />} />
-
-          <Route path="/myfiles/shared" element={getUID() === null ? <Login /> : <SharedFiles />} />
-          <Route path="/myfiles/favorites" element={getUID() === null ? <Login /> : <Favorites />} />
-          <Route path="/myfiles/documents" element={getUID() === null ? <Login /> : <Documents />} />
-          <Route path="/myfiles/music" element={getUID() === null ? <Login /> : <MusicLibrary />} />
-          <Route path="/myfiles/photos" element={getUID() === null ? <Login /> : <PhotoAlbum />} />
-        </Routes>
-      </BrowserRouter>
+      <AppContent />
     </FileProvider>
   </UserProvider>,
 )

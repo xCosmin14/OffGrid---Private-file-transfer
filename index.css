@@ -11,6 +11,8 @@
     --boxBgCol: light-dark(rgba(255, 255, 255, 0.85), rgba(219, 219, 219, 0.05));
 }
 
+#root {position: relative;}
+
 :root[data-theme="light"] {color-scheme: light;}
 :root[data-theme="dark"] {color-scheme: dark;}
 
