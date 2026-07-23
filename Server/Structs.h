@@ -6,6 +6,7 @@
 
 #include <string>
 #include <vector>
+#include <unordered_set>
 #include <chrono>
 
 namespace http = boost::beast::http;
@@ -110,4 +111,10 @@ struct WsSession
 {
 	std::shared_ptr<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>> ws;
 	std::string uid;
+};
+
+struct ViewersMapEntry
+{
+	int current_version = 0;
+	std::unordered_set<std::shared_ptr<WsSession>> viewers;
 };

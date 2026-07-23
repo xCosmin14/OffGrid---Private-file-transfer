@@ -5,6 +5,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/beast/websocket.hpp>
 #include <boost/json.hpp>
+
 #include <string>
 #include <unordered_map>
 #include <functional>
@@ -35,6 +36,12 @@ class ClientController
 
 	std::unordered_map<std::string, FileMapEntry> files_cache; // transaction_id -> { path, function to remove from cache }
 	std::shared_mutex files_mutex;
+
+
+	std::unordered_map<std::string, ViewersMapEntry> viewers_map; // file_id -> {ws, uid}
+	
+	std::shared_mutex viewers_mutex;
+
 
 	std::atomic<bool> stop_clean_up{ false };
 	std::thread cleaning_thread;
@@ -82,6 +89,11 @@ class ClientController
 	void cleanUpCache();
 
 
+	Async<void> handleWatch(std::shared_ptr<WsSession>, std::string);
+	Async<void> handleUnwatch(std::shared_ptr<WsSession>, std::string);
+	Async<void> handleModify(std::shared_ptr<WsSession>, json::object, std::string);
+
+
 
 public:
 
@@ -102,6 +114,6 @@ public:
 	Async<void> loadLoggedUsers();
 
 	Async<std::string> isAuthenticated(std::string);
-	Async<void> handleWsMessage(WsSession&, json::object&);
+	Async<void> handleWsMessage(std::shared_ptr<WsSession>, json::object&);
 
 };

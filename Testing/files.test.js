@@ -3,13 +3,13 @@ import fs, { fdatasync } from 'fs'
 import { getResponse, extractCookie, checkDirectory, checkFile } from "./helpers.js";
 import { spawn, execSync, exec } from "child_process";
 import dotenv from 'dotenv';
+import { exp } from "prelude-ls";
 
 
 let mail = `pookie${crypto.randomUUID().slice(0, 8)}@gmail.com`;
 let name = `deea${crypto.randomUUID().slice(0, 8)}`;
 let cookie;
-let file_id;
-
+let file_id, folder_id;
 
 describe("File Tests", () => {
 
@@ -80,6 +80,7 @@ describe("File Tests", () => {
         expect(response.status).toBe(200);
 
         let content = await response.arrayBuffer();
+        console.log(content);
         let received = Buffer.from(content);
         let expected = fs.readFileSync("Testing/dummies/regular_file.txt");
 
@@ -104,6 +105,7 @@ describe("File Tests", () => {
 
         expect(json).toStrictEqual(expected);
     })
+
 
     it('should cancel folder upload', async () => {
         let response = await getResponse("/upload_folder", "POST", {
@@ -146,6 +148,9 @@ describe("File Tests", () => {
         expect(json.status).toBe("success");
         expect(json.message).toBe("ready to receive files");
         expect(json.transaction_id).toBeDefined();
+        expect(json.folder_id).toBeDefined();
+
+        folder_id = json.folder_id;
 
         for (let file of folderFiles) {
             let buffer = fs.readFileSync(`Testing/dummies/${file.path}`);
@@ -155,7 +160,7 @@ describe("File Tests", () => {
             formData.append('file', blob, file.name);
 
             response = await getResponse(`/upload_file?transaction_id=${json.transaction_id}`, "POST", formData, cookie);
-
+           
         }
 
         expect(checkDirectory("Server/FileSystem/files",
@@ -163,15 +168,32 @@ describe("File Tests", () => {
 
     })
 
-    it('should create a folder', async()=>{
-        let response = await getResponse("/create_folder", "POST", {'color':'blue'}, cookie);
-
+    it('should delete a file', async () => {
+        let response = await getResponse(`/delete_file?${file_id}`, "DELETE", null, cookie);
         let data = await response.json();
-
-        expect(data).toStrictEqual({"status":"success", "message":"folder created successfuly"});
+        expect(data).toStrictEqual({ "status": "success", "message": "file deleted successfuly" });
     })
 
 
+    it('should create a folder', async () => {
+        console.log(folder_id);
+        let response = await getResponse("/create_folder", "POST", { 'color': 'blue', 'parent_folder_id':folder_id, "name":"idk" }, cookie);
+
+        let data = await response.json();
+        console.log(data);
+        expect(data.status).toBe("success");
+        expect(data.message).toBe("folder created successfuly");
+        expect(data.folder_id).toBeDefined();
+
+        folder_id = data.folder_id;
+    })
+
+    it('should delete a folder', async () => {
+        let response = await getResponse(`/delete_folder?${folder_id}`, "DELETE", null, cookie);
+        let data = await response.json();
+
+        expect(data).toStrictEqual({ "status": "success", "message": "folder deleted successfuly" });
+    })
 
     afterAll(() => {
         console.log("Cleaning up");
@@ -180,7 +202,7 @@ describe("File Tests", () => {
 
         execSync("node Testing/clean_up.js", { stdio: 'inherit' });
 
-        new Promise((resolve, reject) => {
+       /*  new Promise((resolve, reject) => {
             const proc = spawn(process.env.MYSQL_PATH || 'mysql', [
                 "-u", "offgrid_test",
                 `-p${process.env.DB_PASS}`,
@@ -191,7 +213,7 @@ describe("File Tests", () => {
             proc.stdin.end();
             proc.on('close', resolve);
             proc.on('error', reject);
-        })
+        }) */
 
 
     })

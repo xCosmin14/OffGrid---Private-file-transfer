@@ -72,3 +72,20 @@ export async function testChange(endpoint, body, cookie, expected) {
     let data = await response.json();
     expect(data).toStrictEqual(expected);
 }
+
+
+export async function sendAndReceive(ws, obj) {
+    
+    return new Promise((resolve, reject) => {
+
+        ws.once("message", (data) => {
+            try {
+                resolve(JSON.parse(data.toString()))
+            } catch (err) {
+                reject(err);
+            }
+        });
+
+        ws.send(JSON.stringify(obj));
+    })
+}

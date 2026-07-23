@@ -26,4 +26,6 @@ namespace Helpers
 	void removeFiles(std::vector<std::string>, std::string);
 
 	std::string extractSessionId(std::string);
+
+	Async<void> sendWsMessage(std::shared_ptr<WsSession>, json::object);
 };

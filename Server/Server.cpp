@@ -28,21 +28,25 @@ Async<void> handle_websocket_session(boost::asio::ip::tcp::socket socket, http::
 
 		co_await ws->async_accept(req, boost::asio::use_awaitable);
 
+
+		std::string session_id = Helpers::extractSessionId(cookie);
+		std::string uid = co_await c.isAuthenticated(session_id);
+
+		if (uid.empty()) co_return;
+
+		auto ws_session = std::make_shared<WsSession>(ws, uid);
+
 		for (;;)
 		{
 			boost::beast::flat_buffer buffer;
 			co_await ws->async_read(buffer, boost::asio::use_awaitable);
 
-			std::string session_id = Helpers::extractSessionId(cookie);
-			std::string uid = co_await c.isAuthenticated(session_id);
-
 			//if (!uid.empty()) {
+
 
 				std::string msg = boost::beast::buffers_to_string(buffer.data());
 				json::object obj = json::parse(msg).as_object();
 				
-				WsSession ws_session(ws, uid);
-
 				co_await c.handleWsMessage(ws_session, obj);
 			//}
 		}

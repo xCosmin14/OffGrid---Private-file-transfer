@@ -226,6 +226,14 @@ Query Queries::VerifyFolderId(std::string id, std::string uid)
 
 }
 
+Query Queries::VerifyFileAccess(std::string id, std::string uid)
+{
+	return { "SELECT file.file_id FROM offgrid_db.file "
+	"LEFT JOIN offgrid_db.access on access.file_id = file.file_id "
+	"WHERE file.file_id = ? and (file.creator_id=? or access.user_id=?)", {
+	mysql::field(id), mysql::field(uid), mysql::field(uid)} };
+}
+
 
 Query Queries::UpdateUser(json::object const& obj, std::string uid, std::string entity, std::string id_column, std::string entity_id)
 {

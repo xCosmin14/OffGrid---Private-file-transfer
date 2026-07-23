@@ -58,6 +58,8 @@ namespace Queries
 
 	Query VerifyFolderId(std::string, std::string);
 
+	Query VerifyFileAccess(std::string, std::string);
+
 	Query UpdateUser(json::object const&, std::string, std::string, std::string, std::string);
 
 	Query DeleteFile_(std::string, std::string, std::string);
