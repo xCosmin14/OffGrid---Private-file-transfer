@@ -234,7 +234,7 @@ export const viewerComponentsMap = {
     "webp": "PhotoViewer", "tiff": "PhotoViewer", "heic": "PhotoViewer",
 
 
-    "pdf": "DocumentViewer", 
+    "pdf": "PdfViewer", 
     "doc": "DocumentViewer", "docx": "DocumentViewer", 
     "odt": "DocumentViewer", "rtf": "DocumentViewer",
 

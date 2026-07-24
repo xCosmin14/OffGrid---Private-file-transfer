@@ -16,7 +16,8 @@ export default function PhotoViewer(props) {
 
     return (
         <div id="photoViewer">
-            {(props.file.extension === "png" || props.file.extension === "jpg" || props.file.extension === "jpeg") 
+            {(props.file.extension === "png" || props.file.extension === "bmp"
+                || props.file.extension === "jpg" || props.file.extension === "jpeg") 
                 && <img src={props.fileContent} id="normalPhoto"/>}
 
             {props.file.extension === "svg" && (

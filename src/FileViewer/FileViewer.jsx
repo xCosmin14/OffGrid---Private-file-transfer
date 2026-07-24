@@ -12,7 +12,7 @@ import "./FileViewers.css"
 const VideoPlayer = lazy(() => import("./VideoPlayer.jsx"))
 const AudioPlayer = lazy(() => import("./AudioPlayer.jsx"))
 const PhotoViewer = lazy(() => import("./PhotoViewer.jsx"))
-const DocumentViewer = lazy(() => import("./DocumentViewer.jsx"))
+const PdfViewer = lazy(() => import("./PdfViewer.jsx"))
 const SpreadsheetViewer = lazy(() => import("./SpreadsheetViewer.jsx"))
 const PresentationViewer = lazy(() => import("./PresentationViewer.jsx"))
 const CodeViewer = lazy(() => import("./CodeViewer.jsx"))
@@ -103,15 +103,15 @@ export default function FileViewer(props) {
     const componentName = getViewerComponent(props.file.name, extensionToLanguage)
     let ViewerComponent = null
     switch (componentName) {
-        case "VideoPlayer": ViewerComponent = VideoPlayer; break;
-        case "AudioPlayer": ViewerComponent = AudioPlayer; break;
-        case "PhotoViewer": ViewerComponent = PhotoViewer; break;
-        case "DocumentViewer": ViewerComponent = DocumentViewer; break;
-        case "SpreadsheetViewer": ViewerComponent = SpreadsheetViewer; break;
-        case "PresentationViewer": ViewerComponent = PresentationViewer; break;
-        case "CodeViewer": ViewerComponent = CodeViewer; break;
-        case "ArchiveViewer": ViewerComponent = ArchiveViewer; break;
-        default: ViewerComponent = null; break;
+        case "VideoPlayer": ViewerComponent = VideoPlayer; break
+        case "AudioPlayer": ViewerComponent = AudioPlayer; break
+        case "PhotoViewer": ViewerComponent = PhotoViewer; break
+        case "PdfViewer": ViewerComponent = PdfViewer; break
+        case "SpreadsheetViewer": ViewerComponent = SpreadsheetViewer; break
+        case "PresentationViewer": ViewerComponent = PresentationViewer; break
+        case "CodeViewer": ViewerComponent = CodeViewer; break
+        case "ArchiveViewer": ViewerComponent = ArchiveViewer; break
+        default: ViewerComponent = null; break
     }
 
     return (
@@ -135,7 +135,7 @@ export default function FileViewer(props) {
                     <div className="unsupported">Eroare: {fetchError}</div>
                 ) : ViewerComponent ? (
                     <Suspense fallback={<div className="unsupported">Loading viewer...</div>}>
-                        <ViewerComponent file={props.file} fileContent={fileUrl} />
+                        <ViewerComponent file={props.file} fileContent={fileUrl} viewerSize={size}/>
                     </Suspense>
                 ) : (
                     <h3 className="unsupported">This file can't be previewed</h3>
