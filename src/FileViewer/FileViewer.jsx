@@ -1,5 +1,7 @@
-import React, { useState, Suspense, lazy } from "react"
+import React, { useState, useEffect, Suspense, lazy } from "react"
+
 import { getFileColor, getViewerComponent, extensionToLanguage } from "../MyFiles/FileColors"
+import { customFetch } from "../UserContext.jsx"
 
 import Add from "../assets/SVG/FileIcons/Add.svg?react"
 import Enlarge from "../assets/SVG/Enlarge.svg?react"
@@ -17,7 +19,86 @@ const CodeViewer = lazy(() => import("./CodeViewer.jsx"))
 const ArchiveViewer = lazy(() => import("./ArchiveViewer.jsx"))
 
 export default function FileViewer(props) {
-    const [size, setSize] = useState("small")
+    const [fileUrl, setFileUrl] = useState(null)
+    const [loadingContent, setLoadingContent] = useState(true)
+    const [fetchError, setFetchError] = useState(null)
+
+    const fileId = props.file?.file_id || props.id
+
+    useEffect(() => {
+        const handleKeyDown = (event) => {
+            if (event.key === "Escape") props.onExit()
+            
+        }
+
+        window.addEventListener("keydown", handleKeyDown)
+
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown)
+        }
+    }, [props.onExit])
+
+    useEffect(() => {
+        let objectUrl = null, isMounted = true
+
+        const fetchFileContent = async () => {
+            if (!fileId) return
+
+            setLoadingContent(true)
+            setFetchError(null)
+
+            try {
+                const response = await customFetch(`http://localhost:18080/get_file?file_id=${fileId}`, {
+                    method: "GET",
+                    headers: { 'Content-Type': 'application/json' },
+                })
+
+                if (!response.ok)
+                    throw new Error("File content can't be loaded")
+
+                const buffer = await response.arrayBuffer()
+                objectUrl = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }))
+
+                if (isMounted) {
+                    setFileUrl(objectUrl)
+                    setLoadingContent(false)
+                }
+            } catch (err) {
+                if (isMounted) {
+                    setFetchError(err.message)
+                    setLoadingContent(false)
+                }
+            }
+        }
+
+        fetchFileContent()
+
+        return () => {
+            isMounted = false
+            if (objectUrl) URL.revokeObjectURL(objectUrl)
+        }
+    }, [fileId])
+
+    const downloadFile = async () => {
+        const response = await customFetch(`http://localhost:18080/get_file?file_id=${fileId}`, {
+            method: "GET",
+            headers: { 'Content-Type': 'application/json' },
+        })
+
+        let buffer = await response.arrayBuffer()
+        const url = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }))
+        const a = document.createElement('a')
+        a.href = url
+        a.download = props.file.name
+        document.body.appendChild(a)
+        a.click()
+
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+    }        
+
+    const size = props.viewerSize || "small"
+    const setSize = props.setViewerSize
 
     const componentName = getViewerComponent(props.file.name, extensionToLanguage)
     let ViewerComponent = null
@@ -48,14 +129,20 @@ export default function FileViewer(props) {
             <h1 id="fileTitle">{props.file.name}</h1>
 
             <div className="viewerContent">
-                {ViewerComponent ? (
-                    <Suspense fallback={<div className="loadingViewer">Loading viewer</div>}>
-                        <ViewerComponent file={props.file} />
+                {loadingContent ? (
+                    <div className="unsupported">Loading file data...</div>
+                ) : fetchError ? (
+                    <div className="unsupported">Eroare: {fetchError}</div>
+                ) : ViewerComponent ? (
+                    <Suspense fallback={<div className="unsupported">Loading viewer...</div>}>
+                        <ViewerComponent file={props.file} fileContent={fileUrl} />
                     </Suspense>
                 ) : (
                     <h1 className="unsupported">This file type can't be previewed</h1>
                 )}
             </div>
+                
+            <button onClick={() => downloadFile()}>Download</button>
         </div>
     )
 }

@@ -236,8 +236,8 @@ export default function Settings() {
                     </div>
 
                     <div className="settingsActionButtons">
-                        <button className="settingsBtn primary" onClick={saveColors}>Save theme</button>
-                        <button className="settingsBtn danger" onClick={logOut}>Log out</button>
+                        <button className="settingsBtn primary" onClick={() => saveColors()}>Save theme</button>
+                        <button className="settingsBtn danger" onClick={() => logOut()}>Log out</button>
                     </div>
                 </div>
 

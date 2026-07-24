@@ -219,7 +219,9 @@ export default function File(props) {
                 <h3 className="itemName">{props.name}</h3>
             </div>
             
-            <h3 className="fileDetail"><span className="mobileLabel">Type: </span>{isFolder ? "Folder" : props.extension}</h3>
+            {!props.hideType && (
+                <h3 className="fileDetail"><span className="mobileLabel">Type: </span>{isFolder ? "Folder" : props.extension}</h3>
+            )}
             <h3 className="fileDetail"><span className="mobileLabel">Size: </span>{
                 props.size ? props.size > 1073741824 ? `${Number.parseFloat(props.size/1000000.0).toFixed(2)} GB` : `${Number.parseFloat(props.size/1048576.0).toFixed(2)} MB` : "0 MB"
             }</h3>

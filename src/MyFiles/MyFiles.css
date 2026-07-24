@@ -107,6 +107,11 @@
     min-width: 800px;
 }
 
+.fileContainer.viewer-open-small .fileTableHeader,
+.fileContainer.viewer-open-small .fileRow {
+    grid-template-columns: 2.5fr .75fr 1fr 1fr; 
+}
+
 .fileTableHeader {
     padding: 0 50px 0 20px;
     font-size: 14px; font-weight: 500;

@@ -70,6 +70,8 @@ export default function MyFiles() {
     }
 
     const [openFile, setOpenFile] = useState(null)
+    const [viewerSize, setViewerSize] = useState("small")
+    const isViewerSmall = openFile !== null && viewerSize === "small"
 
     const { sizeByTypes, totalFileSize } = useMemo(() => {
         const sizes = {}
@@ -268,12 +270,20 @@ export default function MyFiles() {
                 ))}
             </div>
 
-            {openFile !== null && <FileViewer file={openFile} onExit={() => setOpenFile(null)} />}
+            {openFile !== null && (
+                <FileViewer 
+                    file={openFile} 
+                    onExit={() => { setOpenFile(null); setViewerSize("small"); }} 
+                    viewerSize={viewerSize}
+                    setViewerSize={setViewerSize}
+                />
+            )}
 
-            <div className="fileContainer">
+            <div className={`fileContainer ${isViewerSmall ? "viewer-open-small" : ""}`}
+                style={{width: isViewerSmall ? "75%" : "100%"}}>
                 <div className="fileTableHeader">
                     <div>Name</div>
-                    <div>Type</div>
+                    {!isViewerSmall && <div>Type</div>}
                     <div>Size</div>
                     <div>Created</div>
                     <div>Last modified</div>
@@ -326,6 +336,7 @@ export default function MyFiles() {
                                     created={!isLoading && formatDate(file.created)}
                                     lastModified={!isLoading && formatDate(file.modified)}
                                     onFileClick = {() => setOpenFile(file)}
+                                    hideType={isViewerSmall}
                                 />
                             ))}
                         </>
