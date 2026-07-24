@@ -235,14 +235,10 @@ export const viewerComponentsMap = {
 
 
     "pdf": "PdfViewer", 
-    "doc": "DocumentViewer", "docx": "DocumentViewer", 
-    "odt": "DocumentViewer", "rtf": "DocumentViewer",
+    "docx": "DocumentViewer", 
 
-    "xls": "SpreadsheetViewer", "xlsx": "SpreadsheetViewer", 
-    "csv": "SpreadsheetViewer", "ods": "SpreadsheetViewer",
-
-    "ppt": "PresentationViewer", "pptx": "PresentationViewer", 
-    "odp": "PresentationViewer",
+    "xls": "DocumentViewer", "xlsx": "DocumentViewer", 
+    "csv": "DocumentViewer", "ods": "DocumentViewer",
 
     "txt": "TextViewer"
 };

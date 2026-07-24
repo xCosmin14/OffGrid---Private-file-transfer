@@ -8,13 +8,12 @@ import Enlarge from "../assets/SVG/Enlarge.svg?react"
 import Shrink from "../assets/SVG/Shrink.svg?react"
 
 import "./FileViewers.css"
+import DocumentViewer from "./DocumentViewer.jsx"
 
 const VideoPlayer = lazy(() => import("./VideoPlayer.jsx"))
 const AudioPlayer = lazy(() => import("./AudioPlayer.jsx"))
 const PhotoViewer = lazy(() => import("./PhotoViewer.jsx"))
 const PdfViewer = lazy(() => import("./PdfViewer.jsx"))
-const SpreadsheetViewer = lazy(() => import("./SpreadsheetViewer.jsx"))
-const PresentationViewer = lazy(() => import("./PresentationViewer.jsx"))
 const CodeViewer = lazy(() => import("./CodeViewer.jsx"))
 const ArchiveViewer = lazy(() => import("./ArchiveViewer.jsx"))
 
@@ -106,9 +105,8 @@ export default function FileViewer(props) {
         case "VideoPlayer": ViewerComponent = VideoPlayer; break
         case "AudioPlayer": ViewerComponent = AudioPlayer; break
         case "PhotoViewer": ViewerComponent = PhotoViewer; break
+        case "DocumentViewer": ViewerComponent = DocumentViewer; break
         case "PdfViewer": ViewerComponent = PdfViewer; break
-        case "SpreadsheetViewer": ViewerComponent = SpreadsheetViewer; break
-        case "PresentationViewer": ViewerComponent = PresentationViewer; break
         case "CodeViewer": ViewerComponent = CodeViewer; break
         case "ArchiveViewer": ViewerComponent = ArchiveViewer; break
         default: ViewerComponent = null; break
