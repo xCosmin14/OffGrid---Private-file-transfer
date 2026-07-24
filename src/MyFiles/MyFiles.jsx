@@ -121,10 +121,6 @@ export default function MyFiles() {
         }
     }, [showPathMenu])
 
-    const handlePathAction = (action) => {
-        console.log(`Action trigged: ${action}`)
-    }
-
     const visibleFolders = (folders || []).filter(folder => {
         if (folder.inTrash == 1 || getParentPath(folder.path) !== currentPathStr) return false
 

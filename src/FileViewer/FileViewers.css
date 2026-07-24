@@ -25,7 +25,7 @@
 .fileViewer h1 {font-weight: 600;}
 
 #full.fileViewer h1 {
-    margin-top: -47px; margin-left: 60px;
+    margin-top: -42px; margin-left: 60px;
     font-size: 2em;
 }
 
@@ -37,6 +37,8 @@
     overflow-wrap: anywhere;
     word-break: break-word;
 }
+
+#full.fileViewer #windowActions {height: 40px;}
 
 .fileViewer #windowActions {
     position: relative;
@@ -69,9 +71,15 @@
 .viewerContent {
     width: 100%; height: calc(100% - 140px);
     display: flex; justify-content: center;
-    align-items: center; overflow: hidden;
+    align-items: center; 
+    overflow: hidden;
     padding: 20px;
     box-sizing: border-box;
+}
+.viewerContent:has(pre) {
+    padding-inline: 0;
+    height: 100%;
+    margin-top: 10px;
 }
 
 #photoViewer {
@@ -124,3 +132,26 @@
 #full.fileViewer button {bottom: 30px;}
 
 .fileViewer button:hover {color: var(--text);}
+
+
+pre {
+    position: relative;
+    background: none;
+    color: var(--text);
+    height: 100%;
+}
+pre::-webkit-scrollbar {
+    width: 6px; border-radius: 6px;
+}
+
+pre::-webkit-scrollbar-thumb {
+    background: transparent;
+}
+
+pre::-webkit-scrollbar-track {
+    background: linear-gradient(
+        to bottom,
+        var(--hoverCol) var(--scroll-progress, 0%),
+        var(--boxShadowCol) var(--scroll-progress, 0%)
+    );
+}

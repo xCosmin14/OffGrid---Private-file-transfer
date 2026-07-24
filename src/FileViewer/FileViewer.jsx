@@ -138,7 +138,7 @@ export default function FileViewer(props) {
                         <ViewerComponent file={props.file} fileContent={fileUrl} />
                     </Suspense>
                 ) : (
-                    <h1 className="unsupported">This file type can't be previewed</h1>
+                    <h3 className="unsupported">This file can't be previewed</h3>
                 )}
             </div>
                 

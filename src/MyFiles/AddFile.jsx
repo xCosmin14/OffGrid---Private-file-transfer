@@ -169,6 +169,7 @@ export default function AddFile(props) {
             
             if (props.onUploadSuccess) props.onUploadSuccess()
             window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
+            setShow(false)
         } catch (error) {
             window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
         }
