@@ -4,6 +4,7 @@ import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { useTitle } from "../UseTitle.js"
 import { FileContext } from "../GetFiles.jsx"
 import { getFileColor } from "./FileColors.js"
+import isMobile from "../IsMobile.js"
 
 import AddFile from "./AddFile.jsx"
 import Filters from "./Filters.jsx"
@@ -70,7 +71,7 @@ export default function MyFiles() {
     }
 
     const [openFile, setOpenFile] = useState(null)
-    const [viewerSize, setViewerSize] = useState("small")
+    const [viewerSize, setViewerSize] = useState(isMobile() == 0 ? "small" : "full")
     const isViewerSmall = openFile !== null && viewerSize === "small"
 
     const { sizeByTypes, totalFileSize } = useMemo(() => {
@@ -269,7 +270,7 @@ export default function MyFiles() {
             {openFile !== null && (
                 <FileViewer 
                     file={openFile} 
-                    onExit={() => { setOpenFile(null); setViewerSize("small"); }} 
+                    onExit={() => { setOpenFile(null); setViewerSize(isMobile() == 0 ? "small" : "full"); }} 
                     viewerSize={viewerSize}
                     setViewerSize={setViewerSize}
                 />

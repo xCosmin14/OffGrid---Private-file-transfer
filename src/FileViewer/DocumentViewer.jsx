@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from "react"
 import { renderAsync } from "docx-preview"
 import * as XLSX from "xlsx"
 
+import isMobile from "../IsMobile.js"
+
 import "./FileViewers.css"
 
 export default function DocumentViewer(props) {
@@ -10,7 +12,7 @@ export default function DocumentViewer(props) {
     const [textContent, setTextContent] = useState("") 
     const [docHeight, setDocHeight] = useState(0)
 
-    const [scale, setScale] = useState(props.viewerSize === "full" ? 0.868 : 0.59)
+    const [scale, setScale] = useState(props.viewerSize === "full" ? 0.75 : 0.45)
 
     const handleScroll = (e) => {
         const el = e.target
@@ -21,7 +23,7 @@ export default function DocumentViewer(props) {
 
     useEffect(() => {
         if (props.file.extension === "docx") 
-            setScale(props.viewerSize === "full" ? 0.868 : 0.59)
+            setScale(props.viewerSize === "full" ? 0.75 : 0.45)
     }, [props.viewerSize, props.file.extension])
 
     useEffect(() => {
@@ -33,15 +35,18 @@ export default function DocumentViewer(props) {
                 .then(blob => {
                     if (docxContainerRef.current) {
                         docxContainerRef.current.innerHTML = ""
-                        renderAsync(blob, docxContainerRef.current, null, { inWrapper: false })
+                        
+                        renderAsync(blob, docxContainerRef.current, null, { 
+                            inWrapper: false,
+                            breakPages: true,
+                            ignoreLastRenderedPageBreak: true
+                        })
                             .then(() => {
                                 if (docxContainerRef.current) 
                                     setDocHeight(docxContainerRef.current.scrollHeight)
                             })
                     }
-                })
-                .catch(err => console.error("Eroare la randarea DOCX:", err))
-                
+                }).catch()
         } else if (props.file.extension === "xlsx" || props.file.extension === "xls" || props.file.extension === "csv") {
             fetch(props.fileContent)
                 .then(res => res.arrayBuffer())
@@ -52,20 +57,19 @@ export default function DocumentViewer(props) {
                     
                     const html = XLSX.utils.sheet_to_html(worksheet)
                     setHtmlTable(html)
-                })
-                .catch(err => console.error("Eroare la randarea Excel:", err))
+                }).catch()
 
         } else if (props.file.extension === "txt") {
             fetch(props.fileContent)
                 .then(res => res.text())
                 .then(text => setTextContent(text))
-                .catch(err => console.error("Eroare la citirea fișierului TXT:", err))
+                .catch()
         }
     }, [props.fileContent, props.file.extension])
 
-    const zoomIn = () => setScale(prev => Math.min(prev + 0.05, 2.5))
-    const zoomOut = () => setScale(prev => Math.max(prev - 0.05, 0.5))
-    const resetZoom = () => setScale(props.viewerSize === "full" ? 0.868 : 0.59)
+    const zoomIn = () => setScale(prev => Math.min(prev + 0.05, 2))
+    const zoomOut = () => setScale(prev => Math.max(prev - 0.05, 0.25))
+    const resetZoom = () => setScale(props.viewerSize === "full" ? 0.75 : 0.45)
 
     if (props.file.extension === "docx") 
         return (
@@ -79,16 +83,13 @@ export default function DocumentViewer(props) {
                     </div>
                 </div>
 
-                <div 
-                    id="pdfDocumentContainer" 
-                    style={{ backgroundColor: "var(--boxBgCol)" }}
-                    onScroll={handleScroll} 
+                <div id="pdfDocumentContainer" onScroll={handleScroll} 
                 >
                     <div 
                         style={{ 
                             width: `${800 * scale}px`, 
                             height: docHeight ? `${docHeight * scale}px` : "auto", 
-                            margin: "20px auto", 
+                            margin: isMobile() === 0 ? "20px auto" : "0", 
                         }}
                     >
                         <div 
@@ -115,10 +116,7 @@ export default function DocumentViewer(props) {
 
     if (props.file.extension === "txt")
         return (
-            <pre 
-                id="txtViewer" 
-                onScroll={handleScroll}
-            >
+            <pre id="txtViewer" onScroll={handleScroll}>
                 {textContent}
             </pre>
         )

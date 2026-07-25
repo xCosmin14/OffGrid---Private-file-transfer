@@ -2,6 +2,7 @@ import React, { useState, useEffect, Suspense, lazy } from "react"
 
 import { getFileColor, getViewerComponent, extensionToLanguage } from "../MyFiles/FileColors"
 import { customFetch } from "../UserContext.jsx"
+import isMobile from "../IsMobile.js"
 
 import Add from "../assets/SVG/FileIcons/Add.svg?react"
 import Enlarge from "../assets/SVG/Enlarge.svg?react"
@@ -26,8 +27,7 @@ export default function FileViewer(props) {
 
     useEffect(() => {
         const handleKeyDown = (event) => {
-            if (event.key === "Escape") props.onExit()
-            
+            event.key === "Escape" && props.onExit() 
         }
 
         window.addEventListener("keydown", handleKeyDown)
@@ -52,8 +52,7 @@ export default function FileViewer(props) {
                     headers: { 'Content-Type': 'application/json' },
                 })
 
-                if (!response.ok)
-                    throw new Error("File content can't be loaded")
+                if (!response.ok) throw new Error("File content can't be loaded")
 
                 const buffer = await response.arrayBuffer()
                 objectUrl = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }))
@@ -96,7 +95,7 @@ export default function FileViewer(props) {
         URL.revokeObjectURL(url)
     }        
 
-    const size = props.viewerSize || "small"
+    const size = props.viewerSize || (isMobile === 0 ? "small" : "full")
     const setSize = props.setViewerSize
 
     const componentName = getViewerComponent(props.file.name, extensionToLanguage)
@@ -116,8 +115,8 @@ export default function FileViewer(props) {
         <div className="fileViewer" id={size}>
             <div id="windowActions">
                 {size !== "full" ? 
-                    <Enlarge onClick={() => setSize("full")} /> : 
-                    <Shrink onClick={() => setSize("small")} />
+                    isMobile() == 0 && <Enlarge onClick={() => setSize("full")} /> : 
+                    isMobile() == 0 && <Shrink onClick={() => setSize("small")} />
                 }
                 <Add id="closeFileViewer" onClick={() => {
                     props.onExit()
@@ -130,7 +129,7 @@ export default function FileViewer(props) {
                 {loadingContent ? (
                     <div className="unsupported">Loading file data...</div>
                 ) : fetchError ? (
-                    <div className="unsupported">Eroare: {fetchError}</div>
+                    <div className="unsupported">Error: {fetchError}</div>
                 ) : ViewerComponent ? (
                     <Suspense fallback={<div className="unsupported">Loading viewer...</div>}>
                         <ViewerComponent file={props.file} fileContent={fileUrl} viewerSize={size}/>

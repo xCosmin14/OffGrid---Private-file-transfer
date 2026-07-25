@@ -225,17 +225,20 @@ pre::-webkit-scrollbar-track,
     box-shadow: 0px 4px 12px var(--boxShadowCol); 
 }
 
-
+.docx {
+    margin-bottom: 25px;
+    background: white; 
+}
 #docxViewer {
     width: 800px; 
-    background: white; color: black;
+    color: black;
     padding: 40px; 
-    box-shadow: 0px 4px 12px var(--boxShadowCol);
     box-sizing: border-box;
+    overflow-x: hidden;
 }
 #docxViewer > section.docx {
     width: 100% !important;
-    padding: 0 !important;
+    padding-inline: 20px !important;
     box-shadow: none !important;
     min-height: auto !important;
 }
@@ -282,4 +285,16 @@ pre::-webkit-scrollbar-track,
     
     font-family: 'Courier New', Courier, monospace;
     font-size: 14px; line-height: 1.5;
+}
+
+
+@media screen and (max-width: 500px) {
+    #full.fileViewer h1 {
+        margin-top: -10px; margin-left: 20px;
+    }
+
+    .fileViewer #windowActions {
+        left: calc(100% - 65px); 
+        width: 75px;
+    }
 }
