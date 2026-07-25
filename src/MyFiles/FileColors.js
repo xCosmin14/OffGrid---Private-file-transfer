@@ -240,7 +240,7 @@ export const viewerComponentsMap = {
     "xls": "DocumentViewer", "xlsx": "DocumentViewer", 
     "csv": "DocumentViewer", "ods": "DocumentViewer",
 
-    "txt": "TextViewer"
+    "txt": "DocumentViewer"
 };
 
 const generateColorFromText = (text) => {

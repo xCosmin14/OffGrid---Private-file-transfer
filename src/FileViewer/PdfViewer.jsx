@@ -14,6 +14,13 @@ export default function PdfViewer(props) {
     
     const [scale, setScale] = useState(props.viewerSize === "full" ? 0.868 : 0.59)
 
+    const handleScroll = (e) => {
+        const el = e.target
+        const maxScroll = el.scrollHeight - el.clientHeight
+        const progress = maxScroll > 0 ? (el.scrollTop / maxScroll) * 100 : 0
+        el.style.setProperty('--scroll-progress', `${Math.round(progress)}%`)
+    }
+
     useEffect(() => {
         setScale(props.viewerSize === "full" ? 0.868 : 0.59)
     }, [props.viewerSize])
@@ -29,9 +36,8 @@ export default function PdfViewer(props) {
         const observer = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
+                    if (entry.isIntersecting) 
                         setIndex(Number(entry.target.dataset.pageNumber))
-                    }
                 })
             },
             {
@@ -68,7 +74,10 @@ export default function PdfViewer(props) {
                 )}
             </div>
 
-            <div id="pdfDocumentContainer">
+            <div 
+                id="pdfDocumentContainer" 
+                onScroll={handleScroll}
+            >
                 <Document
                     file={props.fileContent}
                     onLoadSuccess={onDocumentLoadSuccess}

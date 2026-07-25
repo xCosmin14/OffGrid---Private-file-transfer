@@ -7,14 +7,21 @@ import "./FileViewers.css"
 export default function DocumentViewer(props) {
     const docxContainerRef = useRef(null)
     const [htmlTable, setHtmlTable] = useState("")
-    
-    const [docHeight, setDocHeight] = useState(0) 
+    const [textContent, setTextContent] = useState("") 
+    const [docHeight, setDocHeight] = useState(0)
+
     const [scale, setScale] = useState(props.viewerSize === "full" ? 0.868 : 0.59)
 
+    const handleScroll = (e) => {
+        const el = e.target
+        const maxScroll = el.scrollHeight - el.clientHeight
+        const progress = maxScroll > 0 ? (el.scrollTop / maxScroll) * 100 : 0
+        el.style.setProperty('--scroll-progress', `${Math.round(progress)}%`)
+    }
+
     useEffect(() => {
-        if (props.file.extension === "docx") {
+        if (props.file.extension === "docx") 
             setScale(props.viewerSize === "full" ? 0.868 : 0.59)
-        }
     }, [props.viewerSize, props.file.extension])
 
     useEffect(() => {
@@ -26,7 +33,6 @@ export default function DocumentViewer(props) {
                 .then(blob => {
                     if (docxContainerRef.current) {
                         docxContainerRef.current.innerHTML = ""
-                        
                         renderAsync(blob, docxContainerRef.current, null, { inWrapper: false })
                             .then(() => {
                                 if (docxContainerRef.current) 
@@ -34,6 +40,8 @@ export default function DocumentViewer(props) {
                             })
                     }
                 })
+                .catch(err => console.error("Eroare la randarea DOCX:", err))
+                
         } else if (props.file.extension === "xlsx" || props.file.extension === "xls" || props.file.extension === "csv") {
             fetch(props.fileContent)
                 .then(res => res.arrayBuffer())
@@ -45,6 +53,13 @@ export default function DocumentViewer(props) {
                     const html = XLSX.utils.sheet_to_html(worksheet)
                     setHtmlTable(html)
                 })
+                .catch(err => console.error("Eroare la randarea Excel:", err))
+
+        } else if (props.file.extension === "txt") {
+            fetch(props.fileContent)
+                .then(res => res.text())
+                .then(text => setTextContent(text))
+                .catch(err => console.error("Eroare la citirea fișierului TXT:", err))
         }
     }, [props.fileContent, props.file.extension])
 
@@ -55,7 +70,6 @@ export default function DocumentViewer(props) {
     if (props.file.extension === "docx") 
         return (
             <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%" }}>
-                
                 <div id="pdfControls">
                     <div id="zoomControls">
                         <button onClick={zoomOut}>-</button>
@@ -65,9 +79,11 @@ export default function DocumentViewer(props) {
                     </div>
                 </div>
 
-                <div id="pdfDocumentContainer">
-                    
-                    
+                <div 
+                    id="pdfDocumentContainer" 
+                    style={{ backgroundColor: "var(--boxBgCol)" }}
+                    onScroll={handleScroll} 
+                >
                     <div 
                         style={{ 
                             width: `${800 * scale}px`, 
@@ -80,7 +96,7 @@ export default function DocumentViewer(props) {
                                 width: "800px", 
                                 transform: `scale(${scale})`, 
                                 transformOrigin: "top left", 
-                                transition: "transform 0.15s ease-out"
+                                transition: "transform 0.3s ease"
                             }}
                         >
                             <div id="docxViewer" ref={docxContainerRef} />
@@ -92,10 +108,19 @@ export default function DocumentViewer(props) {
 
     if (props.file.extension === "xlsx" || props.file.extension === "xls" || props.file.extension === "csv") 
         return (
-            <div 
-                id="excelViewer"
+            <div id="excelViewer" onScroll={handleScroll} 
                 dangerouslySetInnerHTML={{ __html: htmlTable }} 
             />
+        )
+
+    if (props.file.extension === "txt")
+        return (
+            <pre 
+                id="txtViewer" 
+                onScroll={handleScroll}
+            >
+                {textContent}
+            </pre>
         )
 
     return <div className="unsupported">Format nesuportat în acest viewer.</div>
