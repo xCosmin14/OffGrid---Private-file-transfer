@@ -46,7 +46,7 @@ struct FileMapEntry
 
 	FileMapEntry() = default;
 	FileMapEntry(std::string uid, std::vector<std::string> file_paths) :
-		file_paths(file_paths), user_id(uid)
+		file_paths(file_paths), user_id(uid), created(std::chrono::steady_clock::now())
 	{
 		current_file = 0;
 	}

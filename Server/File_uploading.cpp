@@ -180,7 +180,7 @@ Async<HttpResponse> ClientController::uploadFile(std::vector<uint8_t>& body, std
 			filedata.path = entry.file_paths[entry.current_file];
 			filedata.folder_id = entry.folder_ids[entry.current_file];
 			entry.current_file++;
-
+			entry.created = std::chrono::steady_clock::now();
 
 			entry.preparedQueries.push_back(Queries::InsertFile(filedata));
 
