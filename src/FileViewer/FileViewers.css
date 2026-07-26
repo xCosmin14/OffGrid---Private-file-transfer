@@ -479,7 +479,5 @@ pre::-webkit-scrollbar-track,
         margin-bottom: 30px;
     }
 
-    #full .mainAudio img {
-        width: 95%;
-    }
+    #full .mainAudio img {width: 95%;}
 }

@@ -85,7 +85,10 @@ export default function File(props) {
                     headers: { 'Content-Type': 'application/json' },
                 })
 
-                if (response.ok) await refreshFiles()
+                if (response.ok) {
+                    props.onDelete()
+                    await refreshFiles()
+                }
                 break
             }
 

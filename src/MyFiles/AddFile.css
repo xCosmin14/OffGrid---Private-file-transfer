@@ -242,7 +242,7 @@ hr {color: var(--boxShadowCol);}
 
 @media screen and (max-width: 500px) {
     #addContainer {
-        top: 35.5%; left: 5px;
+        top: 320px; left: 5px;
         z-index: 5;
     }
 }

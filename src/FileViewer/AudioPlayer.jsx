@@ -178,8 +178,6 @@ export default function AudioPlayer(props) {
                     {metadata?.common?.album && <p>Album: <b>{metadata.common.album}</b></p>}
                     {metadata?.common?.date && <p>Release date: <b>{metadata.common.date}</b></p>}
                     
-                    <h2></h2>
-
                     <p>Format: <b>{metadata?.format?.codec || "Unknown"}</b></p>
                     <p>Sample rate: <b>{sampleRate} kHz</b></p>
                     <p>Bits per sample: <b>{metadata?.format?.bitsPerSample || "N/A"}</b></p>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, Suspense, lazy } from "react"
 import {Link} from 'react-router-dom'
 
 import { useTitle } from "../UseTitle.js"
@@ -6,14 +6,14 @@ import { useTitle } from "../UseTitle.js"
 import AddFile from "../MyFiles/AddFile.jsx"
 import Filters from "../MyFiles/Filters.jsx"
 
-import ArrowRight from "../assets/SVG/ArrowRight.svg?react"
-import ArrowDown from "../assets/SVG/ArrowDown.svg?react"
-import Download from "../assets/SVG/FileIcons/Download.svg?react"
-import Rename from "../assets/SVG/FileIcons/Rename.svg?react"
-import ChangeColor from "../assets/SVG/FileIcons/ChangeColor.svg?react"
-import Trash from "../assets/SVG/FileIcons/Trash.svg?react"
-import StarFull from "../assets/SVG/StarFull.svg?react"
-import Group from "../assets/SVG/UserIcons/Group.svg?react"
+const ArrowRight = lazy(() => import ("../assets/SVG/ArrowRight.svg?react"))
+const ArrowDown = lazy(() => import ("../assets/SVG/ArrowDown.svg?react"))
+const Download = lazy(() => import ("../assets/SVG/FileIcons/Download.svg?react"))
+const Rename = lazy(() => import ("../assets/SVG/FileIcons/Rename.svg?react"))
+const ChangeColor = lazy(() => import ("../assets/SVG/FileIcons/ChangeColor.svg?react"))
+const Trash = lazy(() => import ("../assets/SVG/FileIcons/Trash.svg?react"))
+const StarFull = lazy(() => import ("../assets/SVG/StarFull.svg?react"))
+const Group = lazy(() => import ("../assets/SVG/UserIcons/Group.svg?react"))
 
 import "./Documents.css"
 import "../MyFiles/MyFiles.css"
@@ -23,14 +23,13 @@ export default function Documents() {
     const [showPathMenu, setShowPathMenu] = useState(false)
     const pathMenuRef = useRef(null)
 
-    const [appliedFilters, setAppliedFilters] = useState({});
-    const handleFilterChange = (filters) => {setAppliedFilters(filters);};
+    const [appliedFilters, setAppliedFilters] = useState({})
+    const handleFilterChange = (filters) => {setAppliedFilters(filters);}
 
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (pathMenuRef.current && !pathMenuRef.current.contains(event.target)) {
+            if (pathMenuRef.current && !pathMenuRef.current.contains(event.target)) 
                 setShowPathMenu(false)
-            }
         }
 
         if (showPathMenu) {

@@ -5,6 +5,7 @@ import { useTitle } from "../UseTitle.js"
 import { FileContext } from "../GetFiles.jsx"
 import { getFileColor } from "./FileColors.js"
 import isMobile from "../IsMobile.js"
+import { customFetch } from "../UserContext.jsx"
 
 import AddFile from "./AddFile.jsx"
 import Filters from "./Filters.jsx"
@@ -13,6 +14,7 @@ import FileViewer from "../FileViewer/FileViewer.jsx"
 
 import ArrowRight from "../assets/SVG/ArrowRight.svg?react"
 import ArrowDown from "../assets/SVG/ArrowDown.svg?react"
+import ArrowUp from "../assets/SVG/ArrowUp.svg?react"
 import Download from "../assets/SVG/FileIcons/Download.svg?react"
 import Rename from "../assets/SVG/FileIcons/Rename.svg?react"
 import ChangeColor from "../assets/SVG/FileIcons/ChangeColor.svg?react"
@@ -37,8 +39,8 @@ const calculateFolderSize = (folderPath, allFiles) => {
 }
 
 const formatDate = (dateString) => {
-    if (dateString) dateString = dateString.slice(0, dateString.length - 7)
-    const d = new Date(dateString)
+    if (!dateString) return ""
+    const d = new Date(dateString.slice(0, dateString.length - 7))
     
     return d.toLocaleDateString("en-UK", { 
         day: '2-digit', 
@@ -46,6 +48,24 @@ const formatDate = (dateString) => {
         year: 'numeric', 
         hour: '2-digit', 
         minute: '2-digit' 
+    })
+}
+
+const sortItems = (items, crit, order) => {
+    return [...items].sort((a, b) => { 
+        let valA = a[crit], valB = b[crit]
+
+        if (crit === "size" || crit === "calculatedSize") {
+            valA = parseFloat(valA) || 0
+            valB = parseFloat(valB) || 0
+        } else {
+            valA = (valA || "").toString().toLowerCase()
+            valB = (valB || "").toString().toLowerCase()
+        }
+
+        if (valA < valB) return order === "asc" ? -1 : 1
+        if (valA > valB) return order === "asc" ? 1 : -1
+        return 0
     })
 }
 
@@ -66,8 +86,14 @@ export default function MyFiles() {
     const pathMenuRef = useRef(null)
     
     const [appliedFilters, setAppliedFilters] = useState({})
+    const [sortFilter, setSortFilter] = useState({crit: "name", order: "asc"})
+    
     const handleFilterChange = (filters) => { 
         setAppliedFilters(filters) 
+    }
+
+    const handleSortChange = (sort) => {
+        setSortFilter(sort)
     }
 
     const [openFile, setOpenFile] = useState(null)
@@ -78,9 +104,8 @@ export default function MyFiles() {
         const sizes = {}
         let total = 0 
 
-        if (!files || files.length === 0) {
-            return { sizeByTypes: [], totalFileSize: 0 }
-        }
+        if (!files || files.length === 0) 
+            return { sizeByTypes: [], totalFileSize: 0 } 
 
         files.forEach(file => {
             if (file.inTrash == 1) return 
@@ -104,11 +129,54 @@ export default function MyFiles() {
         }
     }, [files])
 
+    const { processedFolders, processedFiles } = useMemo(() => {
+        const safeFiles = files || [], safeFolders = folders || []
+
+        let filteredFolders = safeFolders
+            .map(folder => ({
+                ...folder,
+                calculatedSize: calculateFolderSize(folder.path, safeFiles)
+            }))
+            .filter(folder => {
+                if (folder.inTrash == 1 || getParentPath(folder.path) !== currentPathStr) return false
+                if (appliedFilters.extensionFilter && appliedFilters.extensionFilter !== "Folder") return false
+                if (searchQuery && !folder.name.toLowerCase().includes(searchQuery.toLowerCase())) return false
+                
+                const folderMB = folder.calculatedSize / 1048576.0
+                if (appliedFilters.sizeFilterLowerBound && folderMB < parseFloat(appliedFilters.sizeFilterLowerBound)) return false
+                if (appliedFilters.sizeFilterUpperBound && folderMB > parseFloat(appliedFilters.sizeFilterUpperBound)) return false
+                if (appliedFilters.dateFilterLowerBound && folder.created < appliedFilters.dateFilterLowerBound) return false
+                if (appliedFilters.dateFilterUpperBound && folder.created > appliedFilters.dateFilterUpperBound + "T23:59:59") return false
+                if (appliedFilters.sentBy && (!folder.sentBy || !folder.sentBy.toLowerCase().includes(appliedFilters.sentBy.toLowerCase()))) return false
+                return true
+            })
+
+        let filteredFiles = safeFiles.filter(file => {
+            if (file.inTrash == 1 || getParentPath(file.path) !== currentPathStr) return false
+            if (appliedFilters.extensionFilter && file.extension !== appliedFilters.extensionFilter) return false
+            if (searchQuery && !file.name.toLowerCase().includes(searchQuery.toLowerCase())) return false
+            
+            const fileMB = (parseFloat(file.size) || 0) / 1048576.0
+            if (appliedFilters.sizeFilterLowerBound && fileMB < parseFloat(appliedFilters.sizeFilterLowerBound)) return false
+            if (appliedFilters.sizeFilterUpperBound && fileMB > parseFloat(appliedFilters.sizeFilterUpperBound)) return false
+            if (appliedFilters.dateFilterLowerBound && file.created < appliedFilters.dateFilterLowerBound) return false
+            if (appliedFilters.dateFilterUpperBound && file.created > appliedFilters.dateFilterUpperBound + "T23:59:59") return false
+            if (appliedFilters.sentBy && (!file.sentBy || !file.sentBy.toLowerCase().includes(appliedFilters.sentBy.toLowerCase()))) return false
+            return true
+        })
+
+        const folderSortCrit = sortFilter.crit === "size" ? "calculatedSize" : sortFilter.crit
+        
+        filteredFolders = sortItems(filteredFolders, folderSortCrit, sortFilter.order)
+        filteredFiles = sortItems(filteredFiles, sortFilter.crit, sortFilter.order)
+
+        return { processedFolders: filteredFolders, processedFiles: filteredFiles }
+    }, [files, folders, currentPathStr, appliedFilters, searchQuery, sortFilter])
+
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (pathMenuRef.current && !pathMenuRef.current.contains(event.target)) {
+            if (pathMenuRef.current && !pathMenuRef.current.contains(event.target)) 
                 setShowPathMenu(false)
-            }
         }
 
         if (showPathMenu) {
@@ -122,37 +190,60 @@ export default function MyFiles() {
         }
     }, [showPathMenu])
 
-    const visibleFolders = (folders || []).filter(folder => {
-        if (folder.inTrash == 1 || getParentPath(folder.path) !== currentPathStr) return false
+    const handlePathAction = (action) => {
+        setShowPathMenu(false)
+    }
 
-        if (appliedFilters.extensionFilter && appliedFilters.extensionFilter != "Folder") return false
-        
-        if (searchQuery && !folder.name.toLowerCase().includes(searchQuery.toLowerCase())) return false
-        
-        if (appliedFilters.sizeFilterLowerBound && folder.size < parseFloat(appliedFilters.sizeFilterLowerBound)) return false
-        if (appliedFilters.sizeFilterUpperBound && folder.size > parseFloat(appliedFilters.sizeFilterUpperBound)) return false
-        if (appliedFilters.dateFilterLowerBound && folder.created < appliedFilters.dateFilterLowerBound) return false
-        if (appliedFilters.dateFilterUpperBound && folder.created > appliedFilters.dateFilterUpperBound + "T23:59:59") return false
-        if (appliedFilters.sentBy && (!folder.sentBy || !folder.sentBy.toLowerCase().includes(appliedFilters.sentBy.toLowerCase()))) return false
+    const handleFileAction = async (action) => {
+        if (!openFile) return
+        setShowPathMenu(false)
+    
+        switch (action) {
+            case "download": {
+                const response = await customFetch(`http://localhost:18080/get_file?file_id=${openFile.file_id || openFile.id}`, {
+                    method: "GET",
+                    headers: { 'Content-Type': 'application/json' },
+                })
 
-        return true
-    })
-    const visibleFiles = (files || []).filter(file => {
-        if (file.inTrash == 1 || getParentPath(file.path) !== currentPathStr) return false
+                let buffer = await response.arrayBuffer()
+                const url = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }))
+                const a = document.createElement('a')
 
-        if (appliedFilters.extensionFilter && file.extension !== appliedFilters.extensionFilter) return false
+                a.href = url
+                a.download = openFile.name
+                document.body.appendChild(a)
+                a.click()
 
-        if (searchQuery && !file.name.toLowerCase().includes(searchQuery.toLowerCase())) return false
-        
-        const fileMB = file.size / 1048576.0
-        if (appliedFilters.sizeFilterLowerBound && fileMB < parseFloat(appliedFilters.sizeFilterLowerBound)) return false
-        if (appliedFilters.sizeFilterUpperBound && fileMB > parseFloat(appliedFilters.sizeFilterUpperBound)) return false
-        if (appliedFilters.dateFilterLowerBound && file.created < appliedFilters.dateFilterLowerBound) return false
-        if (appliedFilters.dateFilterUpperBound && file.created > appliedFilters.dateFilterUpperBound + "T23:59:59") return false
-        if (appliedFilters.sentBy && (!file.sentBy || !file.sentBy.toLowerCase().includes(appliedFilters.sentBy.toLowerCase()))) return false
-
-        return true
-    })
+                document.body.removeChild(a)
+                URL.revokeObjectURL(url)
+                break
+            }
+            case "delete": {
+                const response = await customFetch(`http://localhost:18080/delete_file?${openFile.file_id || openFile.id}`, {
+                    method: "DELETE",
+                    headers: { 'Content-Type': 'application/json' },
+                })
+                if (response.ok) {
+                    setOpenFile(null) 
+                    await refreshFiles()
+                }
+                break
+            }
+            case "favorites": {
+                const response = await customFetch(`http://localhost:18080/change_data/file/${openFile.file_id || openFile.id}`, {
+                    method: "PATCH",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ favourite: openFile.favourite ? 0 : 1 })
+                })
+                if (response.ok) {
+                    setOpenFile(prev => ({ ...prev, favourite: prev.favourite ? 0 : 1 }))
+                    await refreshFiles()
+                }
+                break
+            }
+            default: break
+        }
+    }
 
     const renderPathMenu = () => {
         if (!showPathMenu) return null
@@ -190,6 +281,33 @@ export default function MyFiles() {
         )
     }
 
+    const renderFilePathMenu = () => {
+        if (!showPathMenu || !openFile) return null
+    
+        return (
+            <div id="pathDropdownMenu">
+                <div className="pathMenuOption" onClick={() => handleFileAction("download")}>
+                    <Download />
+                    <h5>Download</h5>
+                </div>
+                <hr />
+                <div className="pathMenuOption" onClick={() => handleFileAction("delete")}>
+                    <Trash />
+                    <h5>Delete</h5>
+                </div>
+                <div className="pathMenuOption" onClick={() => handleFileAction("favorites")}>
+                    <StarFull style={{ color: openFile.favourite ? "var(--hoverCol)" : "var(--text)" }} />
+                    <h5>{openFile.favourite ? "Remove from favorites" : "Add to Favorites"}</h5>
+                </div>
+                <hr />
+                <div className="pathMenuOption" onClick={() => handleFileAction("access")}>
+                    <Group />
+                    <h5>Manage Access</h5>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="page">
             <AddFile 
@@ -197,10 +315,14 @@ export default function MyFiles() {
                 parentFolderID={currentFolderID}
                 onUploadSuccess={refreshFiles}
             />
-            <Filters onFilterChange = {handleFilterChange}/>
+            
+            <Filters 
+                onFilterChange={handleFilterChange} 
+                onSortChange={handleSortChange} 
+            />
 
             <div id="currentPathDisplay">
-                {currentPath.length === 0 ? (
+                {currentPath.length === 0 && !openFile ? (
                     <div style={{ position: "relative", display: "inline-block" }} ref={pathMenuRef}>
                         <a onClick={() => setShowPathMenu(prev => !prev)} 
                             style={{ display: "flex", alignItems: "center", gap: "5px", cursor: "pointer" }}>
@@ -210,11 +332,11 @@ export default function MyFiles() {
                         {renderPathMenu()}
                     </div>
                 ) : (
-                    <Link to="/" onClick={() => setSearchQuery("")}>My files</Link>
+                    <Link to="/" onClick={() => { setSearchQuery(""); setOpenFile(null); }}>My files</Link>
                 )}
 
                 {currentPath.map((folderName, index) => {
-                    const isLast = index === currentPath.length - 1
+                    const isLast = index === currentPath.length - 1 && !openFile
                     const breadcrumbPath = currentPath.slice(0, index + 1).join("/")
 
                     return (
@@ -235,7 +357,7 @@ export default function MyFiles() {
                                 </div>
                             ) : (
                                 <Link to={`/?dir=${encodeURIComponent(breadcrumbPath)}`}
-                                    onClick={() => setSearchQuery("")} 
+                                    onClick={() => { setSearchQuery(""); setOpenFile(null); }} 
                                 >
                                     {folderName}
                                 </Link>
@@ -243,6 +365,21 @@ export default function MyFiles() {
                         </span>
                     )
                 })}
+
+                {openFile && (
+                    <span style={{ display: "contents" }}>
+                        <ArrowRight id="arrowRight"/>
+                        <div style={{ position: "relative", display: "inline-block" }} ref={pathMenuRef}>
+                            <a onClick={() => setShowPathMenu(prev => !prev)}
+                                style={{ display: "flex", alignItems: "center", gap: "5px", cursor: "pointer", fontWeight: "600" }}
+                            >
+                                {openFile.name}
+                                <ArrowDown id="arrowDown"/>
+                            </a>
+                            {renderFilePathMenu()}
+                        </div>
+                    </span>
+                )}
             </div>
 
             <div className="fileSizeChart">
@@ -279,11 +416,50 @@ export default function MyFiles() {
             <div className={`fileContainer ${isViewerSmall ? "viewer-open-small" : ""}`}
                 style={{width: isViewerSmall ? "75%" : "100%"}}>
                 <div className="fileTableHeader">
-                    <div>Name</div>
-                    {!isViewerSmall && <div>Type</div>}
-                    <div>Size</div>
-                    <div>Created</div>
-                    <div>Last modified</div>
+                    <div style={{color: sortFilter.crit === "name" ? "var(--hoverCol)" : "var(--text)"}}
+                        onClick={() => setSortFilter({crit: "name", order: sortFilter.order === "asc" ? "desc" : "asc"})}
+                    >
+                        {sortFilter.crit === "name" && <ArrowUp style={{ 
+                            transform: sortFilter.order === "asc" ? "rotate(0deg)" : "rotate(180deg)",
+                            transition: "transform 0.2s ease"
+                        }}/>}
+                        Name
+                    </div>
+
+                    {!isViewerSmall && <div style={{color: sortFilter.crit === "extension" ? "var(--hoverCol)" : "var(--text)"}}
+                        onClick={() => setSortFilter({crit: "extension", order: sortFilter.order === "asc" ? "desc" : "asc"})}>
+                        {sortFilter.crit === "extension" && <ArrowUp style={{ 
+                            transform: sortFilter.order === "asc" ? "rotate(0deg)" : "rotate(180deg)",
+                            transition: "transform 0.2s ease"
+                        }}/>}
+                        Type
+                    </div>}
+
+                    <div style={{color: sortFilter.crit === "size" ? "var(--hoverCol)" : "var(--text)"}}
+                        onClick={() => setSortFilter({crit: "size", order: sortFilter.order === "asc" ? "desc" : "asc"})}>
+                        {sortFilter.crit === "size" && <ArrowUp style={{ 
+                            transform: sortFilter.order === "asc" ? "rotate(0deg)" : "rotate(180deg)",
+                            transition: "transform 0.2s ease"
+                        }}/>}
+                        Size
+                    </div>
+                    <div style={{color: sortFilter.crit === "created" ? "var(--hoverCol)" : "var(--text)"}}
+                        onClick={() => setSortFilter({crit: "created", order: sortFilter.order === "asc" ? "desc" : "asc"})}>
+                        {sortFilter.crit === "created" && <ArrowUp style={{ 
+                            transform: sortFilter.order === "asc" ? "rotate(0deg)" : "rotate(180deg)",
+                            transition: "transform 0.2s ease"
+                        }}/>}
+                        Created
+                    </div>
+
+                    <div style={{color: sortFilter.crit === "modified" ? "var(--hoverCol)" : "var(--text)"}}
+                        onClick={() => setSortFilter({crit: "modified", order: sortFilter.order === "asc" ? "desc" : "asc"})}>
+                        {sortFilter.crit === "modified" && <ArrowUp style={{ 
+                            transform: sortFilter.order === "asc" ? "rotate(0deg)" : "rotate(180deg)",
+                            transition: "transform 0.2s ease"
+                        }}/>}
+                        Last modified
+                    </div>
                 </div>
                 
                 <hr className="fileTableDivider"/>
@@ -291,12 +467,11 @@ export default function MyFiles() {
                 <div className="fileList">
                     {isLoading ? (
                         <div>Loading...</div>
-                    ) : visibleFolders.length === 0 && visibleFiles.length === 0 ? (
+                    ) : processedFolders.length === 0 && processedFiles.length === 0 ? (
                         <h2 id="emptyMessage">No files to show</h2>
                     ) : (
                         <>
-                            {visibleFolders.map(folder => {
-                                const calculatedSize = calculateFolderSize(folder.path, files)
+                            {processedFolders.map(folder => {
                                 const nextPath = currentPathStr ? `${currentPathStr}/${folder.name}` : folder.name
                                 const pathForLink = `/?dir=${encodeURIComponent(nextPath)}`
                                 
@@ -312,7 +487,7 @@ export default function MyFiles() {
                                             name={folder.name} 
                                             extension="Folder" 
                                             color={folder.color}
-                                            size={calculatedSize} 
+                                            size={folder.calculatedSize} 
                                             favourite={folder.favourite}
                                             created={!isLoading && formatDate(folder.created)}
                                             lastModified={!isLoading && formatDate(folder.modified)}
@@ -321,7 +496,7 @@ export default function MyFiles() {
                                 )
                             })}
                             
-                            {visibleFiles.map(file => (
+                            {processedFiles.map(file => (
                                 <File 
                                     path={file.path}
                                     id={file.file_id} 

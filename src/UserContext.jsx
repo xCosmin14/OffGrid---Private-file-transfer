@@ -9,13 +9,20 @@ export const customFetch = async (url, options = {}) => {
         credentials: 'include' 
     }
 
+    const doFetch = () => fetch(url, fetchOptions)
+
     try {
-        const response = await fetch(url, fetchOptions)
+        let response = await doFetch()
 
         if (response.status === 401) {
-            localStorage.setItem("isLogged", "false")
-            window.location.href = "/login" 
-            return Promise.reject("Unauthorized - Session expired")
+            await new Promise(resolve => setTimeout(resolve, 600))
+            response = await doFetch()
+
+            if (response.status === 401) {
+                localStorage.setItem("isLogged", "false")
+                window.location.href = "/login" 
+                return Promise.reject("Unauthorized - Session expired")
+            }
         }
 
         return response

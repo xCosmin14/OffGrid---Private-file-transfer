@@ -163,7 +163,7 @@ export default function Settings() {
             setpError(data.message)
             if (response.ok) {
                 setCurrentPassword("") 
-                NewPassword("") 
+                setNewPassword("") 
             }
         } catch (error) {}
     } 
