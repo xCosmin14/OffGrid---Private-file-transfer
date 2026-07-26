@@ -20,6 +20,7 @@ const ArchiveViewer = lazy(() => import("./ArchiveViewer.jsx"))
 
 export default function FileViewer(props) {
     const [fileUrl, setFileUrl] = useState(null)
+    const [fileBlob, setFileBlob] = useState(null) 
     const [loadingContent, setLoadingContent] = useState(true)
     const [fetchError, setFetchError] = useState(null)
 
@@ -42,7 +43,6 @@ export default function FileViewer(props) {
 
         const fetchFileContent = async () => {
             if (!fileId) return
-
             setLoadingContent(true)
             setFetchError(null)
 
@@ -55,10 +55,13 @@ export default function FileViewer(props) {
                 if (!response.ok) throw new Error("File content can't be loaded")
 
                 const buffer = await response.arrayBuffer()
-                objectUrl = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }))
+                const contentType = response.headers.get('content-type') || 'application/octet-stream'
+                const blob = new Blob([buffer], { type: contentType })
+                objectUrl = URL.createObjectURL(blob)
 
                 if (isMounted) {
                     setFileUrl(objectUrl)
+                    setFileBlob(blob)  
                     setLoadingContent(false)
                 }
             } catch (err) {
@@ -123,7 +126,7 @@ export default function FileViewer(props) {
                 }} />
             </div>
 
-            <h1 id="fileTitle">{props.file.name}</h1>
+            {ViewerComponent != AudioPlayer && <h1 id="fileTitle">{props.file.name}</h1>}
 
             <div className="viewerContent">
                 {loadingContent ? (
@@ -132,7 +135,9 @@ export default function FileViewer(props) {
                     <div className="unsupported">Error: {fetchError}</div>
                 ) : ViewerComponent ? (
                     <Suspense fallback={<div className="unsupported">Loading viewer...</div>}>
-                        <ViewerComponent file={props.file} fileContent={fileUrl} viewerSize={size}/>
+                        <ViewerComponent file={props.file} viewerSize={size}
+                            fileContent={fileUrl} fileBlob={fileBlob}
+                        />
                     </Suspense>
                 ) : (
                     <h3 className="unsupported">This file can't be previewed</h3>

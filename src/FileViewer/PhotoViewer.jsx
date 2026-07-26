@@ -10,7 +10,7 @@ export default function PhotoViewer(props) {
             fetch(props.fileContent)
                 .then(res => res.text())
                 .then(text => setSvgCode(text))
-                .catch(err => console.error(err))
+                .catch()
         }
     }, [props.fileContent])
 

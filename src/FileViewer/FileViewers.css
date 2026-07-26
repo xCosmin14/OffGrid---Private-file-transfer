@@ -288,6 +288,156 @@ pre::-webkit-scrollbar-track,
 }
 
 
+.audioPlayer {
+    position: relative; width: 100%; height: 100%;
+    display: flex; flex-direction: row;
+    align-items: center; 
+}
+#small .audioPlayer {justify-content: center;}
+
+.mainAudio {
+    display: flex; flex-direction: column;
+    align-items: center;
+}
+#full .mainAudio {
+    width: 45%; 
+    position: relative; 
+}
+
+.mainAudio img {
+    width: 100%; max-width: 300px;
+}
+#small .mainAudio img {
+    margin-top: -40px;
+}
+#full .mainAudio img {
+    width: 120%;
+    max-width: 400px;
+}
+
+#small .mainAudio h2 {
+    font-size: 2rem;
+    text-align: center;
+}
+.mainAudio h3 {
+    text-align: center; 
+    margin-top: -10px;
+    font-weight: 500; font-size: 1.3rem;
+}
+
+#audioControls {
+    position: relative;
+    display: flex; flex-direction: row;
+    align-items: center; justify-content: center;
+    margin-top: 25px; scale: 1.2;
+}
+#full #audioControls {scale: 1.5;}
+
+#audioControls svg {
+    width: 30px; height: 30px;
+    color: var(--text); fill: var(--text);
+    background: none;
+    cursor: pointer;
+    transition: .3s ease;
+}
+#audioControls svg:hover {
+    color: var(--hoverCol); fill: var(--hoverCol);
+}
+#audioControls svg:not(#audioPlayBtn) {
+    width: 48px; height: 48px;
+}
+
+.progressContainer {
+    display: flex; align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: 12px; margin-top: 25px;
+}
+
+#full .progressContainer {width: 55%; }
+
+.timeDisplay {
+    font-size: 0.85rem;
+    color: var(--text);
+    opacity: 0.8;
+    font-variant-numeric: tabular-nums; 
+    min-width: 40px;
+    text-align: center;
+}
+
+#audioProgress {
+    -webkit-appearance: none;
+    flex: 1;
+    background: transparent;
+    cursor: pointer;
+}
+
+#full #audioProgress {width: 50%;}
+
+#audioProgress::-webkit-slider-runnable-track {
+  height: 8px; 
+  background: linear-gradient(
+      to right,
+      var(--hoverCol) var(--progress, 0%),
+      var(--text) var(--progress, 0%)
+  );
+  border-radius: 10px;
+  border: 0px solid #cbd5e1;
+  box-shadow: 0px 2px 0px rgba(0, 0, 0, 0.1);
+}
+
+#audioProgress::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 16px;
+    width: 16px;
+    background: var(--hoverCol);
+    border-radius: 30px;
+    border: 2px solid #ffffff;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+    margin-top: -4px; 
+}
+
+#audioProgress::-moz-range-track {
+    height: 8px;
+    background: linear-gradient(
+        to right,
+        var(--hoverCol) var(--progress, 0%),
+        #e2e8f0 var(--progress, 0%)
+    );
+    border-radius: 10px;
+    border: 0px solid #cbd5e1;
+    box-shadow: 0px 2px 0px rgba(0, 0, 0, 0.1);
+}
+
+#audioProgress::-moz-range-thumb {
+    height: 16px;
+    width: 16px;
+    background: var(--hoverCol);
+    border-radius: 30px;
+    border: 2px solid #ffffff;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.audioMetadata {
+    position: relative; left: 5%; top: 0;
+    width: 45%; height: 100%;
+    display: flex; flex-direction: column;
+    justify-content: center;
+    border-left: 2px solid var(--menuBgCol);
+    padding-left: 60px;
+}
+#full .audioMetadata h1 {
+    margin-top: 50px; margin-left: 0;
+}
+
+.audioMetadata h1 {margin-bottom: 75px;}
+
+.audioMetadata p {
+    font-size: 1.2rem;
+    margin-bottom: 5px;
+}
+
+
 @media screen and (max-width: 500px) {
     #full.fileViewer h1 {
         margin-top: -10px; margin-left: 20px;
@@ -296,5 +446,40 @@ pre::-webkit-scrollbar-track,
     .fileViewer #windowActions {
         left: calc(100% - 65px); 
         width: 75px;
+    }
+
+    .audioPlayer {
+        flex-direction: column; justify-content: flex-start;
+        overflow-y: auto; 
+        padding-bottom: 30px;
+        box-sizing: border-box;
+    }
+
+    #full .mainAudio {
+        width: 100%;
+        margin-top: 20px;
+    }
+
+    #full .progressContainer {width: 90%; }
+
+    .audioMetadata {
+        width: 90%;
+        border-left: none; 
+        border-top: 1px solid var(--menuBgCol); 
+        padding-left: 0;
+        margin-top: 30px;
+        padding-top: 20px;
+        align-items: center; 
+        text-align: center;
+        left: 0;
+    }
+
+    #full .audioMetadata h1 {
+        margin-top: 10px; margin-left: 0;
+        margin-bottom: 30px;
+    }
+
+    #full .mainAudio img {
+        width: 95%;
     }
 }
