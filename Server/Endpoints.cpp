@@ -60,7 +60,7 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
             co_return co_await this->getFile(std::string(target.substr(pos + 9)), session_id);
         }
     }
-    else if (method == http::verb::delete_)
+    else if (method == http::verb::delete_) // fully tested
     {
         if (target.starts_with("/cancel_upload"))
         {
@@ -69,7 +69,7 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
                 co_return Helpers::makeResponse(http::status::bad_request, "missing transaction_id");
             co_return co_await this->cancelFolderUpload(std::string(target.substr(pos + 16)), session_id);
         }
-        else if (target.starts_with("/delete"))
+        else if (target.starts_with("/delete")) 
         {
             auto pos = target.find("_");
             if (pos == std::string::npos)
@@ -91,7 +91,7 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
             co_return co_await this->deleteFile(entity, entity_id, session_id);
         }
     }
-    else if (method == http::verb::patch)
+    else if (method == http::verb::patch) 
     {
         if (target.starts_with("/change_username")) co_return co_await this->changeUsername(obj, session_id);
         else if (target.starts_with("/change_password")) co_return co_await this->changePassword(obj, session_id);
@@ -102,8 +102,15 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
             co_return co_await this->changeData(obj, session_id, (std::string)target.substr(pos + 13));
         }
     }
+    else  co_return Helpers::makeResponse(http::status::not_found, "nonexistent endpoint");
 
-    co_return Helpers::makeResponse(http::status::not_found, "nonexistent endpoint");
+    try {
+        co_await this->db.runQuery(Queries::UpdateSession(session_id));
+    }
+    catch (boost::system::system_error& e)
+    {
+        std::cerr << "Failed query: " << e.what() << std::endl;
+    }
 }
 
 Async<HttpResponse> ClientController::handleRequest(http::verb method, std::string_view target, std::vector<uint8_t>& body, std::string session_id)
@@ -124,6 +131,14 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
             co_return co_await this->uploadFile(body, session_id, "/files");
         }
     }
+    else co_return Helpers::makeResponse(http::status::not_found, "nonexistent endpoint");
 
-    co_return Helpers::makeResponse(http::status::not_found, "nonexistent endpoint");
+
+    try {
+        co_await this->db.runQuery(Queries::UpdateSession(session_id));
+    }
+    catch (boost::system::system_error& e)
+    {
+        std::cerr << "Failed query: " << e.what()<<std::endl;
+    }
 }

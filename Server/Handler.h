@@ -112,7 +112,7 @@ public:
 			if (session_id == "expired")
 				res.set("Set-Cookie", "session_id=; HttpOnly; SameSite=Strict; Max-Age=0");
 			else if (!session_id.empty())
-				res.set("Set-Cookie", "session_id=" + session_id + "; HttpOnly; SameSite=Strict");
+				res.set("Set-Cookie", "session_id=" + session_id + "; HttpOnly; SameSite=Strict; Max-Age=2592000");
 			};
 
 		if constexpr (std::is_same_v<RequestBody, http::vector_body<uint8_t>>)

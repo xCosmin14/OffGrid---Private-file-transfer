@@ -228,7 +228,7 @@ Query Queries::VerifyFolderId(std::string id, std::string uid)
 
 Query Queries::VerifyFileAccess(std::string id, std::string uid)
 {
-	return { "SELECT file.file_id FROM offgrid_db.file "
+	return { "SELECT file.file_id, file.path FROM offgrid_db.file "
 	"LEFT JOIN offgrid_db.access on access.file_id = file.file_id "
 	"WHERE file.file_id = ? and (file.creator_id=? or access.user_id=?)", {
 	mysql::field(id), mysql::field(uid), mysql::field(uid)} };
@@ -272,4 +272,11 @@ Query Queries::DeleteFile_(std::string file_id, std::string entity, std::string 
 		" LEFT JOIN offgrid_db.access ON access." + entity + "_id = " + entity + "." + entity + "_id"
 		" WHERE " + entity + "." + entity + "_id = ? AND (" + entity + ".creator_id = ? OR (access.user_id = ? AND access.type = 'edit'))",
 		{mysql::field(file_id), mysql::field(uid), mysql::field(uid)}};
+}
+
+
+Query Queries::UpdateSession(std::string session_id)
+{
+	return { "UPDATE offgrid_db.session SET last_active = NOW() WHERE session_id=?",
+		{mysql::field(session_id)} };
 }

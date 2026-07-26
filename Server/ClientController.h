@@ -89,7 +89,7 @@ class ClientController
 	void cleanUpCache();
 
 
-	Async<void> handleWatch(std::shared_ptr<WsSession>, std::string);
+	Async<void> handleWatch(std::shared_ptr<WsSession>, std::string, std::string);
 	Async<void> handleUnwatch(std::shared_ptr<WsSession>, std::string);
 	Async<void> handleModify(std::shared_ptr<WsSession>, json::object, std::string);
 

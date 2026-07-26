@@ -64,4 +64,6 @@ namespace Queries
 
 	Query DeleteFile_(std::string, std::string, std::string);
 
+	Query UpdateSession(std::string);
+
 };

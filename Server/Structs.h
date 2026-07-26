@@ -4,6 +4,8 @@
 #include <boost/json.hpp>
 #include <boost/beast/websocket.hpp>
 
+#include "PieceTable.h"
+
 #include <string>
 #include <vector>
 #include <unordered_set>
@@ -113,8 +115,51 @@ struct WsSession
 	std::string uid;
 };
 
+
+
+struct Op
+{
+	std::string type;
+	int position;
+	std::string text;
+	int length = 0;
+
+
+	Op() = default;
+
+	Op(const json::object& obj)
+	{
+		this->type == json::value_to<std::string>(obj.at("operation"));
+		this->position = json::value_to<int>(obj.at("position"));
+
+		if (obj.at("operation") == "delete")
+			this->length = json::value_to<int>(obj.at("length"));
+		else
+			this->text = json::value_to<std::string>(obj.at("text"));
+	}
+
+	operator json::object() const
+	{
+		json::object obj;
+		obj["operation"] = this->type;
+		obj["position"] = this->position;
+
+		if (this->type == "delete")
+			obj["length"] = this->length;
+		else
+			obj["text"] = this->text;
+
+		return obj;
+	}
+
+	
+};
+
 struct ViewersMapEntry
 {
 	int current_version = 0;
 	std::unordered_set<std::shared_ptr<WsSession>> viewers;
+	std::vector<Op> history;
+	PieceTable content;
+	std::string file_path;
 };
