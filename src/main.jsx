@@ -18,9 +18,9 @@ const MyFiles = lazy(() => import("./MyFiles/MyFiles.jsx"))
 const Settings = lazy(() => import("./Settings/Settings.jsx"))
 const SharedFiles = lazy(() => import("./MyFiles/SharedFiles.jsx"))
 const Favorites = lazy(() => import("./MyFiles/Favorites.jsx")) 
-const Documents = lazy(() => import("./Documents/Documents.jsx"))
-const MusicLibrary = lazy(() => import("./MusicLibrary/MusicLibrary.jsx"))
-const PhotoAlbum = lazy(() => import("./PhotoAlbum/PhotoAlbum.jsx"))
+const Documents = lazy(() => import("./MyFiles/Documents.jsx"))
+const MusicLibrary = lazy(() => import("./MyFiles/MusicLibrary.jsx"))
+const PhotoAlbum = lazy(() => import("./MyFiles/PhotoAlbum.jsx"))
 
 function AppContent() {
   const { isLogged } = useContext(UserContext)

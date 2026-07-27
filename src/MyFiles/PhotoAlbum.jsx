@@ -340,13 +340,13 @@ export default function PhotoAlbum() {
                     <div style={{ position: "relative", display: "inline-block" }} ref={pathMenuRef}>
                         <a onClick={() => setShowPathMenu(prev => !prev)} 
                             style={{ display: "flex", alignItems: "center", gap: "5px", cursor: "pointer" }}>
-                            Documents
+                            Photo album
                             {currentPathStr && <ArrowDown id="arrowDown"/>}
                         </a>
                         {renderPathMenu()}
                     </div>
                 ) : (
-                    <Link to="/documents" onClick={() => { setSearchQuery(""); setOpenFile(null); }}>Documents</Link>
+                    <Link to="/myfiles/photos" onClick={() => { setSearchQuery(""); setOpenFile(null); }}>Photo album</Link>
                 )}
 
                 {currentPath.map((folderName, index) => {

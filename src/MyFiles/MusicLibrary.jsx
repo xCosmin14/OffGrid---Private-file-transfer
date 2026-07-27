@@ -335,13 +335,13 @@ export default function MusicLibrary() {
                     <div style={{ position: "relative", display: "inline-block" }} ref={pathMenuRef}>
                         <a onClick={() => setShowPathMenu(prev => !prev)} 
                             style={{ display: "flex", alignItems: "center", gap: "5px", cursor: "pointer" }}>
-                            Documents
+                            Music library
                             {currentPathStr && <ArrowDown id="arrowDown"/>}
                         </a>
                         {renderPathMenu()}
                     </div>
                 ) : (
-                    <Link to="/documents" onClick={() => { setSearchQuery(""); setOpenFile(null); }}>Documents</Link>
+                    <Link to="/myfiles/music" onClick={() => { setSearchQuery(""); setOpenFile(null); }}>Music library</Link>
                 )}
 
                 {currentPath.map((folderName, index) => {

@@ -347,7 +347,7 @@ export default function MyFiles() {
                         {renderPathMenu()}
                     </div>
                 ) : (
-                    <Link to="/documents" onClick={() => { setSearchQuery(""); setOpenFile(null); }}>Documents</Link>
+                    <Link to="/myfiles/documents" onClick={() => { setSearchQuery(""); setOpenFile(null); }}>Documents</Link>
                 )}
 
                 {currentPath.map((folderName, index) => {
