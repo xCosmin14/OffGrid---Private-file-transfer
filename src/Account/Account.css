@@ -13,8 +13,7 @@
 }
 
 .accountForm h1 {
-    font-size: 44px;
-    font-weight: 700;
+    font-size: 44px; font-weight: 700;
     letter-spacing: -1.5px;
     margin-bottom: 32px;
 }
@@ -37,8 +36,7 @@
     text-indent: 16px; font-size: 15px;
     border-radius: 12px;
     border: 1.5px solid var(--boxShadowCol);
-    background: var(--bgCol);
-    color: var(--text);
+    background: var(--bgCol); color: var(--text);
     font-family: inherit;
     transition: .25s ease;
 }
@@ -89,9 +87,7 @@
     color: var(--hoverCol);
 }
 
-.half {
-    max-width: 48%;
-}
+.half { max-width: 48%;}
 .half:last-of-type {margin-left: 3%;}
 
 #toggleViewPassword {
@@ -105,22 +101,19 @@
 
 @media (max-width: 480px) {
     .accountForm {
-        width: calc(100% - 13px);
-        max-width: 85%;
+        width: calc(100% - 13px); max-width: 85%;
         padding: 35px 24px;
         border-radius: 16px;
         
-        margin-left: 0 !important;
-        margin-top: -20% !important;
+        margin-left: 0 !important; margin-top: -20% !important;
         
         position: relative;
     }
 
     .accountForm h1 {
-        font-size: 28px; 
-        margin-bottom: 24px;
+        font-size: 28px; letter-spacing: -0.5px;
         text-align: center;
-        letter-spacing: -0.5px;
+        margin-bottom: 24px;
     }
 
     .accountForm #accountFormField {
@@ -137,15 +130,13 @@
     .accountForm #accountFormField svg,
     #accountFormField svg {
         right: 12px;
-        width: 18px;
-        height: 18px;
+        width: 18px; height: 18px;
     }
 
     #toggleViewPassword {right: 36px !important;}
 
     .accountForm button {
-        margin-top: 16px;
-        margin-bottom: 12px;
+        margin-top: 16px; margin-bottom: 12px;
         height: 46px;
         font-size: 14px;
     }

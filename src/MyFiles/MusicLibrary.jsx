@@ -3,13 +3,13 @@ import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 
 import { useTitle } from "../UseTitle.js"
 import { FileContext } from "../GetFiles.jsx"
-import { viewerComponentsMap, getFileColor } from "../MyFiles/FileColors"
+import { viewerComponentsMap, getFileColor } from "./FileColors.js"
 import isMobile from "../IsMobile.js"
 import { customFetch } from "../UserContext.jsx"
 
-import AddFile from "../MyFiles/AddFile.jsx"
-import Filters from "../MyFiles/Filters.jsx"
-import File from "../MyFiles/File.jsx"
+import AddFile from "./AddFile.jsx"
+import Filters from "./Filters.jsx"
+import File from "./File.jsx"
 import FileViewer from "../FileViewer/FileViewer.jsx"
 
 import ArrowRight from "../assets/SVG/ArrowRight.svg?react"
