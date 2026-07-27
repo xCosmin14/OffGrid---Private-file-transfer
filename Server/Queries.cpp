@@ -75,15 +75,8 @@ Query Queries::DeleteAccount(std::string uid)
 }
 
 
-Query Queries::insertAccess(std::string access_id, std::string user_id, std::string granted_by, std::string id, std::string resource)
+Query Queries::InsertAccess(std::string access_id, std::string user_id, std::string granted_by, std::string id, std::string resource, std::string type)
 {
-	std::vector<mysql::field> values;
-
-	values.emplace_back(access_id);
-	values.emplace_back(user_id);
-	values.emplace_back(granted_by);
-	values.emplace_back(id);
-
 	std::string query = "INSERT INTO offgrid_db.access(access_id, user_id, granted_by, ";
 
 	if (resource == "folder")
@@ -91,10 +84,10 @@ Query Queries::insertAccess(std::string access_id, std::string user_id, std::str
 	else
 		query += "file_id, ";
 
-	query += "granted_at) VALUES(?, ?, ?, ?, NOW())";
+	query += "type) VALUES(?, ?, ?, ?, ?)";
 
 	return { query, {mysql::field(access_id), mysql::field(user_id), 
-		mysql::field(granted_by), mysql::field(id)}};
+		mysql::field(granted_by), mysql::field(id), mysql::field(type)}};
 
 }
 
@@ -279,4 +272,13 @@ Query Queries::UpdateSession(std::string session_id)
 {
 	return { "UPDATE offgrid_db.session SET last_active = NOW() WHERE session_id=?",
 		{mysql::field(session_id)} };
+}
+
+
+Query Queries::RevokeAccess(std::string file_id, std::string target_uid, std::string granter_uid)
+{
+	return { "DELETE access FROM offgrid_db.access "
+	"LEFT JOIN offgrid_db.file ON file.file_id = access.file_id "
+	"WHERE access.file_id = ? AND access.user_id = ? AND file.creator_id = ?",
+	{mysql::field(file_id), mysql::field(target_uid), mysql::field(granter_uid)} };
 }

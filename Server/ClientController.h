@@ -116,4 +116,6 @@ public:
 	Async<std::string> isAuthenticated(std::string);
 	Async<void> handleWsMessage(std::shared_ptr<WsSession>, json::object&);
 
+	void removeSessionFromAllFiles(std::shared_ptr<WsSession>);
+
 };

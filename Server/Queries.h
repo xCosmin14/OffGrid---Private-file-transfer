@@ -32,8 +32,6 @@ namespace Queries
 
 	Query DeleteAccount(std::string);
 
-	Query insertAccess(std::string, std::string, std::string, std::string, std::string);
-
 	Query getGeneralUserData(std::vector<std::string> const&, std::string);
 
 	Query GetUserFiles(std::vector<std::string> const&, std::string, std::string);
@@ -65,5 +63,10 @@ namespace Queries
 	Query DeleteFile_(std::string, std::string, std::string);
 
 	Query UpdateSession(std::string);
+
+	Query InsertAccess(std::string, std::string, std::string, std::string, std::string, std::string);
+
+	Query RevokeAccess(std::string, std::string, std::string);
+
 
 };

@@ -85,6 +85,28 @@ Async<void> ClientController::handleWatch(std::shared_ptr<WsSession> session, st
 		});
 }
 
+void ClientController::removeSessionFromAllFiles(std::shared_ptr<WsSession> session)
+{
+	std::unique_lock lock(viewers_mutex);
+
+	for (auto it = viewers_map.begin(); it != viewers_map.end(); )
+	{
+		it->second.viewers.erase(session); 
+
+		if (it->second.viewers.empty())   
+		{
+			std::string finalContent = it->second.content.getContent();
+
+			std::ofstream out(it->second.file_path, std::ios::binary | std::ios::trunc);
+			out.write(finalContent.data(), finalContent.size());
+			out.close();
+
+			it = viewers_map.erase(it);
+		}
+		else
+			++it;
+	}
+}
 
 Async<void> ClientController::handleUnwatch(std::shared_ptr<WsSession> session, std::string file_id)
 {

@@ -24,6 +24,8 @@ Async<void> handle_websocket_session(boost::asio::ip::tcp::socket socket, http::
 {
 	auto ws = std::make_shared<websocket::stream<boost::asio::ip::tcp::socket>>(std::move(socket));
 
+	std::shared_ptr<WsSession> ws_session;
+
 	try {
 
 		co_await ws->async_accept(req, boost::asio::use_awaitable);
@@ -34,33 +36,34 @@ Async<void> handle_websocket_session(boost::asio::ip::tcp::socket socket, http::
 
 		if (uid.empty()) co_return;
 
-		auto ws_session = std::make_shared<WsSession>(ws, uid);
+		ws_session = std::make_shared<WsSession>(ws, uid);
 
 		for (;;)
 		{
 			boost::beast::flat_buffer buffer;
 			co_await ws->async_read(buffer, boost::asio::use_awaitable);
 
-			//if (!uid.empty()) {
-
-
-				std::string msg = boost::beast::buffers_to_string(buffer.data());
-				json::object obj = json::parse(msg).as_object();
+			std::string msg = boost::beast::buffers_to_string(buffer.data());
+			json::object obj = json::parse(msg).as_object();
 				
-				co_await c.handleWsMessage(ws_session, obj);
-			//}
+			co_await c.handleWsMessage(ws_session, obj);
 		}
 	}
 	catch (boost::system::system_error& e)
 	{
-		if (e.code() != websocket::error::closed &&
-			e.code() != boost::asio::error::connection_reset)
+		if (e.code() != websocket::error::closed && e.code() != boost::asio::error::connection_reset) {
 			std::cerr << "WS session error: " << e.what();
+		}
+
+
 	}
 	catch (std::exception& e)
 	{
 		std::cerr << "Unexpected error: " << e.what() << std::endl;
 	}
+
+	c.removeSessionFromAllFiles(ws_session);
+
 	
 }
 
