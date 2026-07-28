@@ -68,5 +68,7 @@ namespace Queries
 
 	Query RevokeAccess(std::string, std::string, std::string);
 
+	Query GetUidByEmail(std::string);
+
 
 };

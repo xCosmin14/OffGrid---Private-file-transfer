@@ -82,6 +82,9 @@ class ClientController
 	Async<HttpResponse> createEntity(json::object&, std::string,
 		std::unordered_set<std::string>, std::string);
 
+
+	Async<HttpResponse> grandAccess(json::object&, std::string);
+
 	Async<std::pair<std::vector<std::string>, std::string>> appendFolders(std::vector<Query>&,
 		const std::vector<std::string>&, std::string, std::string);
 

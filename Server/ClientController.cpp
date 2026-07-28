@@ -170,3 +170,65 @@ Async<void> ClientController::loadLoggedUsers()
 	}
 
 }
+
+
+Async<HttpResponse> ClientController::grandAccess(json::object& obj, std::string session_id)
+{
+	std::string uid;
+	std::exception_ptr error;
+	try {
+		uid = this->getUserId(session_id);
+	}
+	catch (std::exception& e)
+	{
+		error = std::current_exception();
+	}
+	if (error)
+		co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
+
+
+	if (!obj.contains("email") || !obj.at("email").is_string())
+		co_return Helpers::makeResponse(http::status::bad_request, "missing email");
+
+	if (!obj.contains("file_id") || !obj.at("file_id").is_string())
+		co_return Helpers::makeResponse(http::status::bad_request, "missing file_id");
+
+	if (!obj.contains("resource") || (obj.at("resource")!="file" && obj.at("resource")!="folder"))
+		co_return Helpers::makeResponse(http::status::bad_request, "missing resource type");
+
+	if (!obj.contains("type") || !obj.at("type").is_string())
+		co_return Helpers::makeResponse(http::status::bad_request, "missing type");
+
+
+	std::string email = json::value_to<std::string>(obj.at("email"));
+	std::string file_id = json::value_to<std::string>(obj.at("file_id"));
+	std::string resource = json::value_to<std::string>(obj.at("resource"));
+	std::string type = json::value_to<std::string>(obj.at("type"));
+
+
+	try {
+		mysql::results results = co_await this->db.runQuery(Queries::VerifyFileAccess(file_id, uid));
+
+		if(results.rows().empty())
+			co_return Helpers::makeResponse(http::status::unauthorized, "file access denied");
+
+		mysql::results email_results = co_await this->db.runQuery(Queries::GetUidByEmail(email));
+
+		if (email_results.rows().empty())
+			co_return Helpers::makeResponse(http::status::not_found, "user not found");
+
+		std::string other_uid = email_results.rows()[0][0].as_string();
+
+		co_await this->db.runQuery(Queries::InsertAccess(
+			this->createId("access"), other_uid, uid, file_id, resource, type));
+	}
+	catch (boost::system::system_error& e)
+	{
+		std::cerr << "Failed query: " << e.what()<<std::endl;
+		co_return Helpers::makeResponse(http::status::internal_server_error, "failed granting access");
+
+	}
+
+	co_return Helpers::makeResponse(http::status::ok, "access granted successfuly");
+
+}

@@ -51,7 +51,7 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
 
         else if (target == "/grand_access")
         {
-
+            co_return co_await this->grandAccess(obj, session_id);
         }
     }
     else if (method == http::verb::get)
