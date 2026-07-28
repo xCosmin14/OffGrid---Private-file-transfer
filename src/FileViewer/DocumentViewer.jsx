@@ -121,5 +121,5 @@ export default function DocumentViewer(props) {
             </pre>
         )
 
-    return <div className="unsupported">Format nesuportat în acest viewer.</div>
+    return <div className="unsupported">Cannot read this file format</div>
 }

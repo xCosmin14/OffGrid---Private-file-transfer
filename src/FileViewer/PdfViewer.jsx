@@ -81,8 +81,8 @@ export default function PdfViewer(props) {
                 <Document
                     file={props.fileContent}
                     onLoadSuccess={onDocumentLoadSuccess}
-                    loading={<div>Se încarcă documentul...</div>}
-                    error={<div>Eroare la încărcarea PDF-ului.</div>}
+                    loading={<div>Loading document...</div>}
+                    error={<div>Error loading file</div>}
                 >
                     {Array.from(new Array(numPages), (_, i) => (
                         <div 
