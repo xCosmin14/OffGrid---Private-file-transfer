@@ -485,6 +485,18 @@ pre::-webkit-scrollbar-track,
     margin-top: 3px;
 }
 
+#small #mdViewer {
+    height: calc(100% - 50px); 
+    margin-top: -50px;
+    overflow-y: scroll;
+}
+#full #mdViewer {
+    height: 100%; 
+    overflow: scroll; overflow-x: visible;
+    padding: 10px;
+    margin-left: 60px; 
+}
+
 @media screen and (min-width: 501px) and (max-width: 1440px) {
     #full.fileViewer #windowActions {left: calc(100% - 125px);}
 
@@ -547,5 +559,11 @@ pre::-webkit-scrollbar-track,
     #full #archiveViewer {
         margin-left: 15px; margin-top: 100px;
         overflow-x: visible;
+    }
+
+    #full #mdViewer {
+        overflow: scroll; overflow-x: scroll;
+        padding: 10px;
+        margin-left: -10px; 
     }
 }

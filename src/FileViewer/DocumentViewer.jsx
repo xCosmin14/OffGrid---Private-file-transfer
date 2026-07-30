@@ -1,6 +1,10 @@
 import React, { useEffect, useRef, useState } from "react"
+
 import { renderAsync } from "docx-preview"
 import * as XLSX from "xlsx"
+
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 
 import isMobile from "../IsMobile.js"
 
@@ -9,7 +13,8 @@ import "./FileViewers.css"
 export default function DocumentViewer(props) {
     const docxContainerRef = useRef(null)
     const [htmlTable, setHtmlTable] = useState("")
-    const [textContent, setTextContent] = useState("") 
+    const [textContent, setTextContent] = useState("")
+    const [mdContent, setMdContent] = useState("") 
     const [docHeight, setDocHeight] = useState(0)
 
     const [scale, setScale] = useState(props.viewerSize === "full" ? 0.75 : 0.45)
@@ -59,11 +64,13 @@ export default function DocumentViewer(props) {
                     setHtmlTable(html)
                 }).catch()
 
-        } else if (props.file.extension === "txt") {
+        } else if (props.file.extension === "txt" || props.file.extension === "md") {
             fetch(props.fileContent)
                 .then(res => res.text())
-                .then(text => setTextContent(text))
-                .catch()
+                .then(text => {
+                    if (props.file.extension === "md") setMdContent(text)
+                    else setTextContent(text)
+                }).catch()
         }
     }, [props.fileContent, props.file.extension])
 
@@ -83,8 +90,7 @@ export default function DocumentViewer(props) {
                     </div>
                 </div>
 
-                <div id="pdfDocumentContainer" onScroll={handleScroll} 
-                >
+                <div id="pdfDocumentContainer" onScroll={handleScroll}>
                     <div 
                         style={{ 
                             width: `${800 * scale}px`, 
@@ -116,10 +122,15 @@ export default function DocumentViewer(props) {
 
     if (props.file.extension === "txt")
         return (
-            <pre id="txtViewer" onScroll={handleScroll}>
-                {textContent}
-            </pre>
+            <pre id="txtViewer" onScroll={handleScroll}>{textContent}</pre>
         )
 
+    if (props.file.extension === "md") 
+        return (
+            <div id="mdViewer" onScroll={handleScroll}>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{mdContent}</ReactMarkdown>
+            </div>
+        )
+        
     return <div className="unsupported">Cannot read this file format</div>
 }
