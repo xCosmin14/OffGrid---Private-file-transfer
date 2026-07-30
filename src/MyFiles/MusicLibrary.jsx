@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useContext, useMemo } from "react"
-import { Link, useSearchParams, useNavigate } from 'react-router-dom' 
+import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 
 import { useTitle } from "../UseTitle.js"
 import { FileContext } from "../GetFiles.jsx"
@@ -77,6 +77,7 @@ export default function MusicLibrary() {
 
     const [searchParams] = useSearchParams()
     const navigate = useNavigate()
+    const location = useLocation()
     const currentPathStr = searchParams.get("dir") || ""
     const currentPath = currentPathStr ? currentPathStr.split("/") : []
 
@@ -141,11 +142,12 @@ export default function MusicLibrary() {
             .filter(folder => {
                 if (getParentPath(folder.path) !== currentPathStr) return false
                 
-                const hasRelevantFiles = safeFiles.some(file => 
-                    (viewerComponentsMap[file.extension] === "AudioPlayer") && 
-                    file.path.startsWith(folder.path + "/")
-                )
-                if (!hasRelevantFiles) return false
+                const filesInFolder = safeFiles.filter(file => file.path.startsWith(folder.path + "/"))
+                const hasOnlyValidFiles = 
+                    filesInFolder.length > 0 && 
+                    filesInFolder.every(file => viewerComponentsMap[file.extension] === "AudioPlayer")
+
+                if (!hasOnlyValidFiles) return false
 
                 if (appliedFilters.extensionFilter && appliedFilters.extensionFilter !== "Folder") return false
                 if (searchQuery && !folder.name.toLowerCase().includes(searchQuery.toLowerCase())) return false
@@ -160,19 +162,21 @@ export default function MusicLibrary() {
             })
 
         let filteredFiles = safeFiles.filter(file => {
-            if (viewerComponentsMap[file.extension] != "AudioPlayer") 
-                return false
-            if (appliedFilters.extensionFilter && file.extension !== appliedFilters.extensionFilter) return false
-            if (searchQuery && !file.name.toLowerCase().includes(searchQuery.toLowerCase())) return false
-            
-            const fileMB = (parseFloat(file.size) || 0) / 1048576.0
-            if (appliedFilters.sizeFilterLowerBound && fileMB < parseFloat(appliedFilters.sizeFilterLowerBound)) return false
-            if (appliedFilters.sizeFilterUpperBound && fileMB > parseFloat(appliedFilters.sizeFilterUpperBound)) return false
-            if (appliedFilters.dateFilterLowerBound && file.created < appliedFilters.dateFilterLowerBound) return false
-            if (appliedFilters.dateFilterUpperBound && file.created > appliedFilters.dateFilterUpperBound + "T23:59:59") return false
-            if (appliedFilters.sentBy && (!file.sentBy || !file.sentBy.toLowerCase().includes(appliedFilters.sentBy.toLowerCase()))) return false
-            return true
-        })
+        if (viewerComponentsMap[file.extension] != "AudioPlayer") return false
+
+        if (getParentPath(file.path) !== currentPathStr) return false
+
+        if (appliedFilters.extensionFilter && file.extension !== appliedFilters.extensionFilter) return false
+        if (searchQuery && !file.name.toLowerCase().includes(searchQuery.toLowerCase())) return false
+        
+        const fileMB = (parseFloat(file.size) || 0) / 1048576.0
+        if (appliedFilters.sizeFilterLowerBound && fileMB < parseFloat(appliedFilters.sizeFilterLowerBound)) return false
+        if (appliedFilters.sizeFilterUpperBound && fileMB > parseFloat(appliedFilters.sizeFilterUpperBound)) return false
+        if (appliedFilters.dateFilterLowerBound && file.created < appliedFilters.dateFilterLowerBound) return false
+        if (appliedFilters.dateFilterUpperBound && file.created > appliedFilters.dateFilterUpperBound + "T23:59:59") return false
+        if (appliedFilters.sentBy && (!file.sentBy || !file.sentBy.toLowerCase().includes(appliedFilters.sentBy.toLowerCase()))) return false
+        return true
+    })
 
         const folderSortCrit = sortFilter.crit === "size" ? "calculatedSize" : sortFilter.crit
         
@@ -365,7 +369,7 @@ export default function MusicLibrary() {
                                     {renderPathMenu()}
                                 </div>
                             ) : (
-                                <Link to={`/?dir=${encodeURIComponent(breadcrumbPath)}`}
+                                <Link to={`${location.pathname}?dir=${encodeURIComponent(breadcrumbPath)}`}
                                     onClick={() => { setSearchQuery(""); setOpenFile(null); }} 
                                 >
                                     {folderName}
@@ -482,7 +486,7 @@ export default function MusicLibrary() {
                         <>
                             {processedFolders.map(folder => {
                                 const nextPath = currentPathStr ? `${currentPathStr}/${folder.name}` : folder.name
-                                const pathForLink = `/?dir=${encodeURIComponent(nextPath)}`
+                                const pathForLink = `${location.pathname}?dir=${encodeURIComponent(nextPath)}`                                
                                 
                                 return (
                                     <div 

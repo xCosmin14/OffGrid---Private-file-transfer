@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useContext, useMemo } from "react"
-import { Link, useSearchParams, useNavigate } from 'react-router-dom' 
+import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 
 import { useTitle } from "../UseTitle.js"
 import { FileContext } from "../GetFiles.jsx"
@@ -34,8 +34,7 @@ const calculateFolderSize = (folderPath, allFiles) => {
     if (!allFiles || allFiles.length === 0) return 0
 
     return allFiles
-        .filter(file => (viewerComponentsMap[file.extension] == "DocumentViewer" || 
-                viewerComponentsMap[file.extension] == "PdfViewer") 
+        .filter(file => (viewerComponentsMap[file.extension] == "DocumentViewer" || viewerComponentsMap[file.extension] == "PdfViewerwer")
                 && file.path.startsWith(folderPath + "/"))
         .reduce((accumulator, file) => accumulator + (parseFloat(file.size) || 0), 0)
 }
@@ -75,45 +74,42 @@ export default function MyFiles() {
     useTitle("OffGrid - Private file transfer")
 
     const { files, folders, isLoading, refreshFiles, searchQuery, setSearchQuery } = useContext(FileContext)
-
-    const [searchParams] = useSearchParams()
-    const navigate = useNavigate()
-    const currentPathStr = searchParams.get("dir") || ""
-    const currentPath = currentPathStr ? currentPathStr.split("/") : []
-
-    const currentFolderObj = (folders || []).find(f => f.path === currentPathStr)
-    const currentFolderID = currentFolderObj ? currentFolderObj.folder_id : ""
-
-    const [showPathMenu, setShowPathMenu] = useState(false)
-    const pathMenuRef = useRef(null)
+        
+        const [searchParams] = useSearchParams()
+        const navigate = useNavigate()
+        const location = useLocation()
+        const currentPathStr = searchParams.get("dir") || ""
+        const currentPath = currentPathStr ? currentPathStr.split("/") : []
     
-    const [appliedFilters, setAppliedFilters] = useState({})
-    const [sortFilter, setSortFilter] = useState({crit: "name", order: "asc"})
+        const currentFolderObj = (folders || []).find(f => f.path === currentPathStr)
+        const currentFolderID = currentFolderObj ? currentFolderObj.folder_id : ""
     
-    const handleFilterChange = (filters) => { 
-        setAppliedFilters(filters) 
-    }
-
-    const handleSortChange = (sort) => {
-        setSortFilter(sort)
-    }
-
-    const [openFile, setOpenFile] = useState(null)
-    const [viewerSize, setViewerSize] = useState(isMobile() == 0 ? "small" : "full")
-    const isViewerSmall = openFile !== null && viewerSize === "small"
-
-    const { sizeByTypes, totalFileSize } = useMemo(() => {
-        const sizes = {}
-        let total = 0 
-
-        if (!files || files.length === 0) 
-            return { sizeByTypes: [], totalFileSize: 0 } 
-
-        files.forEach(file => {
-            if (viewerComponentsMap[file.extension] != "DocumentViewer" && 
-                viewerComponentsMap[file.extension] != "PdfViewer") 
-                return
-             
+        const [showPathMenu, setShowPathMenu] = useState(false)
+        const pathMenuRef = useRef(null)
+        
+        const [appliedFilters, setAppliedFilters] = useState({})
+        const [sortFilter, setSortFilter] = useState({crit: "name", order: "asc"})
+        
+        const handleFilterChange = (filters) => { 
+            setAppliedFilters(filters) 
+        }
+    
+        const handleSortChange = (sort) => {
+            setSortFilter(sort)
+        }
+    
+        const [openFile, setOpenFile] = useState(null)
+        const [viewerSize, setViewerSize] = useState(isMobile() == 0 ? "small" : "full")
+        const isViewerSmall = openFile !== null && viewerSize === "small"
+    
+        const { sizeByTypes, totalFileSize } = useMemo(() => {
+            const sizes = {}
+            let total = 0 
+    
+            if (!files || files.length === 0) return { sizeByTypes: [], totalFileSize: 0 } 
+    
+            files.forEach(file => {
+                if (viewerComponentsMap[file.extension] !== "DocumentViewer" && viewerComponentsMap[file.extension] !== "PdfViewerwer") return
 
             const fileSizeNum = parseFloat(file.size) || 0
             const fileSizeMB = fileSizeNum / 1048576.0 
@@ -133,7 +129,7 @@ export default function MyFiles() {
             totalFileSize: total
         }
     }, [files])
-
+    
     const { processedFolders, processedFiles } = useMemo(() => {
         const safeFiles = files || [], safeFolders = folders || []
 
@@ -144,13 +140,13 @@ export default function MyFiles() {
             }))
             .filter(folder => {
                 if (getParentPath(folder.path) !== currentPathStr) return false
+                
+                const filesInFolder = safeFiles.filter(file => file.path.startsWith(folder.path + "/"))
+                const hasOnlyValidFiles = 
+                    filesInFolder.length > 0 && 
+                    filesInFolder.every(file => viewerComponentsMap[file.extension] == "DocumentViewer" || viewerComponentsMap[file.extension] == "PdfViewerwer")
 
-                const hasRelevantFiles = safeFiles.some(file => 
-                    (viewerComponentsMap[file.extension] === "DocumentViewer" || 
-                     viewerComponentsMap[file.extension] === "PdfViewer") && 
-                    file.path.startsWith(folder.path + "/")
-                )
-                if (!hasRelevantFiles) return false
+                if (!hasOnlyValidFiles) return false
 
                 if (appliedFilters.extensionFilter && appliedFilters.extensionFilter !== "Folder") return false
                 if (searchQuery && !folder.name.toLowerCase().includes(searchQuery.toLowerCase())) return false
@@ -165,9 +161,10 @@ export default function MyFiles() {
             })
 
         let filteredFiles = safeFiles.filter(file => {
-            if (viewerComponentsMap[file.extension] != "DocumentViewer" && 
-                viewerComponentsMap[file.extension] != "PdfViewer") 
-                return false
+            if (viewerComponentsMap[file.extension] !== "DocumentViewer" && viewerComponentsMap[file.extension] !== "PdfViewerwer") return false
+
+            if (getParentPath(file.path) !== currentPathStr) return false
+
             if (appliedFilters.extensionFilter && file.extension !== appliedFilters.extensionFilter) return false
             if (searchQuery && !file.name.toLowerCase().includes(searchQuery.toLowerCase())) return false
             
@@ -371,7 +368,7 @@ export default function MyFiles() {
                                     {renderPathMenu()}
                                 </div>
                             ) : (
-                                <Link to={`/?dir=${encodeURIComponent(breadcrumbPath)}`}
+                                <Link to={`${location.pathname}?dir=${encodeURIComponent(breadcrumbPath)}`}
                                     onClick={() => { setSearchQuery(""); setOpenFile(null); }} 
                                 >
                                     {folderName}
@@ -488,7 +485,7 @@ export default function MyFiles() {
                         <>
                             {processedFolders.map(folder => {
                                 const nextPath = currentPathStr ? `${currentPathStr}/${folder.name}` : folder.name
-                                const pathForLink = `/?dir=${encodeURIComponent(nextPath)}`
+                                const pathForLink = `${location.pathname}?dir=${encodeURIComponent(nextPath)}`                                
                                 
                                 return (
                                     <div 

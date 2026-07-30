@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useContext, useMemo } from "react"
-import { Link, useSearchParams, useNavigate } from 'react-router-dom' 
+import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 
 import { useTitle } from "../UseTitle.js"
 import { FileContext } from "../GetFiles.jsx"
@@ -34,8 +34,7 @@ const calculateFolderSize = (folderPath, allFiles) => {
     if (!allFiles || allFiles.length === 0) return 0
 
     return allFiles
-        .filter(file => (viewerComponentsMap[file.extension] == "PhotoViewer" || 
-                viewerComponentsMap[file.extension] == "VideoPlayer") 
+        .filter(file => (viewerComponentsMap[file.extension] == "VideoPlayer" || viewerComponentsMap[file.extension] == "PhotoViewer")
                 && file.path.startsWith(folderPath + "/"))
         .reduce((accumulator, file) => accumulator + (parseFloat(file.size) || 0), 0)
 }
@@ -75,9 +74,10 @@ export default function PhotoAlbum() {
     useTitle("Photo album")
 
     const { files, folders, isLoading, refreshFiles, searchQuery, setSearchQuery } = useContext(FileContext)
-
+    
     const [searchParams] = useSearchParams()
     const navigate = useNavigate()
+    const location = useLocation()
     const currentPathStr = searchParams.get("dir") || ""
     const currentPath = currentPathStr ? currentPathStr.split("/") : []
 
@@ -106,13 +106,10 @@ export default function PhotoAlbum() {
         const sizes = {}
         let total = 0 
 
-        if (!files || files.length === 0) 
-            return { sizeByTypes: [], totalFileSize: 0 } 
+        if (!files || files.length === 0) return { sizeByTypes: [], totalFileSize: 0 } 
 
         files.forEach(file => {
-            if (viewerComponentsMap[file.extension] != "PhotoViewer" && 
-                viewerComponentsMap[file.extension] != "VideoPlayer") 
-                return
+                if (viewerComponentsMap[file.extension] !== "VideoPlayer" && viewerComponentsMap[file.extension] !== "PhotoViewer") return
 
             const fileSizeNum = parseFloat(file.size) || 0
             const fileSizeMB = fileSizeNum / 1048576.0 
@@ -132,7 +129,7 @@ export default function PhotoAlbum() {
             totalFileSize: total
         }
     }, [files])
-
+    
     const { processedFolders, processedFiles } = useMemo(() => {
         const safeFiles = files || [], safeFolders = folders || []
 
@@ -143,13 +140,13 @@ export default function PhotoAlbum() {
             }))
             .filter(folder => {
                 if (getParentPath(folder.path) !== currentPathStr) return false
+                
+                const filesInFolder = safeFiles.filter(file => file.path.startsWith(folder.path + "/"))
+                const hasOnlyValidFiles = 
+                    filesInFolder.length > 0 && 
+                    filesInFolder.every(file => viewerComponentsMap[file.extension] == "VideoPlayer" || viewerComponentsMap[file.extension] == "PhotoViewer")
 
-                const hasRelevantFiles = safeFiles.some(file => 
-                    (viewerComponentsMap[file.extension] === "PhotoViewer" || 
-                     viewerComponentsMap[file.extension] === "VideoPlayer") && 
-                    file.path.startsWith(folder.path + "/")
-                )
-                if (!hasRelevantFiles) return false
+                if (!hasOnlyValidFiles) return false
 
                 if (appliedFilters.extensionFilter && appliedFilters.extensionFilter !== "Folder") return false
                 if (searchQuery && !folder.name.toLowerCase().includes(searchQuery.toLowerCase())) return false
@@ -164,9 +161,10 @@ export default function PhotoAlbum() {
             })
 
         let filteredFiles = safeFiles.filter(file => {
-            if (viewerComponentsMap[file.extension] != "PhotoViewer" && 
-                viewerComponentsMap[file.extension] != "VideoPlayer") 
-                return false
+            if (viewerComponentsMap[file.extension] !== "VideoPlayer" && viewerComponentsMap[file.extension] !== "PhotoViewer") return false
+
+            if (getParentPath(file.path) !== currentPathStr) return false
+
             if (appliedFilters.extensionFilter && file.extension !== appliedFilters.extensionFilter) return false
             if (searchQuery && !file.name.toLowerCase().includes(searchQuery.toLowerCase())) return false
             
@@ -370,7 +368,7 @@ export default function PhotoAlbum() {
                                     {renderPathMenu()}
                                 </div>
                             ) : (
-                                <Link to={`/?dir=${encodeURIComponent(breadcrumbPath)}`}
+                                <Link to={`${location.pathname}?dir=${encodeURIComponent(breadcrumbPath)}`}
                                     onClick={() => { setSearchQuery(""); setOpenFile(null); }} 
                                 >
                                     {folderName}
@@ -487,7 +485,7 @@ export default function PhotoAlbum() {
                         <>
                             {processedFolders.map(folder => {
                                 const nextPath = currentPathStr ? `${currentPathStr}/${folder.name}` : folder.name
-                                const pathForLink = `/?dir=${encodeURIComponent(nextPath)}`
+                                const pathForLink = `${location.pathname}?dir=${encodeURIComponent(nextPath)}`                                
                                 
                                 return (
                                     <div 

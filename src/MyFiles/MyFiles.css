@@ -237,6 +237,8 @@
     padding-right: 15px;
 }
 
+.fileRow:last-of-type {margin-bottom: 25px;}
+
 #music .fileTableHeader div:not(:nth-child(4)):not(:nth-child(7)) {text-align: left;}
 
 .mobileExpandBtn, .mobileLabel {display: none;}
@@ -361,6 +363,8 @@
         border-color: var(--hoverCol);
         box-shadow: 0 4px 12px var(--boxShadowCol);
     }
+
+    .fileRow:last-of-type {margin-bottom: 80px;}
 
     .mobileLabel {
         display: inline-block;
