@@ -29,9 +29,7 @@ export async function cancelUpload() {
             credentials: "include"
         })
         const data = await res.json()
-    } catch (err) {
-        console.error("Eroare la trimiterea cancel către server:", err)
-    } finally {
+    } catch (err) {} finally {
         transaction_id = ""
         window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
     }
@@ -117,62 +115,68 @@ export default function AddFile(props) {
     }
 
     const handleFileUpload = async (e) => {
-        const file = e.target.files[0]
-        if (!file) return
+        const files = e.target.files
+        if (!files || files.length === 0) return
 
-        const formData = new FormData() 
-        const finalPath = props.currentPath ? `${props.currentPath}/${file.name}` : file.name
-        formData.append("file", file, finalPath)
-
-        const totalBytes = file.size
-        const totalMB = (totalBytes / (1024 * 1024)).toFixed(1)
-
-        try {
-            await new Promise((resolve, reject) => {
-                const xhr = new XMLHttpRequest()
-                currentXhr = xhr
-
-                xhr.upload.addEventListener("progress", (event) => {
-                    if (event.lengthComputable) {
-                        const percentage = Math.round((event.loaded / event.total) * 100)
-                        
-                        const loadedMB = (event.loaded / (1024 * 1024)).toFixed(1)
-                        const networkTotalMB = (event.total / (1024 * 1024)).toFixed(1)
-
-                        const finalPercentage = Math.min(percentage, 100)
-
-                        window.dispatchEvent(new CustomEvent('upload-progress', { 
-                            detail: { 
-                                isUploading: true, 
-                                progress: finalPercentage, 
-                                loaded: loadedMB, 
-                                total: networkTotalMB, 
-                                currentFile: file.name,
-                                fileIndex: 1,
-                                totalFiles: 1
-                            } 
-                        }))
-                    }
-                })
-
-                xhr.addEventListener("load", () => {
-                    if (xhr.status >= 200 && xhr.status < 300) resolve()
-                    else reject(new Error("Server error"))
-                })
-
-                xhr.addEventListener("error", reject)
-
-                xhr.open("POST", "http://localhost:18080/upload_file")
-                xhr.withCredentials = true
-                xhr.send(formData)
-            })
+        var totalBytes = 0
+        for (let i = 0; i < files.length; i++) totalBytes += files[i].size
+        
+        for (let i = 0; i < files.length; i++) {
+            const formData = new FormData()
             
-            if (props.onUploadSuccess) props.onUploadSuccess()
-            window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
-            setShow(false)
-        } catch (error) {
-            window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
+            const finalPath = props.currentPath ? `${props.currentPath}/${files[i].name}` : files[i].name            
+            formData.append("file", files[i], finalPath)
+
+            const fileMB = (files[i].size / (1024 * 1024)).toFixed(1)
+
+            try {
+                await new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest()
+                    currentXhr = xhr
+
+                    xhr.upload.addEventListener("progress", (event) => {
+                        if (event.lengthComputable) {
+                            const percentage = Math.round((event.loaded / event.total) * 100)
+                            
+                            const loadedMB = (event.loaded / (1024 * 1024)).toFixed(1)
+                            const networkTotalMB = (event.total / (1024 * 1024)).toFixed(1)
+
+                            const finalPercentage = Math.min(percentage, 100)
+
+                            window.dispatchEvent(new CustomEvent('upload-progress', { 
+                                detail: { 
+                                    isUploading: true, 
+                                    progress: finalPercentage, 
+                                    loaded: loadedMB, 
+                                    total: networkTotalMB, 
+                                    currentFile: files[i].name,
+                                    fileIndex: i,
+                                    totalFiles: files.length
+                                } 
+                            }))
+                        }
+                    })
+
+                    xhr.addEventListener("load", () => {
+                        if (xhr.status >= 200 && xhr.status < 300) resolve()
+                        else reject(new Error("Server error"))
+                    })
+
+                    xhr.addEventListener("error", reject)
+
+                    xhr.open("POST", "http://localhost:18080/upload_file")
+                    xhr.withCredentials = true
+                    xhr.send(formData)
+                })
+                
+                if (props.onUploadSuccess) props.onUploadSuccess()
+            } catch (error) {
+                console.error("Eroare la upload:", error)
+            } 
         }
+
+        window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
+        setShow(false)
     }
 
     const handleCreateFolder = () => {
@@ -299,10 +303,6 @@ export default function AddFile(props) {
         
     }
 
-    const handleCreateMarkdown = () => {
-        
-    }
-
     const renderCreateFolder = () => {
         if (!displayCreateFolder) return null
 
@@ -312,6 +312,9 @@ export default function AddFile(props) {
                 
                 <input type="text" name="newFolderName" placeholder="Name" value={newFolderName}
                     onChange={(e) => setNewFolderName(e.target.value)}
+                    onBeforeInput={(e) => {
+                        if (/[/]/.test(e.data)) e.preventDefault()     
+                    }} 
                 />
 
                 <div id="newFolderColor">
@@ -348,6 +351,7 @@ export default function AddFile(props) {
                     <input 
                         type="file" name="fileUpload"
                         accept={types} 
+                        multiple="1"
                         onChange = {handleFileUpload}
                     />
                     <h3>Upload file</h3>
@@ -384,11 +388,6 @@ export default function AddFile(props) {
                 <div className="uploadOption" onClick={handleCreateText}>
                     <TextFile id="bigger"/>
                     <h3>Create text file</h3>
-                </div>
-
-                <div className="uploadOption" onClick={handleCreateMarkdown}>
-                    <TextFile id="bigger"/>
-                    <h3>Create markdown file</h3>
                 </div>
             </div>}
             

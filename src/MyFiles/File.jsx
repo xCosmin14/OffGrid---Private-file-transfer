@@ -163,10 +163,12 @@ export default function File(props) {
                     
                     <input 
                         type="text" 
-                        name="newFileName" 
-                        placeholder="Name" 
+                        name="newFileName" placeholder="Name" 
                         value={newName}
                         onChange={(e) => setNewName(e.target.value)}
+                        onBeforeInput={(e) => {
+                            if (/[/]/.test(e.data)) e.preventDefault()     
+                        }} 
                     />
 
                     {isFolder && (
@@ -176,8 +178,7 @@ export default function File(props) {
                                     .trim().replace("light-dark(", "").replace(", ", " / ").replace(")", "") : 
                                     newFolderColor}</h3>
                             <input 
-                                type="color" 
-                                name="newFolderColor" 
+                                type="color" name="newFolderColor" 
                                 value={newFolderColor}
                                 onChange={(e) => setNewFolderColor(e.target.value)}
                             />
@@ -242,7 +243,7 @@ export default function File(props) {
                         <Download /><h5>Download</h5>
                     </div>
                     <hr />
-                    <div className="pathMenuOption" onClick={(e) => handleAction(e, "rename")}>
+                    <div className="pathMenuOption" onClick={(e) => handleAction(e, "rename")} >
                         <Rename /><h5>Rename</h5>
                     </div>
                     <hr />
