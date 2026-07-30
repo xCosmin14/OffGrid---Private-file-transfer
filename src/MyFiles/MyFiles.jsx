@@ -100,35 +100,6 @@ export default function MyFiles() {
     const [viewerSize, setViewerSize] = useState(isMobile() == 0 ? "small" : "full")
     const isViewerSmall = openFile !== null && viewerSize === "small"
 
-    const { sizeByTypes, totalFileSize } = useMemo(() => {
-        const sizes = {}
-        let total = 0 
-
-        if (!files || files.length === 0) 
-            return { sizeByTypes: [], totalFileSize: 0 } 
-
-        files.forEach(file => {
-            if (file.inTrash == 1) return 
-
-            const fileSizeNum = parseFloat(file.size) || 0
-            const fileSizeMB = fileSizeNum / 1048576.0 
-
-            const ext = file.extension ? file.extension.charAt(0).toUpperCase() + file.extension.slice(1).toLowerCase() : "Unknown"
-
-            sizes[ext] = (sizes[ext] || 0) + fileSizeMB
-            total += fileSizeMB 
-        })
-
-        const sortedTypes = Object.entries(sizes)
-            .map(([extension, size]) => ({ extension, size }))
-            .sort((a, b) => b.size - a.size)
-
-        return {
-            sizeByTypes: sortedTypes,
-            totalFileSize: total
-        }
-    }, [files])
-
     const { processedFolders, processedFiles } = useMemo(() => {
         const safeFiles = files || [], safeFolders = folders || []
 
@@ -173,6 +144,35 @@ export default function MyFiles() {
         return { processedFolders: filteredFolders, processedFiles: filteredFiles }
     }, [files, folders, currentPathStr, appliedFilters, searchQuery, sortFilter])
 
+    const { sizeByTypes, totalFileSize } = useMemo(() => {
+        const sizes = {}
+        let total = 0 
+
+        if (!files || files.length === 0) 
+            return { sizeByTypes: [], totalFileSize: 0 } 
+
+        files.forEach(file => {
+            if (file.inTrash == 1) return 
+
+            const fileSizeNum = parseFloat(file.size) || 0
+            const fileSizeMB = fileSizeNum / 1048576.0 
+
+            const ext = file.extension ? file.extension.charAt(0).toUpperCase() + file.extension.slice(1).toLowerCase() : "Unknown"
+
+            sizes[ext] = (sizes[ext] || 0) + fileSizeMB
+            total += fileSizeMB 
+        })
+
+        const sortedTypes = Object.entries(sizes)
+            .map(([extension, size]) => ({ extension, size }))
+            .sort((a, b) => b.size - a.size)
+
+        return {
+            sizeByTypes: sortedTypes,
+            totalFileSize: total
+        }
+    }, [processedFiles, processedFolders])
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (pathMenuRef.current && !pathMenuRef.current.contains(event.target)) 
@@ -189,10 +189,6 @@ export default function MyFiles() {
             document.removeEventListener("touchstart", handleClickOutside)
         }
     }, [showPathMenu])
-
-    const handlePathAction = (action) => {
-        setShowPathMenu(false)
-    }
 
     const handleFileAction = async (action) => {
         if (!openFile) return
@@ -250,30 +246,30 @@ export default function MyFiles() {
 
         if (currentPathStr) return (
             <div id="pathDropdownMenu">
-                <div className="pathMenuOption" onClick={() => handlePathAction("download")}>
+                <div className="pathMenuOption" onClick={() => handleFileAction("download")}>
                     <Download />
                     <h5>Download</h5>
                 </div>
                 <hr />
-                <div className="pathMenuOption" onClick={() => handlePathAction("rename")}>
+                <div className="pathMenuOption" onClick={() => handleFileAction("rename")}>
                     <Rename />
                     <h5>Rename</h5>
                 </div>
-                <div className="pathMenuOption" onClick={() => handlePathAction("color")}>
+                <div className="pathMenuOption" onClick={() => handleFileAction("color")}>
                     <ChangeColor />
                     <h5>Change color</h5>
                 </div>
                 <hr />
-                <div className="pathMenuOption" onClick={() => handlePathAction("delete")}>
+                <div className="pathMenuOption" onClick={() => handleFileAction("delete")}>
                     <Trash />
                     <h5>Delete</h5>
                 </div>
-                <div className="pathMenuOption" onClick={() => handlePathAction("favorites")}>
+                <div className="pathMenuOption" onClick={() => handleFileAction("favorites")}>
                     <StarFull />
                     <h5>Add to Favorites</h5>
                 </div>
                 <hr />
-                <div className="pathMenuOption" onClick={() => handlePathAction("access")}>
+                <div className="pathMenuOption" onClick={() => handleFileAction("access")}>
                     <Group />
                     <h5>Manage Access</h5>
                 </div>
@@ -476,23 +472,22 @@ export default function MyFiles() {
                                 const pathForLink = `/?dir=${encodeURIComponent(nextPath)}`
                                 
                                 return (
-                                    <div 
-                                        key={`folder-${folder.path}`} 
-                                        onClick={() => {setSearchQuery(""); navigate(pathForLink);}}
-                                        style={{ display: "contents", textDecoration: "none", color: "inherit", cursor: "pointer" }}
-                                    >
-                                        <File 
-                                            path={folder.path}
-                                            id={folder.folder_id}
-                                            name={folder.name} 
-                                            extension="Folder" 
-                                            color={folder.color}
-                                            size={folder.calculatedSize} 
-                                            favourite={folder.favourite}
-                                            created={!isLoading && formatDate(folder.created)}
-                                            lastModified={!isLoading && formatDate(folder.modified)}
-                                        />
-                                    </div>
+                                    <File 
+                                        key={`folder-${folder.path}`}
+                                        path={folder.path}
+                                        id={folder.folder_id}
+                                        name={folder.name} 
+                                        extension="Folder" 
+                                        color={folder.color}
+                                        size={folder.calculatedSize} 
+                                        favourite={folder.favourite}
+                                        created={!isLoading && formatDate(folder.created)}
+                                        lastModified={!isLoading && formatDate(folder.modified)}
+                                        onFileClick={() => {
+                                            setSearchQuery("")
+                                            navigate(pathForLink)
+                                        }}
+                                    />
                                 )
                             })}
                             
@@ -507,7 +502,7 @@ export default function MyFiles() {
                                     favourite={file.favourite}
                                     created={!isLoading && formatDate(file.created)}
                                     lastModified={!isLoading && formatDate(file.modified)}
-                                    onFileClick = {() => setOpenFile(file)}
+                                    onFileClick={() => setOpenFile(file)}
                                     hideType={isViewerSmall}
                                 />
                             ))}

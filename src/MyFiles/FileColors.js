@@ -222,12 +222,11 @@ const extensionColors = {
 
 export const viewerComponentsMap = {
     "mp4": "VideoPlayer", "webm": "VideoPlayer", "ogv": "VideoPlayer",
-    "mov": "VideoPlayer", "mkv": "VideoPlayer", "avi": "VideoPlayer",
 
     "mp3": "AudioPlayer", "wav": "AudioPlayer", "ogg": "AudioPlayer",
     "flac": "AudioPlayer", "aac": "AudioPlayer", "m4a": "AudioPlayer",
 
-    "zip": "ArchiveViewer", "rar": "ArchiveViewer",
+    "zip": "ArchiveViewer",
 
     "jpg": "PhotoViewer", "jpeg": "PhotoViewer", "png": "PhotoViewer",
     "gif": "PhotoViewer", "bmp": "PhotoViewer", "svg": "PhotoViewer",

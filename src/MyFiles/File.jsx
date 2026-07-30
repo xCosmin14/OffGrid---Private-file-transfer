@@ -143,13 +143,11 @@ export default function File(props) {
                 setDisplayRename(false)
                 if (refreshFiles) await refreshFiles()
             }
-        } catch (err) {
-            console.error("Eroare la redenumire:", err)
-        }
+        } catch (err) {}
     }
 
     const handleRowClick = () => {
-        if (!isFolder) props.onFileClick()
+        if (props.onFileClick) props.onFileClick()
     }
 
     const renderRenameModal = () => {
@@ -173,7 +171,10 @@ export default function File(props) {
 
                     {isFolder && (
                         <div id="newFolderColor">
-                            <h3>Color: {newFolderColor}</h3>
+                            <h3>Color: {newFolderColor.includes("var") ? 
+                                window.getComputedStyle(document.documentElement).getPropertyValue('--hoverCol')
+                                    .trim().replace("light-dark(", "").replace(", ", " / ").replace(")", "") : 
+                                    newFolderColor}</h3>
                             <input 
                                 type="color" 
                                 name="newFolderColor" 
@@ -223,7 +224,7 @@ export default function File(props) {
                 <h3 className="fileDetail"><span className="mobileLabel">Type: </span>{isFolder ? "Folder" : props.extension}</h3>
             )}
             <h3 className="fileDetail"><span className="mobileLabel">Size: </span>{
-                props.size ? props.size > 1073741824 ? `${Number.parseFloat(props.size/1000000.0).toFixed(2)} GB` : `${Number.parseFloat(props.size/1048576.0).toFixed(2)} MB` : "0 MB"
+                props.size ? props.size > 1073741824 ? `${Number.parseFloat(props.size/1073741824.0).toFixed(2)} GB` : `${Number.parseFloat(props.size/1048576.0).toFixed(2)} MB` : "0 MB"
             }</h3>
             <h3 className="fileDetail"><span className="mobileLabel">Created: </span>{props.created}</h3>
             <h3 className="fileDetail"><span className="mobileLabel">Modified: </span>{props.lastModified}</h3>

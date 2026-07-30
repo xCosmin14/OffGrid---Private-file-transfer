@@ -31,11 +31,11 @@ const getParentPath = (fullPath) => {
 }
 
 const calculateFolderSize = (folderPath, allFiles) => {
-    if (!allFiles || allFiles.length === 0) return 0
+    if (!allFiles || allFiles.length === 0) return 0;
 
     return allFiles
-        .filter(file => file.favourite == 1 && file.path.startsWith(folderPath + "/"))
-        .reduce((accumulator, file) => accumulator + (parseFloat(file.size) || 0), 0)
+        .filter(file => file.path.startsWith(folderPath + "/"))
+        .reduce((accumulator, file) => accumulator + (parseFloat(file.size) || 0), 0);
 }
 
 const formatDate = (dateString) => {
@@ -100,37 +100,9 @@ export default function Favourites() {
     const [viewerSize, setViewerSize] = useState(isMobile() == 0 ? "small" : "full")
     const isViewerSmall = openFile !== null && viewerSize === "small"
 
-    const { sizeByTypes, totalFileSize } = useMemo(() => {
-        const sizes = {}
-        let total = 0 
-
-        if (!files || files.length === 0) 
-            return { sizeByTypes: [], totalFileSize: 0 } 
-
-        files.forEach(file => {
-            if (file.favourite == 0) return 
-
-            const fileSizeNum = parseFloat(file.size) || 0
-            const fileSizeMB = fileSizeNum / 1048576.0 
-
-            const ext = file.extension ? file.extension.charAt(0).toUpperCase() + file.extension.slice(1).toLowerCase() : "Unknown"
-
-            sizes[ext] = (sizes[ext] || 0) + fileSizeMB
-            total += fileSizeMB 
-        })
-
-        const sortedTypes = Object.entries(sizes)
-            .map(([extension, size]) => ({ extension, size }))
-            .sort((a, b) => b.size - a.size)
-
-        return {
-            sizeByTypes: sortedTypes,
-            totalFileSize: total
-        }
-    }, [files])
-
     const { processedFolders, processedFiles } = useMemo(() => {
         const safeFiles = files || [], safeFolders = folders || []
+        const isRoot = currentPathStr === ""
 
         let filteredFolders = safeFolders
             .map(folder => ({
@@ -138,7 +110,9 @@ export default function Favourites() {
                 calculatedSize: calculateFolderSize(folder.path, safeFiles)
             }))
             .filter(folder => {
-                if (folder.favourite == 0 || getParentPath(folder.path) !== currentPathStr) return false
+                if (getParentPath(folder.path) !== currentPathStr) return false
+                if (isRoot && folder.favourite == 0) return false
+
                 if (appliedFilters.extensionFilter && appliedFilters.extensionFilter !== "Folder") return false
                 if (searchQuery && !folder.name.toLowerCase().includes(searchQuery.toLowerCase())) return false
                 
@@ -152,7 +126,9 @@ export default function Favourites() {
             })
 
         let filteredFiles = safeFiles.filter(file => {
-            if (file.favourite == 0 || getParentPath(file.path) !== currentPathStr) return false
+            if (getParentPath(file.path) !== currentPathStr) return false
+            if (isRoot && file.favourite == 0) return false
+            
             if (appliedFilters.extensionFilter && file.extension !== appliedFilters.extensionFilter) return false
             if (searchQuery && !file.name.toLowerCase().includes(searchQuery.toLowerCase())) return false
             
@@ -172,6 +148,32 @@ export default function Favourites() {
 
         return { processedFolders: filteredFolders, processedFiles: filteredFiles }
     }, [files, folders, currentPathStr, appliedFilters, searchQuery, sortFilter])
+
+    const { sizeByTypes, totalFileSize } = useMemo(() => {
+        const sizes = {}
+        let total = 0 
+
+        if (!processedFiles || processedFiles.length === 0) 
+            return { sizeByTypes: [], totalFileSize: 0 } 
+
+        processedFiles.forEach(file => {
+            const fileSizeNum = parseFloat(file.size) || 0, fileSizeMB = fileSizeNum / 1048576.0 
+
+            const ext = file.extension ? file.extension.charAt(0).toUpperCase() + file.extension.slice(1).toLowerCase() : "Unknown"
+
+            sizes[ext] = (sizes[ext] || 0) + fileSizeMB
+            total += fileSizeMB 
+        })
+
+        const sortedTypes = Object.entries(sizes)
+            .map(([extension, size]) => ({ extension, size }))
+            .sort((a, b) => b.size - a.size)
+
+        return {
+            sizeByTypes: sortedTypes,
+            totalFileSize: total
+        }
+    }, [processedFiles])
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -235,6 +237,7 @@ export default function Favourites() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ favourite: openFile.favourite ? 0 : 1 })
                 })
+                
                 if (response.ok) {
                     setOpenFile(prev => ({ ...prev, favourite: prev.favourite ? 0 : 1 }))
                     await refreshFiles()
@@ -356,7 +359,7 @@ export default function Favourites() {
                                     {renderPathMenu()}
                                 </div>
                             ) : (
-                                <Link to={`/?dir=${encodeURIComponent(breadcrumbPath)}`}
+                                <Link to={`/myfiles/favorites?dir=${encodeURIComponent(breadcrumbPath)}`}
                                     onClick={() => { setSearchQuery(""); setOpenFile(null); }} 
                                 >
                                     {folderName}
@@ -472,27 +475,23 @@ export default function Favourites() {
                     ) : (
                         <>
                             {processedFolders.map(folder => {
-                                const nextPath = currentPathStr ? `${currentPathStr}/${folder.name}` : folder.name
-                                const pathForLink = `/?dir=${encodeURIComponent(nextPath)}`
+                                const nextPath = currentPathStr ? `${currentPathStr}/${folder.name}` : folder.name;
+                                const pathForLink = `/myfiles/favorites?dir=${encodeURIComponent(nextPath)}`;
                                 
                                 return (
-                                    <div 
-                                        key={`folder-${folder.path}`} 
-                                        onClick={() => {setSearchQuery(""); navigate(pathForLink);}}
-                                        style={{ display: "contents", textDecoration: "none", color: "inherit", cursor: "pointer" }}
-                                    >
-                                        <File 
-                                            path={folder.path}
-                                            id={folder.folder_id}
-                                            name={folder.name} 
-                                            extension="Folder" 
-                                            color={folder.color}
-                                            size={folder.calculatedSize} 
-                                            favourite={folder.favourite}
-                                            created={!isLoading && formatDate(folder.created)}
-                                            lastModified={!isLoading && formatDate(folder.modified)}
-                                        />
-                                    </div>
+                                    <File 
+                                        key={`folder-${folder.path}`}
+                                        path={folder.path}
+                                        id={folder.folder_id}
+                                        name={folder.name} 
+                                        extension="Folder" 
+                                        color={folder.color}
+                                        size={folder.calculatedSize} 
+                                        favourite={folder.favourite}
+                                        created={!isLoading && formatDate(folder.created)}
+                                        lastModified={!isLoading && formatDate(folder.modified)}
+                                        onFileClick={() => { setSearchQuery(""); navigate(pathForLink); }}
+                                    />
                                 )
                             })}
                             
