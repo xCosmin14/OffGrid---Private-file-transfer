@@ -98,7 +98,7 @@ export default function FileViewer(props) {
         URL.revokeObjectURL(url)
     }        
 
-    const size = props.viewerSize || (isMobile === 0 ? "small" : "full")
+    const size = props.viewerSize || (isMobile() === 0 ? "small" : "full")
     const setSize = props.setViewerSize
 
     const componentName = getViewerComponent(props.file.name, extensionToLanguage)

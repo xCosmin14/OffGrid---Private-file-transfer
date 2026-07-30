@@ -31,8 +31,9 @@ export default function Login() {
         })
 
         let data = await response.json()
+        setShowError(data.message)
 
-        if (data.message == "user logged in") {
+        if (showError === "user logged in") {
             localStorage.setItem("isLogged", "true")
             window.location.href = "/"
             setShowError(null)
@@ -68,12 +69,12 @@ export default function Login() {
                     <Password />
                 </div>
 
-                {showError === 1 && <h3 style={{color: "red"}}>Email does not exist</h3>}
-                {showError === 2 && <h3 style={{color: "red"}}>Wrong password</h3>}
+                {showError && showError !== "user logged in" && showError !== "incorrect password" && 
+                    <h3 style={{color: "red"}}>Email does not exist</h3>}
+                {showError === "incorrect password" && <h3 style={{color: "red"}}>Wrong password</h3>}
 
                 <button type="submit">Login</button>
 
-                <Link to="/passwordreset">Forgot your password?</Link>
                 <Link to="/register">Create an account</Link>
             </form>
         </div>

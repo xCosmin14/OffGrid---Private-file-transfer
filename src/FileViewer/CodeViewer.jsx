@@ -27,7 +27,7 @@ export default function CodeViewer(props) {
 
     return (
         <SyntaxHighlighter 
-            language={extensionToLanguage[props.file.extension]}
+            language={`${extensionToLanguage[props.file.extension]}`}
             showLineNumbers="1"
 
             style={atelierLakesideDark}

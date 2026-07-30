@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react"
+import { useState, useEffect, useContext, useMemo, useRef } from "react"
 import { useLocation } from "react-router-dom"
 
 import { FileContext } from "../GetFiles.jsx"
@@ -6,16 +6,21 @@ import isMobile from "../IsMobile.js"
 
 import "../Header/Header.css"
 
-export default function Filters( {onFilterChange} ) {
+export default function Filters({ onFilterChange }) {
     const { pathname } = useLocation()
-
     const { files, folders, isLoading } = useContext(FileContext)
-    let extensions = []
 
-    if (folders) extensions.push("Folder")
-    !isLoading && files.forEach(file => {
-        if (file.extension && !extensions.includes(file.extension)) extensions.push(file.extension)
-    })
+    const extensions = useMemo(() => {
+        const extSet = new Set()
+        if (folders) extSet.add("Folder")
+        
+        if (!isLoading && files) 
+            files.forEach(file => {
+                if (file.extension) extSet.add(file.extension)
+            })
+        
+        return Array.from(extSet)
+    }, [folders, files, isLoading])
 
     const [localFilters, setLocalFilters] = useState({
         dateFilterLowerBound: "",
@@ -25,6 +30,8 @@ export default function Filters( {onFilterChange} ) {
         extensionFilter: "",
         sentBy: ""
     })
+
+    const isFirstRender = useRef(true)
 
     const handleInputChange = (e) => {
         const { name, value } = e.target
@@ -36,6 +43,11 @@ export default function Filters( {onFilterChange} ) {
 
     useEffect(() => {
         if (!onFilterChange) return
+
+        if (isFirstRender.current) {
+            isFirstRender.current = false
+            return
+        }
 
         const delayDebounceFn = setTimeout(() => {
             onFilterChange(localFilters)
@@ -51,27 +63,33 @@ export default function Filters( {onFilterChange} ) {
                 
                 <div id="boundedInputs">
                     <h3>from:</h3>
-                    <input type="date" name="dateFilterLowerBound"
+                    <input 
+                        type="date" 
+                        name="dateFilterLowerBound"
                         value={localFilters.dateFilterLowerBound}
                         onChange={handleInputChange}
                     />
 
                     <h3>to:</h3>
-                    <input type="date" name="dateFilterUpperBound"
+                    <input 
+                        type="date" 
+                        name="dateFilterUpperBound"
                         value={localFilters.dateFilterUpperBound}
                         onChange={handleInputChange}
                     />
                 </div>
             </div>
 
-            {isMobile() == 0 && <div id="filterBar"></div>}
+            {isMobile() === 0 && <div id="filterBar"></div>}
 
             <div className="parameterSearch">
                 <h2>Size (MB)</h2>
                 
                 <div id="boundedInputs">
                     <h3>from:</h3>
-                    <input type="number" name="sizeFilterLowerBound"
+                    <input 
+                        type="number" 
+                        name="sizeFilterLowerBound"
                         value={localFilters.sizeFilterLowerBound}
                         pattern="[0-9]+"
                         onChange={handleInputChange}
@@ -83,7 +101,9 @@ export default function Filters( {onFilterChange} ) {
                     />
 
                     <h3>to:</h3>
-                    <input type="number" name="sizeFilterUpperBound"
+                    <input 
+                        type="number" 
+                        name="sizeFilterUpperBound"
                         value={localFilters.sizeFilterUpperBound}
                         pattern="[0-9]+"
                         onChange={handleInputChange}
@@ -96,12 +116,13 @@ export default function Filters( {onFilterChange} ) {
                 </div>
             </div>
 
-            {isMobile() == 0 && <div id="filterBar"></div>}
+            {isMobile() === 0 && <div id="filterBar"></div>}
 
             <div className="parameterSearch">
                 <h2>Extension:</h2>
 
-                <select name="extensionFilter"
+                <select 
+                    name="extensionFilter"
                     value={localFilters.extensionFilter}
                     onChange={handleInputChange}
                 >
@@ -117,7 +138,10 @@ export default function Filters( {onFilterChange} ) {
                 <div className="parameterSearch">
                     <h2>Sent by:</h2>
 
-                    <input type="text" name="sentBy" placeholder="User name"
+                    <input 
+                        type="text" 
+                        name="sentBy" 
+                        placeholder="User name"
                         value={localFilters.sentBy}
                         onChange={handleInputChange}
                     />

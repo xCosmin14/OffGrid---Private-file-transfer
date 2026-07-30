@@ -51,16 +51,15 @@ export const UserProvider = ({ children }) => {
             const photoRes = await customFetch("http://localhost:18080/get_profile_photo", { method: 'GET' })
             if (photoRes.ok) {
                 const blob = await photoRes.blob()
-                setAvatar(URL.createObjectURL(blob))
+                const imageUrl = URL.createObjectURL(blob)
+                setAvatar(imageUrl)
             }
         } catch (error) {
             console.error("Failed to fetch user data:", error)
         }
     }
 
-    useEffect(() => {
-        if (isLogged) loadData()
-    }, [isLogged])
+    useEffect(() => {if (isLogged) loadData()}, [isLogged])
 
     useEffect(() => {
         if (!user?.preferences) return

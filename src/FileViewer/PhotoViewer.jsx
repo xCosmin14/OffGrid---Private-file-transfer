@@ -1,26 +1,34 @@
 import React, { useState, useEffect } from "react"
 
+import DOMPurify from "dompurify"
+
 import "./FileViewers.css"
 
 export default function PhotoViewer(props) {
     const [svgCode, setSvgCode] = useState("")
+    const ext = props.file?.extension?.toLowerCase()
 
     useEffect(() => {
-        if (props.fileContent) {
+        if (props.fileContent && ext === "svg") {
             fetch(props.fileContent)
                 .then(res => res.text())
-                .then(text => setSvgCode(text))
+                .then(text => {
+                    const cleanSvg = DOMPurify.sanitize(text, { 
+                        USE_PROFILES: { svg: true, svgFilters: true } 
+                    })
+                    setSvgCode(cleanSvg)
+                })
                 .catch()
         }
-    }, [props.fileContent])
+    }, [props.fileContent, ext])
 
     return (
         <div id="photoViewer">
-            {(props.file.extension === "png" || props.file.extension === "bmp"
-                || props.file.extension === "jpg" || props.file.extension === "jpeg") 
-                && <img src={props.fileContent} id="normalPhoto"/>}
+            {(ext === "png" || ext === "bmp" || ext === "webp" || ext === "jpg" || ext === "jpeg" || ext === "gif") && (
+                <img src={props.fileContent} id="normalPhoto" alt={props.file?.name || "Preview"} />
+            )}
 
-            {props.file.extension === "svg" && (
+            {ext === "svg" && (
                 <div 
                     id="svgContainer" 
                     dangerouslySetInnerHTML={{ __html: svgCode }} 

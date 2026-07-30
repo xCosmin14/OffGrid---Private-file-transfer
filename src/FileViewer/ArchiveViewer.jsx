@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import JSZip from "jszip"
+import { ZipReader, HttpReader, BlobReader } from "@zip.js/zip.js"
 
 import ArrowDown from "../assets/SVG/ArrowDown.svg?react"
 import Folder from "../assets/SVG/FileIcons/Folder.svg?react"
@@ -10,8 +10,8 @@ function buildFileTree(zipEntries) {
     const root = { name: "root", isDir: true, children: {} }
 
     zipEntries.forEach((entry) => {
-        const isDir = entry.dir || entry.name.endsWith("/")
-        const parts = entry.name.split("/").filter(Boolean)
+        const isDir = entry.directory || entry.filename.endsWith("/")
+        const parts = entry.filename.split("/").filter(Boolean)
 
         let current = root
         parts.forEach((part, index) => {
@@ -80,32 +80,34 @@ export default function ArchiveViewer(props) {
     const [error, setError] = useState(null)
 
     useEffect(() => {
-        if (!props.fileBlob) return
+        let zipReader = null
 
         const readZip = async () => {
             try {
-                const zip = await JSZip.loadAsync(props.fileBlob)
-                const entries = []
+                let sourceReader
 
-                zip.forEach((relativePath, zipEntry) => {
-                    entries.push(zipEntry)
-                })
+                if (props.fileUrl) sourceReader = new HttpReader(props.fileUrl)
+                else if (props.fileBlob) sourceReader = new BlobReader(props.fileBlob)
+                else return
 
+                zipReader = new ZipReader(sourceReader)
+                const entries = await zipReader.getEntries()
                 const builtTree = buildFileTree(entries)
                 setTree(builtTree)
             } catch (err) {
                 setError("Could not read ZIP archive content")
+            } finally {
+                if (zipReader) await zipReader.close()
             }
         }
 
         const extension = props.file?.extension?.toLowerCase()
         if (extension === "zip") readZip()
         else setError("Unsupported archive format")
-        
-    }, [props.fileBlob, props.file])
+    }, [props.fileBlob, props.fileUrl, props.file])
 
     if (error) return <div id="archiveViewer">{error}</div>
-    if (!tree) return <div id="archiveViewer">Decoding archive...</div>
+    if (!tree) return <div id="archiveViewer">Reading archive metadata...</div>
 
     const rootKeys = Object.keys(tree.children).sort((a, b) => {
         const childA = tree.children[a]

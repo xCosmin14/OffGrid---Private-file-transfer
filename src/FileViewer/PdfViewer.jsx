@@ -6,7 +6,10 @@ import "react-pdf/dist/Page/TextLayer.css"
 
 import "./FileViewers.css"
 
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.mjs',
+    import.meta.url
+).toString()
 
 export default function PdfViewer(props) {
     const [numPages, setNumPages] = useState(null)
@@ -54,11 +57,10 @@ export default function PdfViewer(props) {
 
     const zoomIn = () => setScale(prev => Math.min(prev + 0.05, 2.5))
     const zoomOut = () => setScale(prev => Math.max(prev - 0.05, 0.5))
-    const resetZoom = () => setScale(props.viewerSize === "full" ? 0.8 : 0.59)
+    const resetZoom = () => setScale(props.viewerSize === "full" ? 0.868 : 0.59)
 
     return (
         <div id="pdfViewer">
-            
             <div id="pdfControls">
                 <div id="zoomControls">
                     <button onClick={zoomOut}>-</button>

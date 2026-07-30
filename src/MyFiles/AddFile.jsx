@@ -10,28 +10,32 @@ import ArrowUp from "../assets/SVG/ArrowUp.svg?react"
 
 import "./AddFile.css"
 
-let transaction_id = "", currentXhr = null
+const activeUploads = new Map()
 
-export async function cancelUpload() {
-    if (currentXhr) {
-        currentXhr.abort()
-        currentXhr = null
+export async function cancelUpload(uploadId) {
+    const uploadTask = activeUploads.get(uploadId)
+    
+    if (!uploadTask) {
+        window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false, uploadId } }))
+        return
     }
 
-    if (!transaction_id) {
-        window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
+    if (uploadTask.xhr) uploadTask.xhr.abort()
+    
+    if (!uploadTask.transaction_id) {
+        activeUploads.delete(uploadId)
+        window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false, uploadId } }))
         return
     }
     
     try {
-        const res = await customFetch(`http://localhost:18080/cancel_upload?transaction_id=${transaction_id}`, {
+        await customFetch(`http://localhost:18080/cancel_upload?transaction_id=${uploadTask.transaction_id}`, {
             method: "DELETE",
             credentials: "include"
         })
-        const data = await res.json()
     } catch (err) {} finally {
-        transaction_id = ""
-        window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
+        activeUploads.delete(uploadId) 
+        window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false, uploadId } }))
     }
 }
 
@@ -121,36 +125,41 @@ export default function AddFile(props) {
         var totalBytes = 0
         for (let i = 0; i < files.length; i++) totalBytes += files[i].size
         
+        const uploadId = crypto.randomUUID()
+        activeUploads.set(uploadId, { xhr: null, transaction_id: null })
+
         for (let i = 0; i < files.length; i++) {
+            if (files[i].size / (1024 * 1024 * 1024) > 50) {
+                console.error("File too big (> 50GB)")
+                continue
+            }
+
             const formData = new FormData()
-            
             const finalPath = props.currentPath ? `${props.currentPath}/${files[i].name}` : files[i].name            
             formData.append("file", files[i], finalPath)
-
-            const fileMB = (files[i].size / (1024 * 1024)).toFixed(1)
 
             try {
                 await new Promise((resolve, reject) => {
                     const xhr = new XMLHttpRequest()
-                    currentXhr = xhr
+                    
+                    const currentTask = activeUploads.get(uploadId)
+                    if (currentTask) currentTask.xhr = xhr
 
                     xhr.upload.addEventListener("progress", (event) => {
                         if (event.lengthComputable) {
                             const percentage = Math.round((event.loaded / event.total) * 100)
-                            
                             const loadedMB = (event.loaded / (1024 * 1024)).toFixed(1)
                             const networkTotalMB = (event.total / (1024 * 1024)).toFixed(1)
 
-                            const finalPercentage = Math.min(percentage, 100)
-
                             window.dispatchEvent(new CustomEvent('upload-progress', { 
                                 detail: { 
-                                    isUploading: true, 
-                                    progress: finalPercentage, 
+                                    isUploading: true,
+                                    uploadId: uploadId, 
+                                    progress: Math.min(percentage, 100), 
                                     loaded: loadedMB, 
                                     total: networkTotalMB, 
                                     currentFile: files[i].name,
-                                    fileIndex: i,
+                                    fileIndex: i + 1, 
                                     totalFiles: files.length
                                 } 
                             }))
@@ -163,6 +172,7 @@ export default function AddFile(props) {
                     })
 
                     xhr.addEventListener("error", reject)
+                    xhr.addEventListener("abort", () => reject(new Error("Aborted")))
 
                     xhr.open("POST", "http://localhost:18080/upload_file")
                     xhr.withCredentials = true
@@ -171,11 +181,12 @@ export default function AddFile(props) {
                 
                 if (props.onUploadSuccess) props.onUploadSuccess()
             } catch (error) {
-                console.error("Eroare la upload:", error)
+                if (error.message === "Aborted") break 
             } 
         }
 
-        window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
+        activeUploads.delete(uploadId)
+        window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false, uploadId } }))
         setShow(false)
     }
 
@@ -212,10 +223,12 @@ export default function AddFile(props) {
         const files = Array.from(e.target.files)
         if (files.length === 0) return
 
+        const uploadId = crypto.randomUUID()
+        activeUploads.set(uploadId, { xhr: null, transaction_id: null })
+
         const paths = files.map(file => 
             props.currentPath ? `${props.currentPath}/${file.webkitRelativePath}` : file.webkitRelativePath
         )
-
         const totalBytes = files.reduce((acc, file) => acc + file.size, 0)
         const totalMB = (totalBytes / (1024 * 1024)).toFixed(1)
 
@@ -228,42 +241,39 @@ export default function AddFile(props) {
             })
             let data = await response.json()
             
-            if (!response.ok || !data.transaction_id) {
+            if (!response.ok || !data.transaction_id) 
                 throw new Error(data.message || `upload_folder failed: ${response.status}`)
-            }
 
             setUploadStats({ loaded: 0, total: totalMB })
-            transaction_id = data.transaction_id
+            
+            const currentTask = activeUploads.get(uploadId)
+            if (currentTask) currentTask.transaction_id = data.transaction_id
 
             let uploadedBytes = 0
 
             for (let i = 0; i < files.length; i++) {
-                let file = files[i]
-                let currentPathForFile = paths[i] 
+                let file = files[i], currentPathForFile = paths[i] 
 
                 let formData = new FormData()
                 formData.append('file', file, currentPathForFile) 
 
                 await new Promise((resolve, reject) => {
                     const xhr = new XMLHttpRequest()
-                    currentXhr = xhr
+                    if (currentTask) currentTask.xhr = xhr
 
                     xhr.upload.addEventListener("progress", (event) => {
                         if (event.lengthComputable) {
                             const currentFileProgress = event.loaded / event.total
                             const scaledLoadedForCurrentFile = currentFileProgress * file.size
                             const currentTotalLoaded = uploadedBytes + scaledLoadedForCurrentFile
-                            
                             let percentage = Math.round((currentTotalLoaded / totalBytes) * 100)
-                            percentage = Math.min(percentage, 100) 
-
-                            const loadedMB = (currentTotalLoaded / (1024 * 1024)).toFixed(1)
-
+                            
                             window.dispatchEvent(new CustomEvent('upload-progress', { 
                                 detail: { 
-                                    isUploading: true, 
-                                    progress: percentage, 
-                                    loaded: loadedMB, 
+                                    isUploading: true,
+                                    uploadId: uploadId, 
+                                    progress: Math.min(percentage, 100), 
+                                    loaded: (currentTotalLoaded / (1024 * 1024)).toFixed(1), 
                                     total: totalMB, 
                                     currentFile: file.name,
                                     fileIndex: i + 1,
@@ -277,25 +287,22 @@ export default function AddFile(props) {
                         if (xhr.status >= 200 && xhr.status < 300) {
                             uploadedBytes += file.size
                             resolve()
-                        } else {
-                            reject(new Error(`Server responded with status: ${xhr.status}`))
-                        }
+                        } else reject(new Error(`Server responded with status: ${xhr.status}`))
                     })
 
                     xhr.addEventListener("error", () => reject(new Error("Network error")))
+                    xhr.addEventListener("abort", () => reject(new Error("Aborted"))) // Handle abort
 
-                    xhr.open("POST", `http://localhost:18080/upload_file?transaction_id=${transaction_id}`)
+                    xhr.open("POST", `http://localhost:18080/upload_file?transaction_id=${data.transaction_id}`)
                     xhr.withCredentials = true 
                     xhr.send(formData)
                 })
             }
 
             if (props.onUploadSuccess) props.onUploadSuccess()
-
-        } catch (error) {
-            
-        } finally {
-            window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false } }))
+        } catch (error) {} finally {
+            activeUploads.delete(uploadId)
+            window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false, uploadId } }))
         }
     }
 
@@ -311,7 +318,7 @@ export default function AddFile(props) {
                 <h2>Create folder</h2>
                 
                 <input type="text" name="newFolderName" placeholder="Name" value={newFolderName}
-                    onChange={(e) => setNewFolderName(e.target.value)}
+                    onChange={(e) => setNewFolderName(e.target.value.trim())}
                     onBeforeInput={(e) => {
                         if (/[/]/.test(e.data)) e.preventDefault()     
                     }} 

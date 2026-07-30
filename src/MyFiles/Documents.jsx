@@ -34,7 +34,7 @@ const calculateFolderSize = (folderPath, allFiles) => {
     if (!allFiles || allFiles.length === 0) return 0
 
     return allFiles
-        .filter(file => (viewerComponentsMap[file.extension] == "DocumentViewer" || viewerComponentsMap[file.extension] == "PdfViewerwer")
+        .filter(file => (viewerComponentsMap[file.extension] == "DocumentViewer" || viewerComponentsMap[file.extension] == "PdfViewer")
                 && file.path.startsWith(folderPath + "/"))
         .reduce((accumulator, file) => accumulator + (parseFloat(file.size) || 0), 0)
 }
@@ -73,43 +73,43 @@ const sortItems = (items, crit, order) => {
 export default function MyFiles() {
     useTitle("OffGrid - Private file transfer")
 
-    const { files, folders, isLoading, refreshFiles, searchQuery, setSearchQuery } = useContext(FileContext)
+    const { files, setFiles, folders, setFolders, isLoading, refreshFiles, searchQuery, setSearchQuery } = useContext(FileContext)
         
-        const [searchParams] = useSearchParams()
-        const navigate = useNavigate()
-        const location = useLocation()
-        const currentPathStr = searchParams.get("dir") || ""
-        const currentPath = currentPathStr ? currentPathStr.split("/") : []
+    const [searchParams] = useSearchParams()
+    const navigate = useNavigate()
+    const location = useLocation()
+    const currentPathStr = searchParams.get("dir") || ""
+    const currentPath = currentPathStr ? currentPathStr.split("/") : []
+
+    const currentFolderObj = (folders || []).find(f => f.path === currentPathStr)
+    const currentFolderID = currentFolderObj ? currentFolderObj.folder_id : ""
+
+    const [showPathMenu, setShowPathMenu] = useState(false)
+    const pathMenuRef = useRef(null)
     
-        const currentFolderObj = (folders || []).find(f => f.path === currentPathStr)
-        const currentFolderID = currentFolderObj ? currentFolderObj.folder_id : ""
+    const [appliedFilters, setAppliedFilters] = useState({})
+    const [sortFilter, setSortFilter] = useState({crit: "name", order: "asc"})
     
-        const [showPathMenu, setShowPathMenu] = useState(false)
-        const pathMenuRef = useRef(null)
-        
-        const [appliedFilters, setAppliedFilters] = useState({})
-        const [sortFilter, setSortFilter] = useState({crit: "name", order: "asc"})
-        
-        const handleFilterChange = (filters) => { 
-            setAppliedFilters(filters) 
-        }
+    const handleFilterChange = (filters) => { 
+        setAppliedFilters(filters) 
+    }
+
+    const handleSortChange = (sort) => {
+        setSortFilter(sort)
+    }
     
-        const handleSortChange = (sort) => {
-            setSortFilter(sort)
-        }
+    const [openFile, setOpenFile] = useState(null)
+    const [viewerSize, setViewerSize] = useState(isMobile() == 0 ? "small" : "full")
+    const isViewerSmall = openFile !== null && viewerSize === "small"
     
-        const [openFile, setOpenFile] = useState(null)
-        const [viewerSize, setViewerSize] = useState(isMobile() == 0 ? "small" : "full")
-        const isViewerSmall = openFile !== null && viewerSize === "small"
-    
-        const { sizeByTypes, totalFileSize } = useMemo(() => {
-            const sizes = {}
-            let total = 0 
-    
-            if (!files || files.length === 0) return { sizeByTypes: [], totalFileSize: 0 } 
-    
-            files.forEach(file => {
-                if (viewerComponentsMap[file.extension] !== "DocumentViewer" && viewerComponentsMap[file.extension] !== "PdfViewerwer") return
+    const { sizeByTypes, totalFileSize } = useMemo(() => {
+        const sizes = {}
+        let total = 0 
+
+        if (!files || files.length === 0) return { sizeByTypes: [], totalFileSize: 0 } 
+
+        files.forEach(file => {
+            if (viewerComponentsMap[file.extension] !== "DocumentViewer" && viewerComponentsMap[file.extension] !== "PdfViewer") return
 
             const fileSizeNum = parseFloat(file.size) || 0
             const fileSizeMB = fileSizeNum / 1048576.0 
@@ -144,7 +144,7 @@ export default function MyFiles() {
                 const filesInFolder = safeFiles.filter(file => file.path.startsWith(folder.path + "/"))
                 const hasOnlyValidFiles = 
                     filesInFolder.length > 0 && 
-                    filesInFolder.every(file => viewerComponentsMap[file.extension] == "DocumentViewer" || viewerComponentsMap[file.extension] == "PdfViewerwer")
+                    filesInFolder.every(file => viewerComponentsMap[file.extension] == "DocumentViewer" || viewerComponentsMap[file.extension] == "PdfViewer")
 
                 if (!hasOnlyValidFiles) return false
 
@@ -161,7 +161,7 @@ export default function MyFiles() {
             })
 
         let filteredFiles = safeFiles.filter(file => {
-            if (viewerComponentsMap[file.extension] !== "DocumentViewer" && viewerComponentsMap[file.extension] !== "PdfViewerwer") return false
+            if (viewerComponentsMap[file.extension] !== "DocumentViewer" && viewerComponentsMap[file.extension] !== "PdfViewer") return false
 
             if (getParentPath(file.path) !== currentPathStr) return false
 
@@ -209,6 +209,9 @@ export default function MyFiles() {
     const handleFileAction = async (action) => {
         if (!openFile) return
         setShowPathMenu(false)
+
+        const targetId = openFile.file_id || openFile.id
+        const isFolder = 'folder_id' in openFile || openFile.extension === "Folder"
     
         switch (action) {
             case "download": {
@@ -237,19 +240,40 @@ export default function MyFiles() {
                 })
                 if (response.ok) {
                     setOpenFile(null) 
-                    await refreshFiles()
+                    
+                    if (isFolder && setFolders) 
+                        setFolders(prev => prev.filter(f => (f.folder_id || f.id) !== targetId))
+                    else if (setFiles) 
+                        setFiles(prev => prev.filter(f => (f.file_id || f.id) !== targetId))
                 }
                 break
             }
             case "favorites": {
-                const response = await customFetch(`http://localhost:18080/change_data/file/${openFile.file_id || openFile.id}`, {
-                    method: "PATCH",
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ favourite: openFile.favourite ? 0 : 1 })
-                })
-                if (response.ok) {
-                    setOpenFile(prev => ({ ...prev, favourite: prev.favourite ? 0 : 1 }))
-                    await refreshFiles()
+                const currentFav = openFile.favourite
+                const newFavStatus = currentFav ? 0 : 1
+                
+                setOpenFile(prev => ({ ...prev, favourite: newFavStatus }))
+                
+                if (isFolder && setFolders) 
+                    setFolders(prev => prev.map(f => (f.folder_id || f.id) === targetId ? { ...f, favourite: newFavStatus } : f))
+                else if (setFiles) 
+                    setFiles(prev => prev.map(f => (f.file_id || f.id) === targetId ? { ...f, favourite: newFavStatus } : f))
+                
+                try {
+                    const response = await customFetch(`http://localhost:18080/change_data/file/${targetId}`, {
+                        method: "PATCH",
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ favourite: newFavStatus })
+                    })
+                    
+                    if (!response.ok) throw new Error("Update failed")
+                } catch (error) {
+                    setOpenFile(prev => ({ ...prev, favourite: currentFav }))
+                    
+                    if (isFolder && setFolders) 
+                        setFolders(prev => prev.map(f => (f.folder_id || f.id) === targetId ? { ...f, favourite: currentFav } : f))
+                     else if (setFiles) 
+                        setFiles(prev => prev.map(f => (f.file_id || f.id) === targetId ? { ...f, favourite: currentFav } : f))
                 }
                 break
             }

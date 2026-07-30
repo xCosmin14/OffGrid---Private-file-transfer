@@ -1,59 +1,85 @@
 import { useState, useEffect } from "react"
-
-import {cancelUpload} from "./AddFile.jsx"
+import { cancelUpload } from "./AddFile.jsx"
 
 export default function GlobalUploadProgress() {
-    const [uploadData, setUploadData] = useState({ 
-        isUploading: false, 
-        progress: 0, 
-        loaded: 0, 
-        total: 0,
-        currentFile: "",
-        fileIndex: 0,
-        totalFiles: 0
-    })
+    const [uploads, setUploads] = useState({})
 
     useEffect(() => {
-        let timeoutId
+        const timeouts = {}
 
         const handleProgressUpdate = (e) => {
-            const data = e.detail
+            const data = e.detail, { uploadId, isUploading } = data
 
-            if (!data.isUploading) 
-                timeoutId = setTimeout(() => {
-                    setUploadData(data)
+            if (!uploadId) return 
+            if (!isUploading) {
+                setUploads(prev => {
+                    if (!prev[uploadId]) return prev
+                    return { 
+                        ...prev, 
+                        [uploadId]: { ...prev[uploadId], isUploading: false, progress: 100 } 
+                    }
+                })
+
+                timeouts[uploadId] = setTimeout(() => {
+                    setUploads(prev => {
+                        const newUploads = { ...prev }
+                        delete newUploads[uploadId]
+                        return newUploads
+                    })
+                    delete timeouts[uploadId]
                 }, 3000)
-            else {
-                clearTimeout(timeoutId)
-                setUploadData(data)
+            } else {
+                if (timeouts[uploadId]) {
+                    clearTimeout(timeouts[uploadId])
+                    delete timeouts[uploadId]
+                }
+                
+                setUploads(prev => ({
+                    ...prev,
+                    [uploadId]: data
+                }))
             }
-        };
+        }
 
         window.addEventListener('upload-progress', handleProgressUpdate)
         
         return () => {
             window.removeEventListener('upload-progress', handleProgressUpdate)
-            clearTimeout(timeoutId)
-        };
-    }, []);
+            Object.values(timeouts).forEach(clearTimeout)
+        }
+    }, [])
 
-    if (!uploadData.isUploading) return null
-
-    const isFinished = uploadData.progress === 100
+    const activeUploads = Object.entries(uploads)
+    if (activeUploads.length === 0) return null
 
     return (
-        <div className="uploadProgressContainer">
-            <h4>{isFinished ? "Upload complete!" : `Uploading: ${uploadData.progress}%`}</h4>
-            
-            <div className="currentFile">{isFinished 
-                    ? "All files were successfully saved."
-                    : <>Processing ({uploadData.fileIndex}/{uploadData.totalFiles}): <strong>{uploadData.currentFile}</strong></>
-                }</div>
-            
-            <progress value={uploadData.progress} min="0" max="100" />
-            
-            <p id="cancelUpload" onClick={() => cancelUpload()}>Cancel</p>
-            <p>{uploadData.loaded} of {uploadData.total} MB</p>
+        <div id="globalUploadsWrapper" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {activeUploads.map(([id, data]) => {
+                const isFinished = data.progress === 100 && !data.isUploading
+
+                return (
+                    <div className="uploadProgressContainer" key={id}>
+                        <h4>{isFinished ? "Upload complete!" : `Uploading: ${data.progress}%`}</h4>
+                        
+                        <div className="currentFile">
+                            {isFinished 
+                                ? "All files were successfully saved."
+                                : <>Processing ({data.fileIndex}/{data.totalFiles}): <strong>{data.currentFile}</strong></>
+                            }
+                        </div>
+                        
+                        <progress value={data.progress} min="0" max="100" />
+                        
+                        {!isFinished && (
+                            <p id="cancelUpload" onClick={() => cancelUpload(id)} style={{ cursor: "pointer" }}>
+                                Cancel
+                            </p>
+                        )}
+                        
+                        <p>{data.loaded} of {data.total} MB</p>
+                    </div>
+                )
+            })}
         </div>
     )
 }

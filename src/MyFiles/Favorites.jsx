@@ -72,7 +72,7 @@ const sortItems = (items, crit, order) => {
 export default function Favourites() {
     useTitle("Favourites")
 
-    const { files, folders, isLoading, refreshFiles, searchQuery, setSearchQuery } = useContext(FileContext)
+    const { files, setFiles, folders, setFolders, isLoading, refreshFiles, searchQuery, setSearchQuery } = useContext(FileContext)
 
     const [searchParams] = useSearchParams()
     const navigate = useNavigate()
@@ -199,6 +199,9 @@ export default function Favourites() {
     const handleFileAction = async (action) => {
         if (!openFile) return
         setShowPathMenu(false)
+
+        const targetId = openFile.file_id || openFile.id
+        const isFolder = 'folder_id' in openFile || openFile.extension === "Folder"
     
         switch (action) {
             case "download": {
@@ -227,20 +230,40 @@ export default function Favourites() {
                 })
                 if (response.ok) {
                     setOpenFile(null) 
-                    await refreshFiles()
+                    
+                    if (isFolder && setFolders) 
+                        setFolders(prev => prev.filter(f => (f.folder_id || f.id) !== targetId))
+                    else if (setFiles) 
+                        setFiles(prev => prev.filter(f => (f.file_id || f.id) !== targetId))
                 }
                 break
             }
             case "favorites": {
-                const response = await customFetch(`http://localhost:18080/change_data/file/${openFile.file_id || openFile.id}`, {
-                    method: "PATCH",
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ favourite: openFile.favourite ? 0 : 1 })
-                })
+                const currentFav = openFile.favourite
+                const newFavStatus = currentFav ? 0 : 1
                 
-                if (response.ok) {
-                    setOpenFile(prev => ({ ...prev, favourite: prev.favourite ? 0 : 1 }))
-                    await refreshFiles()
+                setOpenFile(prev => ({ ...prev, favourite: newFavStatus }))
+                
+                if (isFolder && setFolders) 
+                    setFolders(prev => prev.map(f => (f.folder_id || f.id) === targetId ? { ...f, favourite: newFavStatus } : f))
+                else if (setFiles) 
+                    setFiles(prev => prev.map(f => (f.file_id || f.id) === targetId ? { ...f, favourite: newFavStatus } : f))
+                
+                try {
+                    const response = await customFetch(`http://localhost:18080/change_data/file/${targetId}`, {
+                        method: "PATCH",
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ favourite: newFavStatus })
+                    })
+                    
+                    if (!response.ok) throw new Error("Update failed")
+                } catch (error) {
+                    setOpenFile(prev => ({ ...prev, favourite: currentFav }))
+                    
+                    if (isFolder && setFolders) 
+                        setFolders(prev => prev.map(f => (f.folder_id || f.id) === targetId ? { ...f, favourite: currentFav } : f))
+                     else if (setFiles) 
+                        setFiles(prev => prev.map(f => (f.file_id || f.id) === targetId ? { ...f, favourite: currentFav } : f))
                 }
                 break
             }

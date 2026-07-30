@@ -24,7 +24,7 @@ export default function Header() {
         return localStorage.getItem("theme") || "light"
     })
 
-    const { user, avatar } = useContext(UserContext)
+    const { user, avatar , isLogged} = useContext(UserContext)
     const { searchQuery, setSearchQuery } = useContext(FileContext)
 
     const [notificationsOpen, setNotificationsOpen] = useState(false)
@@ -72,7 +72,7 @@ export default function Header() {
 
                 {(isMobile() == 1 && showMobileMenu) && <Menu />}
 
-                {localStorage.getItem("isLogged") === "true" && <div id="headerFileSearch">
+                {isLogged && <div id="headerFileSearch">
                     <input type="text" placeholder="Search files and folders..." 
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -83,7 +83,7 @@ export default function Header() {
 
             <div className="headerRight">
                 <div className="headerOptions">
-                    {localStorage.getItem("isLogged") === "true" && <Link>
+                    {isLogged && <Link>
                         <Notification 
                             onClick={() => toggleMobileNotifications()} 
                             id="notifButton" 
