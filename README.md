@@ -12,6 +12,7 @@ Upload files, share and preview them, everything in the browser with the smalles
 ![React.JS (website)](https://img.shields.io/badge/-React.JS%20(website)-555?style=for-the-badge&logo=react.js%20(website)) ![C++ (server)](https://img.shields.io/badge/-C%2B%2B%20(server)-555?style=for-the-badge&logo=c%2B%2B%20(server)) ![QT 6 (Desktop app)](https://img.shields.io/badge/-QT%206%20(Desktop%20app)-555?style=for-the-badge&logo=qt%206%20(desktop%20app))
 
 [✨ Request Feature](https://github.com/xCosmin14/offgrid/issues)
+[📼 Video Demo](https://youtu.be/Ao-LEOav1Co)
 
 </div>
 
