@@ -39,8 +39,11 @@ class ClientController
 
 
 	std::unordered_map<std::string, ViewersMapEntry> viewers_map; // file_id -> {ws, uid}
-	
 	std::shared_mutex viewers_mutex;
+
+
+	std::unordered_map<std::string, std::unordered_set<std::shared_ptr<WsSession>>> online_users;
+	std::shared_mutex online_users_mutex;
 
 
 	std::atomic<bool> stop_clean_up{ false };
@@ -97,6 +100,8 @@ class ClientController
 	Async<void> handleModify(std::shared_ptr<WsSession>, json::object, std::string);
 
 
+	Async<void> sendNotifications(Notification, std::string, std::string, std::string);
+
 
 public:
 
@@ -120,5 +125,7 @@ public:
 	Async<void> handleWsMessage(std::shared_ptr<WsSession>, json::object&);
 
 	void removeSessionFromAllFiles(std::shared_ptr<WsSession>);
+
+	void addSocket(std::shared_ptr<WsSession>);
 
 };

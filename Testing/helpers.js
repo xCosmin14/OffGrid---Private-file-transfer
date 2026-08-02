@@ -74,18 +74,35 @@ export async function testChange(endpoint, body, cookie, expected) {
 }
 
 
-export async function sendAndReceive(ws, obj) {
-    
+export function sendAndReceive(ws, obj) {
     return new Promise((resolve, reject) => {
+        function handler(data) {
+            const parsed = JSON.parse(data.toString());
 
-        ws.once("message", (data) => {
-            try {
-                resolve(JSON.parse(data.toString()))
-            } catch (err) {
-                reject(err);
+            if (parsed.status === undefined) {
+                ws.once('message', handler);
+                return;
             }
-        });
 
+            resolve(parsed);
+        }
+
+        ws.once('message', handler);
         ws.send(JSON.stringify(obj));
-    })
+    });
+}
+
+
+export function collectMessages(ws, count) {
+    return new Promise((resolve) => {
+        const messages = [];
+        function handler(data) {
+            messages.push(JSON.parse(data.toString()));
+            if (messages.length < count)
+                ws.once('message', handler);
+            else
+                resolve(messages);
+        }
+        ws.once('message', handler);
+    });
 }

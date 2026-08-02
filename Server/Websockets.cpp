@@ -96,12 +96,15 @@ void ClientController::removeSessionFromAllFiles(std::shared_ptr<WsSession> sess
 		if (it->second.viewers.empty())   
 		{
 			std::string finalContent = it->second.content.getContent();
+			std::string full_path = "FileSystem/files/" + it->second.owner_uid + "/" + it->second.file_path;
 
-			std::ofstream out(it->second.file_path, std::ios::binary | std::ios::trunc);
+			std::filesystem::create_directories(std::filesystem::path(full_path).parent_path());
+
+			std::ofstream out(full_path, std::ios::binary | std::ios::trunc);
 			out.write(finalContent.data(), finalContent.size());
 			out.close();
 
-			it = viewers_map.erase(it);
+			viewers_map.erase(it);
 		}
 		else
 			++it;
@@ -119,7 +122,12 @@ Async<void> ClientController::handleUnwatch(std::shared_ptr<WsSession> session, 
 			if (it->second.viewers.empty())
 			{
 				std::string finalContent = it->second.content.getContent();
-				std::ofstream out(it->second.file_path, std::ios::binary | std::ios::trunc);
+				std::string full_path = "FileSystem/files/" + it->second.owner_uid + "/" + it->second.file_path;
+
+				std::filesystem::create_directories(std::filesystem::path(full_path).parent_path());
+
+
+				std::ofstream out(full_path, std::ios::binary | std::ios::trunc);
 				out.write(finalContent.data(), finalContent.size());
 				out.close();
 
@@ -205,6 +213,49 @@ Async<void> ClientController::handleModify(std::shared_ptr<WsSession> session, j
 		co_await Helpers::sendWsMessage(session, {
 		{"status", "error"}, {"message", "unknown operation"} });
 
+	
+	std::exception_ptr err;
+	try {
+		mysql::results results = co_await this->db.runQuery(Queries::VerifyFileRights(file_id, session->uid));
+
+		auto rows = results.rows();
+
+		if (rows.empty()) {
+			if (rows.empty()) {
+				std::cerr << "VerifyFileRights returned no rows despite VerifyFileAccess passing for file_id=" << file_id << " uid=" << session->uid << std::endl;
+				co_await Helpers::sendWsMessage(session, {
+					{"status", "error"}, {"message", "internal server error"} });
+				co_return;
+			}
+		}
+
+		std::string rights = rows[0][0].as_string();
+		std::string owner_id = rows[0][1].as_string();
+
+
+		{
+			std::unique_lock lock(viewers_mutex);
+			viewers_map[file_id].owner_uid = owner_id;
+		}
+
+		if (rights != "owner" && rights != "edit") {
+			co_await Helpers::sendWsMessage(session, {
+			{"status", "error"}, {"message", "this user doesn't have edit rights to this file"} });
+			co_return;
+		}
+
+	}
+	catch (boost::system::system_error& e)
+	{
+		std::cerr << "Failed query: " << e.what() << std::endl;
+		err = std::current_exception();
+	}
+	if (err) {
+		co_await Helpers::sendWsMessage(session, {
+		{"status", "error"}, {"message", "internal server error"} });
+		co_return;
+	}
+
 
 	int on_version = json::value_to<int>(obj.at("on_version"));
 	std::vector<std::shared_ptr<WsSession>> sessions_to_notify;
@@ -284,3 +335,76 @@ Async<void> ClientController::handleWsMessage(std::shared_ptr<WsSession> session
 	co_return;
 }
 
+
+
+Async<void> ClientController::sendNotifications(Notification notif, std::string actor_uid, 
+	std::string involvment_entity, std::string involvment_id)
+{
+	try {
+
+		mysql::results senderResult = co_await this->db.runQuery(Queries::GetUsername(actor_uid));
+		std::string sender_username = senderResult.rows()[0][0].as_string();
+		notif.addUsername(sender_username);
+
+		json::object notif_obj = notif.getObject();
+
+		mysql::results results = co_await this->db.runQuery(Queries::GetInvolvedUsers(involvment_id, involvment_entity));
+		std::unordered_set<std::string> uids;
+
+		auto rows = results.rows();
+
+		if (rows.empty()) co_return;
+
+
+		for (auto row : rows)
+		{
+			uids.insert(row[0].as_string()); 
+			if (!row[1].is_null())
+				uids.insert(row[1].as_string()); 
+		}
+
+
+		for (auto& target_uid: uids)
+		{
+		
+			if (target_uid == actor_uid) continue;
+
+			std::string notification_id = this->createId("notification");
+
+			
+			json::object obj;
+			obj["notification_id"] = notification_id;
+			obj["receiver_id"] = target_uid;
+			obj["sender_id"] = actor_uid;
+			obj["info"] = notif.getObject();
+
+
+			co_await this->db.runQuery(Queries::InsertNotification(obj));
+
+
+			std::vector<std::shared_ptr<WsSession>> live_users;
+			{
+				std::shared_lock lock(online_users_mutex);
+				auto it = online_users.find(target_uid);
+				if (it != online_users.end())
+					live_users.assign(it->second.begin(), it->second.end());
+			}
+
+			json::object payload;
+			payload["type"] = "notification";
+			payload["info"] = notif.getObject();
+			payload["notification_id"] = notification_id;
+
+
+			for (auto socket : live_users)
+			{
+				co_await Helpers::sendWsMessage(socket, payload);
+			}
+		}
+
+	}
+	catch (boost::system::system_error& e)
+	{
+		std::cerr << "Failed query: " << e.what() << std::endl;
+	}
+}

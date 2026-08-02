@@ -1,6 +1,8 @@
 #include "ClientController.h"
 #include "Helpers.h"
 
+#include <boost/asio/co_spawn.hpp>
+
 #include <fstream>
 #include <filesystem>
 
@@ -43,6 +45,11 @@ Async<HttpResponse> ClientController::UpdateDb(std::vector<Query> queries, std::
 			}
 
 		}
+
+		/*Notification notif("folder_upload", last_file_id, "folder");
+		boost::asio::co_spawn(co_await boost::asio::this_coro::executor,
+			this->sendNotifications(notif, uid), boost::asio::detached);*/
+
 		co_return Helpers::makeResponse(http::status::ok, "folder uploaded sucessfuly", "", {{"file_id",last_file_id}});
 	}
 	catch (boost::system::system_error& e)
@@ -95,6 +102,8 @@ Async<HttpResponse> ClientController::createEntity(json::object& obj, std::strin
 	obj[entity + "_id"] = this->createId(entity);
 	obj["creator_id"] = uid;
 
+	std::string folder_id = "", parent_folder_name = "";
+
 	try {
 		std::string field; Query q;
 
@@ -104,13 +113,14 @@ Async<HttpResponse> ClientController::createEntity(json::object& obj, std::strin
 
 		if (obj.contains(field) && obj.at(field).is_string())
 		{
-			std::string folder_id = json::value_to<std::string>(obj.at(field));
+			folder_id = json::value_to<std::string>(obj.at(field));
 
 			mysql::results results = co_await this->db.runQuery(Queries::VerifyFolderId(folder_id, uid));
 
 			if (results.rows().empty())
 				co_return Helpers::makeResponse(http::status::bad_request, "nonexistent parent folder");
 
+			parent_folder_name = results.rows()[0][1].as_string();
 			auto path_field = results.rows()[0][0];
 			std::string path = path_field.is_null() ? "" : path_field.as_string();
 			
@@ -144,6 +154,16 @@ Async<HttpResponse> ClientController::createEntity(json::object& obj, std::strin
 		std::cout << "Internal error: " << e.what() << std::endl;
 		co_return Helpers::makeResponse(http::status::internal_server_error, "failed creating " + entity);
 	}
+
+	std::string type = entity + "_creation";
+
+	std::string involvement_id = folder_id.empty() ? json::value_to<std::string>(obj[entity + "_id"]) : folder_id;
+	std::string involvement_entity = folder_id.empty() ? entity : "folder";
+
+	Notification notif(type, entity, json::value_to<std::string>(obj[entity + "_id"]), parent_folder_name);
+
+	boost::asio::co_spawn(co_await boost::asio::this_coro::executor,
+		this->sendNotifications(notif, uid, involvement_entity, involvement_id), boost::asio::detached);
 
 	co_return Helpers::makeResponse(http::status::ok, entity + " created successfuly",
 		"", {{entity+"_id", obj[entity + "_id"]}});
@@ -190,27 +210,47 @@ Async<HttpResponse> ClientController::grandAccess(json::object& obj, std::string
 	if (!obj.contains("email") || !obj.at("email").is_string())
 		co_return Helpers::makeResponse(http::status::bad_request, "missing email");
 
-	if (!obj.contains("file_id") || !obj.at("file_id").is_string())
-		co_return Helpers::makeResponse(http::status::bad_request, "missing file_id");
-
 	if (!obj.contains("resource") || (obj.at("resource")!="file" && obj.at("resource")!="folder"))
 		co_return Helpers::makeResponse(http::status::bad_request, "missing resource type");
+
+
+	if (obj["resource"] == "file") {
+		if (!obj.contains("file_id") || !obj.at("file_id").is_string())
+			co_return Helpers::makeResponse(http::status::bad_request, "missing file_id");
+	}
+	else {
+		if (!obj.contains("folder_id") || !obj.at("folder_id").is_string())
+			co_return Helpers::makeResponse(http::status::bad_request, "missing folder_id");
+	}
 
 	if (!obj.contains("type") || !obj.at("type").is_string())
 		co_return Helpers::makeResponse(http::status::bad_request, "missing type");
 
 
 	std::string email = json::value_to<std::string>(obj.at("email"));
-	std::string file_id = json::value_to<std::string>(obj.at("file_id"));
 	std::string resource = json::value_to<std::string>(obj.at("resource"));
+	std::string file_id = json::value_to<std::string>(obj.at(resource + "_id"));
 	std::string type = json::value_to<std::string>(obj.at("type"));
-
+	std::string resource_name;
 
 	try {
-		mysql::results results = co_await this->db.runQuery(Queries::VerifyFileAccess(file_id, uid));
+		Query q; int index;
+		if (resource == "file") {
+			q = Queries::VerifyFileAccess(file_id, uid);
+			index = 2;
+		}
+		else {
+			q = Queries::VerifyFolderId(file_id, uid);
+			index = 1;
+		}
+
+		mysql::results results = co_await this->db.runQuery(q);
 
 		if(results.rows().empty())
 			co_return Helpers::makeResponse(http::status::unauthorized, "file access denied");
+
+		
+		resource_name = results.rows()[0][index].as_string();
 
 		mysql::results email_results = co_await this->db.runQuery(Queries::GetUidByEmail(email));
 
@@ -229,6 +269,18 @@ Async<HttpResponse> ClientController::grandAccess(json::object& obj, std::string
 
 	}
 
+	std::cout << resource << std::endl;
+	Notification notif("access_granted", resource, file_id, resource_name);
+	boost::asio::co_spawn(co_await boost::asio::this_coro::executor,
+		this->sendNotifications(notif, uid, resource, file_id), boost::asio::detached);
+
 	co_return Helpers::makeResponse(http::status::ok, "access granted successfuly");
 
+}
+
+
+void ClientController::addSocket(std::shared_ptr<WsSession> session)
+{
+	std::unique_lock lock(online_users_mutex);
+	online_users[session->uid].insert(session);
 }

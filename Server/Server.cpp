@@ -37,6 +37,7 @@ Async<void> handle_websocket_session(boost::asio::ip::tcp::socket socket, http::
 		if (uid.empty()) co_return;
 
 		ws_session = std::make_shared<WsSession>(ws, uid);
+		c.addSocket(ws_session);
 
 		for (;;)
 		{

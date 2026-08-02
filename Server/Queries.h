@@ -70,5 +70,16 @@ namespace Queries
 
 	Query GetUidByEmail(std::string);
 
+	Query VerifyFileRights(std::string, std::string);
+
+	Query InsertNotification(json::object const&);
+
+	Query ViewNotification(std::string, std::string);
+
+	Query AddNotificationResponse(std::string, std::string, std::string);
+
+	Query GetInvolvedUsers(std::string, std::string);
+
+	Query GetUsername(std::string);
 
 };

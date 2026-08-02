@@ -3,6 +3,7 @@
 #include <boost/mysql.hpp>
 #include <boost/json.hpp>
 #include <boost/beast/websocket.hpp>
+#include <boost/asio/experimental/channel.hpp>
 
 #include "PieceTable.h"
 
@@ -23,8 +24,11 @@ struct Query {
 struct MapEntry
 {
 	std::string uid;
+	std::shared_ptr<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>> ws;
+
 	std::string device_id;
 	std::string OS;
+
 
 	MapEntry() = default;
 
@@ -113,6 +117,15 @@ struct WsSession
 {
 	std::shared_ptr<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>> ws;
 	std::string uid;
+	std::shared_ptr<boost::asio::experimental::channel<void(boost::system::error_code)>> write_lock;
+
+
+	WsSession(std::shared_ptr<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>> ws, std::string uid)
+		: ws(ws), uid(uid)
+	{
+		write_lock = std::make_shared<boost::asio::experimental::channel<void(boost::system::error_code)>>(ws->get_executor(), 1);
+		write_lock->try_send(boost::system::error_code{});
+	}
 };
 
 
@@ -162,4 +175,31 @@ struct ViewersMapEntry
 	std::vector<Op> history;
 	PieceTable content;
 	std::string file_path;
+	std::string owner_uid;
+};
+
+
+class Notification
+{
+	json::object obj;
+
+public:
+
+	Notification(std::string type, std::string entity, std::string entity_id, std::string folder_name = "")
+	{	
+		obj["type"] = type;
+		obj["entity_id"] = entity_id;
+		obj["folder_name"] = folder_name;
+		obj["entity"] = entity;
+	}
+
+	void addUsername(std::string username)
+	{
+		obj["sender_username"] = username;
+	}
+
+	json::object getObject()
+	{
+		return this->obj;
+	}
 };

@@ -2,6 +2,7 @@
 #include "Helpers.h"
 
 #include <boost/asio/post.hpp>
+#include <boost/asio/co_spawn.hpp>
 
 #include <fstream>
 #include <filesystem>
@@ -155,6 +156,13 @@ Async<HttpResponse> ClientController::uploadFile(std::vector<uint8_t>& body, std
 		co_return Helpers::makeResponse(http::status::bad_request, "invalid multipart body");
 	}
 
+	if (filedata.folder_id != "" && transaction_id != "")
+	{
+		mysql::results folderCheck = co_await this->db.runQuery(Queries::VerifyFolderId(filedata.folder_id, uid));
+		if (folderCheck.rows().empty())
+			co_return Helpers::makeResponse(http::status::forbidden, "no access to this folder");
+	}
+
 	bool isLastFile = false;
 	std::vector<Query> queries_to_run;
 
@@ -241,6 +249,13 @@ Async<HttpResponse> ClientController::uploadFile(std::vector<uint8_t>& body, std
 
 	if (isLastFile)
 		co_return co_await this->UpdateDb(queries_to_run, transaction_id, uid, filedata.file_id);
+
+	if (transaction_id == "")
+	{
+		Notification notif("file_upload", "file", filedata.file_id, filedata.folder_id);
+		boost::asio::co_spawn(co_await boost::asio::this_coro::executor,
+			this->sendNotifications(notif, uid, "folder", filedata.folder_id), boost::asio::detached);
+	}
 
 	co_return Helpers::makeResponse(http::status::ok, "file uploaded successfuly", "", { { "file_id", filedata.file_id } });
 }

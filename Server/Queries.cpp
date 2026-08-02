@@ -198,7 +198,7 @@ Query Queries::InsertFolder(json::object const& obj)
 
 Query Queries::VerifyFolderId(std::string id, std::string uid)
 {
-	return { "SELECT path FROM offgrid_db.folder "
+	return { "SELECT path, name FROM offgrid_db.folder "
 	"LEFT JOIN offgrid_db.access on access.folder_id = folder.folder_id "
 	"WHERE folder.folder_id = ? and (folder.creator_id=? or access.user_id=?)", {
 	mysql::field(id), mysql::field(uid), mysql::field(uid)} };
@@ -207,9 +207,9 @@ Query Queries::VerifyFolderId(std::string id, std::string uid)
 
 Query Queries::VerifyFileAccess(std::string id, std::string uid)
 {
-	return { "SELECT file.file_id, file.path FROM offgrid_db.file "
+	return { "SELECT file.file_id, file.path, file.name FROM offgrid_db.file "
 	"LEFT JOIN offgrid_db.access on access.file_id = file.file_id "
-	"WHERE file.file_id = ? and (file.creator_id=? or access.user_id=?)", {
+	"WHERE file.file_id = ? and (file.creator_id = ? or access.user_id = ?)", {
 	mysql::field(id), mysql::field(uid), mysql::field(uid)} };
 }
 
@@ -237,7 +237,7 @@ Query Queries::UpdateUser(json::object const& obj, std::string uid, std::string 
 		addFields(query, obj, values, nullptr, "=?, ");
 
 		values.emplace_back(uid);
-		query += " WHERE user.uid=? and " + entity + "." + entity + "_id=?";
+		query += " WHERE user.uid=? and " + entity + "." + entity + "_id = ?";
 		values.emplace_back(entity_id);
 	}
 
@@ -256,7 +256,7 @@ Query Queries::DeleteFile_(std::string file_id, std::string entity, std::string 
 
 Query Queries::UpdateSession(std::string session_id)
 {
-	return { "UPDATE offgrid_db.session SET last_active = NOW() WHERE session_id=?",
+	return { "UPDATE offgrid_db.session SET last_active = NOW() WHERE session_id = ?",
 		{mysql::field(session_id)} };
 }
 
@@ -289,4 +289,52 @@ Query Queries::RevokeAccess(std::string file_id, std::string target_uid, std::st
 Query Queries::GetUidByEmail(std::string email)
 {
 	return { "SELECT uid FROM offgrid_db.user WHERE email = ?", {mysql::field(email)} };
+}
+
+
+Query Queries::VerifyFileRights(std::string file_id, std::string uid)
+{
+	return { "SELECT COALESCE(access.type, 'owner') AS type, file.creator_id "
+	"FROM offgrid_db.file "
+	"LEFT JOIN offgrid_db.access on access.file_id = file.file_id AND access.user_id = ? "
+	"WHERE file.file_id = ? AND (file.creator_id = ? or access.type is not null)",
+		{mysql::field(uid), mysql::field(file_id),mysql::field(uid)} };
+}
+
+
+Query Queries::InsertNotification(json::object const& obj)
+{
+	return buildInsert(obj, "notification");
+}
+
+
+Query Queries::ViewNotification(std::string id, std::string receiver_id)
+{
+	return { "UPDATE offgrid_db.notification SET seen = 1 "
+		"WHERE notification_id = ? AND receiver_id = ?",
+		{mysql::field(id), mysql::field(receiver_id)}};
+}
+
+
+Query Queries::AddNotificationResponse(std::string response, std::string id, std::string receiver_id)
+{
+	return { "UPDATE offgrid_db.notification SET response = ?, answered = NOW() "
+	"WHERE notification_id = ? AND receiver_id = ?",
+		{mysql::field(response), mysql::field(id), mysql::field(receiver_id) }};
+}
+
+
+Query Queries::GetInvolvedUsers(std::string entity_id, std::string entity)
+{
+	return { "SELECT " + entity + ".creator_id AS owner_uid, access.user_id AS access_uid "
+	"FROM offgrid_db." + entity + " "
+	"LEFT JOIN offgrid_db.access ON access." + entity + "_id = " + entity + "." + entity + "_id "
+	"WHERE " + entity + "." + entity + "_id = ?",
+	{mysql::field(entity_id)} };
+}
+
+
+Query Queries::GetUsername(std::string uid)
+{
+	return { "SELECT username from offgrid_db.user WHERE uid = ?", {mysql::field(uid)} };
 }
