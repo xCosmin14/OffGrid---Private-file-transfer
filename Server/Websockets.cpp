@@ -304,10 +304,55 @@ Async<void> ClientController::handleModify(std::shared_ptr<WsSession> session, j
 }
 
 
+Async<void> ClientController::handleNotification(std::shared_ptr<WsSession> session, json::object obj)
+{
+	if (!co_await verifyField(session, obj, "notification_id", json::kind::string)) co_return;
+	if (!co_await verifyField(session, obj, "response", json::kind::string)) co_return;
+
+	std::string type = json::value_to<std::string>(obj.at("type"));
+
+	try {
+
+		Query q;
+		if (type == "answer_notification")
+
+			q = Queries::AddNotificationResponse(
+				json::value_to<std::string>(obj.at("message")),
+				session->uid,
+				json::value_to<std::string>(obj.at("notification_id")));
+
+		else
+			q = Queries::ViewNotification(
+				json::value_to<std::string>(obj.at("notification_id")),
+				session->uid);
+
+
+		mysql::results results = co_await this->db.runQuery(q);
+
+		if(results.affected_rows() == 0)
+			co_await Helpers::sendWsMessage(session, {
+				{"status", "error"}, {"message", "notification not found"} });
+
+		else 
+			co_await Helpers::sendWsMessage(session, {
+				{"status", "success"}, {"message", "action: " + type + " completed successfuly"}});
+
+	}
+	catch (boost::system::system_error& e)
+	{
+		std::cerr << "Failed query: " << e.what();
+	}
+
+}
+
 
 Async<void> ClientController::handleWsMessage(std::shared_ptr<WsSession> session, json::object& obj)
 {
-	if(! co_await verifyField(session, obj, "type", json::kind::string)) co_return;
+	if(!co_await verifyField(session, obj, "type", json::kind::string)) co_return;
+
+	if (obj.at("type") == "answer_notification" || obj.at("type") == "view_notification")
+		co_await handleNotification(session, obj);
+
 	if(! co_await verifyField(session, obj, "file_id", json::kind::string)) co_return;
 
 

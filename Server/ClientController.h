@@ -98,7 +98,7 @@ class ClientController
 	Async<void> handleWatch(std::shared_ptr<WsSession>, std::string, std::string);
 	Async<void> handleUnwatch(std::shared_ptr<WsSession>, std::string);
 	Async<void> handleModify(std::shared_ptr<WsSession>, json::object, std::string);
-
+	Async<void> handleNotification(std::shared_ptr<WsSession>, json::object);
 
 	Async<void> sendNotifications(Notification, std::string, std::string, std::string);
 
