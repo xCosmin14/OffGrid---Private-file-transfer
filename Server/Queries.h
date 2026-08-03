@@ -84,4 +84,5 @@ namespace Queries
 
 	Query GetNotifications(std::string);
 
+	Query GetFiles(std::string);
 };

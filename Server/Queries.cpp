@@ -261,6 +261,22 @@ Query Queries::UpdateSession(std::string session_id)
 }
 
 
+Query Queries::GetFiles(std::string folder_id)
+{
+	std::string query =
+		"WITH RECURSIVE folder_tree AS ("
+		"    SELECT folder_id FROM offgrid_db.folder WHERE folder_id = ? "
+		"    UNION ALL "
+		"    SELECT f.folder_id "
+		"    FROM offgrid_db.folder f "
+		"    INNER JOIN folder_tree ft ON f.parent_folder_id = ft.folder_id "
+		") "
+		"SELECT file_id FROM offgrid_db.file "
+		"WHERE folder_id IN (SELECT folder_id FROM folder_tree)";
+
+	return { query, {mysql::field(folder_id)} };
+}
+
 Query Queries::InsertAccess(std::string access_id, std::string user_id, std::string granted_by, std::string id, std::string resource, std::string type)
 {
 	std::string query = "INSERT INTO offgrid_db.access(access_id, user_id, granted_by, ";
@@ -342,7 +358,7 @@ Query Queries::GetUsername(std::string uid)
 
 Query Queries::GetNotifications(std::string uid)
 {
-	return { "SELECT notification.notification_id, notification.info, user.username from offgrid_db.notification "
+	return { "SELECT notification.notification_id, notification.info, notification.sent, user.username from offgrid_db.notification "
 	"JOIN offgrid_db.user on user.uid = notification.sender_id "
 	"WHERE notification.receiver_id = ?", {mysql::field(uid)} };
 }

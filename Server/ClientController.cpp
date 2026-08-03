@@ -261,6 +261,30 @@ Async<HttpResponse> ClientController::grantAccess(json::object& obj, std::string
 
 		co_await this->db.runQuery(Queries::InsertAccess(
 			this->createId("access"), other_uid, uid, file_id, resource, type));
+
+		if (resource == "folder")
+		{
+			mysql::results file_ids = co_await this->db.runQuery(Queries::GetFiles(file_id));
+
+			if (!file_ids.rows().empty())
+			{
+				for (mysql::row_view row : file_ids.rows())
+				{
+					std::string current_file_id = row.at(0).as_string();
+
+					std::string new_access_id = this->createId("access");
+
+					co_await this->db.runQuery(Queries::InsertAccess(
+						new_access_id,
+						uid,
+						other_uid,
+						current_file_id,
+						"file",
+						type
+					));
+				}
+			}
+		}
 	}
 	catch (boost::system::system_error& e)
 	{
