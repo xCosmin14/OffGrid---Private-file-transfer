@@ -66,6 +66,11 @@ describe("General test", async () => {
 
     })
 
+    it('should retrieve notifications', async()=>{
+        let respose = await getResponse("/get_notifications", "GET", null, cookie);
+        console.log(await respose.json());
+    })
+
     it('should change user preferences', async () => {
         let response = await getResponse("/change_data", "PATCH", {
             'preferences': '{"color":"blue"}'

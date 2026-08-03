@@ -71,7 +71,7 @@ class ClientController
 
 	Async<HttpResponse> getUserData(json::object&, std::string);
 	Async<HttpResponse> getUserFiles(json::object&, std::string);
-
+	Async<HttpResponse> getNotifications(std::string);
 
 
 	Async<HttpResponse> UpdateDb(std::vector<Query>, std::string, std::string, std::string);

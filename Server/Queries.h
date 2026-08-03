@@ -82,4 +82,6 @@ namespace Queries
 
 	Query GetUsername(std::string);
 
+	Query GetNotifications(std::string);
+
 };

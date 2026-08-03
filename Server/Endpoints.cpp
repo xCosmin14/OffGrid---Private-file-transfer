@@ -64,6 +64,10 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
                 co_return Helpers::makeResponse(http::status::bad_request, "missing file id");
             co_return co_await this->getFile(std::string(target.substr(pos + 9)), session_id);
         }
+        else if (target == "/get_notifications")
+        {
+            co_return co_await this->getNotifications(session_id);
+        }
     }
     else if (method == http::verb::delete_) // fully tested
     {

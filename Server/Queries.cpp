@@ -338,3 +338,11 @@ Query Queries::GetUsername(std::string uid)
 {
 	return { "SELECT username from offgrid_db.user WHERE uid = ?", {mysql::field(uid)} };
 }
+
+
+Query Queries::GetNotifications(std::string uid)
+{
+	return { "SELECT notification.notification_id, notification.info, user.username from offgrid_db.notification "
+	"JOIN offgrid_db.user on user.uid = notification.sender_id "
+	"WHERE notification.receiver_id = ?", {mysql::field(uid)} };
+}

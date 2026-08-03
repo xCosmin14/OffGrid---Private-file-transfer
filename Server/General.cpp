@@ -325,3 +325,42 @@ Async<HttpResponse> ClientController::changeData(json::object& obj, std::string 
 
 }
 
+
+
+Async<HttpResponse> ClientController::getNotifications(std::string session_id)
+{
+	std::string uid;
+	std::exception_ptr error;
+
+	try {
+		uid = this->getUserId(session_id);
+	}
+	catch (std::exception& e)
+	{
+		error = std::current_exception();
+	}
+
+	if (error)
+		co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
+
+
+	try {
+
+		json::array results_arr = co_await Helpers::getGeneralData(Queries::GetNotifications(uid), this->db);
+
+
+		if(results_arr.empty())
+			co_return Helpers::makeResponse(http::status::not_found, "no notifications found");
+		 
+		json::object results;
+		results["notifications"] = results_arr;
+		co_return Helpers::makeResponse(http::status::ok, "notifications found", "",  results);
+
+	}
+	catch (boost::system::system_error& e)
+	{
+		std::cerr << "Failed query: " << e.what();
+		co_return Helpers::makeResponse(http::status::internal_server_error, "internal_server_error");
+
+	}
+}
