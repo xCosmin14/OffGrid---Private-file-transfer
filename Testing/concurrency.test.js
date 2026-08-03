@@ -63,7 +63,7 @@ describe("Concurrent editing test", async () => {
             let access_type = (i % 2 == 0) ? 'edit' : 'view';
 
             let response = await getResponse("/grand_access", "POST", {
-                email: emails[i],
+                username: uesrnames[i],
                 file_id: file_id,
                 type: access_type,
                 resource: 'file'
@@ -85,7 +85,7 @@ describe("Concurrent editing test", async () => {
         });
 
         response = await getResponse("/grand_access", "POST", {
-            email: emails[1],
+            username: usernames[1],
             folder_id: json.folder_id,
             type: 'edit',
             resource: 'folder'

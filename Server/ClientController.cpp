@@ -192,7 +192,7 @@ Async<void> ClientController::loadLoggedUsers()
 }
 
 
-Async<HttpResponse> ClientController::grandAccess(json::object& obj, std::string session_id)
+Async<HttpResponse> ClientController::grantAccess(json::object& obj, std::string session_id)
 {
 	std::string uid;
 	std::exception_ptr error;
@@ -227,7 +227,7 @@ Async<HttpResponse> ClientController::grandAccess(json::object& obj, std::string
 		co_return Helpers::makeResponse(http::status::bad_request, "missing type");
 
 
-	std::string email = json::value_to<std::string>(obj.at("email"));
+	std::string username = json::value_to<std::string>(obj.at("username"));
 	std::string resource = json::value_to<std::string>(obj.at("resource"));
 	std::string file_id = json::value_to<std::string>(obj.at(resource + "_id"));
 	std::string type = json::value_to<std::string>(obj.at("type"));
@@ -252,12 +252,12 @@ Async<HttpResponse> ClientController::grandAccess(json::object& obj, std::string
 		
 		resource_name = results.rows()[0][index].as_string();
 
-		mysql::results email_results = co_await this->db.runQuery(Queries::GetUidByEmail(email));
+		mysql::results name_results = co_await this->db.runQuery(Queries::GetUidByUsername(username));
 
-		if (email_results.rows().empty())
+		if (name_results.rows().empty())
 			co_return Helpers::makeResponse(http::status::not_found, "user not found");
 
-		std::string other_uid = email_results.rows()[0][0].as_string();
+		std::string other_uid = name_results.rows()[0][0].as_string();
 
 		co_await this->db.runQuery(Queries::InsertAccess(
 			this->createId("access"), other_uid, uid, file_id, resource, type));

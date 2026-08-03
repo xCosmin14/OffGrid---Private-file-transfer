@@ -49,7 +49,7 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
             co_return co_await this->getFileMetadata(std::string(target.substr(pos + 9)), session_id, obj);
         }
 
-        else if (target == "/grand_access")
+        else if (target == "/grant_access")
         {
             co_return co_await this->grandAccess(obj, session_id);
         }
