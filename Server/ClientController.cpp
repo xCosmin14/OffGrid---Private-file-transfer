@@ -207,8 +207,8 @@ Async<HttpResponse> ClientController::grandAccess(json::object& obj, std::string
 		co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
 
 
-	if (!obj.contains("email") || !obj.at("email").is_string())
-		co_return Helpers::makeResponse(http::status::bad_request, "missing email");
+	if (!obj.contains("username") || !obj.at("username").is_string())
+		co_return Helpers::makeResponse(http::status::bad_request, "missing username");
 
 	if (!obj.contains("resource") || (obj.at("resource")!="file" && obj.at("resource")!="folder"))
 		co_return Helpers::makeResponse(http::status::bad_request, "missing resource type");

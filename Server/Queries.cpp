@@ -288,7 +288,7 @@ Query Queries::RevokeAccess(std::string file_id, std::string target_uid, std::st
 
 Query Queries::GetUidByEmail(std::string email)
 {
-	return { "SELECT uid FROM offgrid_db.user WHERE email = ?", {mysql::field(email)} };
+	return { "SELECT uid FROM offgrid_db.user WHERE username = ?", {mysql::field(email)} };
 }
 
 
