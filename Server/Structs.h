@@ -189,7 +189,11 @@ public:
 	{	
 		obj["type"] = type;
 		obj["entity_id"] = entity_id;
-		obj["folder_name"] = folder_name;
+		if (type == "access_granted")
+			obj["file_name"] = folder_name;
+		else
+			obj["folder_name"] = folder_name;
+
 		obj["entity"] = entity;
 	}
 
