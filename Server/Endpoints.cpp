@@ -23,21 +23,23 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
         }
     }
 
+
+
 	if (method == http::verb::options) co_return Helpers::makeResponse(http::status::no_content, "");
 
-	if (method == http::verb::post) // fully tested
+	if (method == http::verb::post)
 	{
-		if (target == "/register") co_return co_await this->registerUser(obj);
+        if (target == "/register") co_return co_await this->registerUser(obj);
 
-		else if (target == "/log_in") co_return co_await this->loginUser(obj);
+        else if (target == "/log_in") co_return co_await this->loginUser(obj);
 
-		else if (target == "/log_out") co_return co_await this->logoutUser(obj, session_id);
+        else if (target == "/log_out") co_return co_await this->logoutUser(obj, session_id);
 
-		else if (target == "/delete_account") co_return co_await this->removeUser(obj, session_id);
+        else if (target == "/delete_account") co_return co_await this->removeUser(obj, session_id);
 
         else if (target.starts_with("/upload_folder")) co_return co_await this->uploadFolder(obj, session_id);
 
-        else if (target == "/create_folder") co_return co_await this->createEntity(obj, session_id, { "color", "name", "type", "parent_folder_id"}, "folder");
+        else if (target == "/create_folder") co_return co_await this->createEntity(obj, session_id, { "color", "name", "type", "parent_folder_id" }, "folder");
         else if (target == "/create_file") co_return co_await this->createEntity(obj, session_id, { "name", "folder_id" }, "file");
         else if (target == "/user_data") co_return co_await this->getUserData(obj, session_id);
         else if (target == "/user_files") co_return co_await this->getUserFiles(obj, session_id);
@@ -49,10 +51,11 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
             co_return co_await this->getFileMetadata(std::string(target.substr(pos + 9)), session_id, obj);
         }
 
-        else if (target == "/grant_access")
-        {
-            co_return co_await this->grantAccess(obj, session_id);
-        }
+        else if (target == "/grant_access") 
+            co_return co_await this->manageAccess(obj, session_id);
+        
+        else if (target == "/revoke_access") // not tested
+            co_return co_await this->manageAccess(obj, session_id, "revok");
     }
     else if (method == http::verb::get)
     {

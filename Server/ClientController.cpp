@@ -192,7 +192,7 @@ Async<void> ClientController::loadLoggedUsers()
 }
 
 
-Async<HttpResponse> ClientController::grantAccess(json::object& obj, std::string session_id)
+Async<HttpResponse> ClientController::manageAccess(json::object& obj, std::string session_id, std::string action)
 {
 	std::string uid;
 	std::exception_ptr error;
@@ -223,15 +223,20 @@ Async<HttpResponse> ClientController::grantAccess(json::object& obj, std::string
 			co_return Helpers::makeResponse(http::status::bad_request, "missing folder_id");
 	}
 
-	if (!obj.contains("type") || !obj.at("type").is_string())
-		co_return Helpers::makeResponse(http::status::bad_request, "missing type");
-
 
 	std::string username = json::value_to<std::string>(obj.at("username"));
 	std::string resource = json::value_to<std::string>(obj.at("resource"));
 	std::string file_id = json::value_to<std::string>(obj.at(resource + "_id"));
-	std::string type = json::value_to<std::string>(obj.at("type"));
+	std::string type;
 	std::string resource_name;
+
+	if (action == "grant") {
+		if (!obj.contains("type") || !obj.at("type").is_string())
+			co_return Helpers::makeResponse(http::status::bad_request, "missing type");
+		type = json::value_to<std::string>(obj.at("type"));
+
+	}
+
 
 	try {
 		Query q; int index;
@@ -259,8 +264,13 @@ Async<HttpResponse> ClientController::grantAccess(json::object& obj, std::string
 
 		std::string other_uid = name_results.rows()[0][0].as_string();
 
-		co_await this->db.runQuery(Queries::InsertAccess(
-			this->createId("access"), other_uid, uid, file_id, resource, type));
+		if (action == "grant") 
+			q = Queries::InsertAccess(this->createId("access"), 
+								other_uid, uid, file_id, resource, type);
+		else
+			q = Queries::RevokeAccess(file_id, other_uid, uid, resource);
+
+		co_await this->db.runQuery(q);
 
 		if (resource == "folder")
 		{
@@ -272,16 +282,17 @@ Async<HttpResponse> ClientController::grantAccess(json::object& obj, std::string
 				{
 					std::string current_file_id = row.at(0).as_string();
 
-					std::string new_access_id = this->createId("access");
-
-					co_await this->db.runQuery(Queries::InsertAccess(
-						new_access_id,
-						uid,
+					if (action == "grant")  q = Queries::InsertAccess(
+						this->createId("access"),
 						other_uid,
+						uid,
 						current_file_id,
 						"file",
 						type
-					));
+					);
+					else q = Queries::RevokeAccess(current_file_id, other_uid, uid, "file");
+
+					co_await this->db.runQuery(q);
 				}
 			}
 		}
@@ -289,16 +300,15 @@ Async<HttpResponse> ClientController::grantAccess(json::object& obj, std::string
 	catch (boost::system::system_error& e)
 	{
 		std::cerr << "Failed query: " << e.what()<<std::endl;
-		co_return Helpers::makeResponse(http::status::internal_server_error, "failed granting access");
+		co_return Helpers::makeResponse(http::status::internal_server_error, "failed " + action + "ing access");
 
 	}
 
-	std::cout << resource << std::endl;
-	Notification notif("access_granted", resource, file_id, resource_name);
+	Notification notif("access_"+ action +"ed", resource, file_id, resource_name);
 	boost::asio::co_spawn(co_await boost::asio::this_coro::executor,
 		this->sendNotifications(notif, uid, resource, file_id), boost::asio::detached);
 
-	co_return Helpers::makeResponse(http::status::ok, "access granted successfuly");
+	co_return Helpers::makeResponse(http::status::ok, "access " + action + "ed successfuly");
 
 }
 

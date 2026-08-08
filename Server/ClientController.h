@@ -86,7 +86,7 @@ class ClientController
 		std::unordered_set<std::string>, std::string);
 
 
-	Async<HttpResponse> grantAccess(json::object&, std::string);
+	Async<HttpResponse> manageAccess(json::object&, std::string, std::string = "grant");
 
 	Async<std::pair<std::vector<std::string>, std::string>> appendFolders(std::vector<Query>&,
 		const std::vector<std::string>&, std::string, std::string);

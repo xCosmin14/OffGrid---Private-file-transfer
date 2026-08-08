@@ -66,7 +66,7 @@ namespace Queries
 
 	Query InsertAccess(std::string, std::string, std::string, std::string, std::string, std::string);
 
-	Query RevokeAccess(std::string, std::string, std::string);
+	Query RevokeAccess(std::string, std::string, std::string, std::string);
 
 	Query GetUidByUsername(std::string);
 

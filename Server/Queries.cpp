@@ -293,11 +293,12 @@ Query Queries::InsertAccess(std::string access_id, std::string user_id, std::str
 
 }
 
-Query Queries::RevokeAccess(std::string file_id, std::string target_uid, std::string granter_uid)
+Query Queries::RevokeAccess(std::string file_id, std::string target_uid, std::string granter_uid, std::string resource)
 {
 	return { "DELETE access FROM offgrid_db.access "
-	"LEFT JOIN offgrid_db.file ON file.file_id = access.file_id "
-	"WHERE access.file_id = ? AND access.user_id = ? AND file.creator_id = ?",
+	"LEFT JOIN offgrid_db." + resource + " ON " + resource + "." + resource + 
+		"_id = access." + resource + "_id "
+	"WHERE access." + resource + "_id = ? AND access.user_id = ? AND " + resource + ".creator_id = ?",
 	{mysql::field(file_id), mysql::field(target_uid), mysql::field(granter_uid)} };
 }
 
