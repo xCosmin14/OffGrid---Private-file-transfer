@@ -82,7 +82,8 @@ Async<HttpResponse> ClientController::getUserFiles(json::object& obj, std::strin
 			{"favourite", "file.favourite"},
 			{"inTrash", "file.inTrash"},
 			{"created", "file.created" },
-			{"modified", "file.modified" }
+			{"modified", "file.modified" },
+			{"owner", "creator.username"}
 			}, "file_fields");
 
 		folder_fields = Helpers::getFields(obj, {
@@ -94,7 +95,8 @@ Async<HttpResponse> ClientController::getUserFiles(json::object& obj, std::strin
 			{"favourite", "folder.favourite"},
 			{"inTrash", "folder.inTrash"},
 			{"created", "folder.created" },
-			{"modified", "folder.modified" }
+			{"modified", "folder.modified" },
+			{ "ownser", "creator.username" }
 			}, "folder_fields");
 
 	}
@@ -104,8 +106,8 @@ Async<HttpResponse> ClientController::getUserFiles(json::object& obj, std::strin
 	}
 
 	try {
-		json::array file_obj = co_await Helpers::getGeneralData(Queries::GetUserFiles(file_fields, "file", uid), this->db);
-		json::array folder_obj = co_await Helpers::getGeneralData(Queries::GetUserFiles(folder_fields, "folder", uid), this->db);
+		json::array file_obj = co_await Helpers::getGeneralData(Queries::GetUserFiles(file_fields, "file", uid), this->db, "file_id");
+		json::array folder_obj = co_await Helpers::getGeneralData(Queries::GetUserFiles(folder_fields, "folder", uid), this->db, "folder_id");
 
 		json::object result;
 		result["files"] = file_obj;
@@ -246,6 +248,47 @@ Async<HttpResponse> ClientController::getProfilePhoto(std::string session_id)
 
 }
 
+
+Async<HttpResponse> ClientController::getProfilePics(std::string session_id)
+{
+	std::string uid;
+	std::exception_ptr error;
+
+
+	try {
+		uid = this->getUserId(session_id);
+	}
+	catch (std::exception& e)
+	{
+		error = std::current_exception();
+	}
+
+	if (error)
+		co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
+
+
+	try {
+		mysql::results results = co_await this->db.runQuery(Queries::GetFileAccessUsers(uid));
+
+		auto rows = results.rows();
+
+		if (rows.empty()) 
+			co_return Helpers::makeResponse(http::status::not_found, "no collaborators found");
+
+
+
+		co_return Helpers::makeResponse(http::status::ok, "pictures found", "", { {"path", uid + ".png"}, {"content_type", "image/png"} });
+
+
+	}
+	catch (boost::system::system_error& e)
+	{
+		std::cerr << "Failed query: " << e.what() << std::endl;
+		co_return Helpers::makeResponse(http::status::internal_server_error, "internal server error");
+
+	}
+
+}
 
 Async<HttpResponse> ClientController::changeData(json::object& obj, std::string session_id, std::string entity)
 {

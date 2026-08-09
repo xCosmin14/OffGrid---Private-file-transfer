@@ -71,6 +71,8 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
         {
             co_return co_await this->getNotifications(session_id);
         }
+        else if (target == "/get_collaborators_profile")
+            co_return co_await this->getProfilePics(session_id);
     }
     else if (method == http::verb::delete_) // fully tested
     {

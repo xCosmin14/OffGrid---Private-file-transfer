@@ -21,7 +21,7 @@ namespace Helpers
 	HttpResponse makeResponse(http::status status, std::string message, std::string session_id = "", json::object additional = {});
 
 	std::vector<std::string> getFields(json::object&, const std::unordered_map<std::string, std::string> & = {}, std::string key = "fields");
-	Async<json::array> getGeneralData(Query, DatabaseController&);
+	Async<json::array> getGeneralData(Query, DatabaseController&, std::string = "");
 
 	void removeFiles(std::vector<std::string>, std::string);
 

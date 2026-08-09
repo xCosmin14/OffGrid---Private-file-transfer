@@ -85,4 +85,6 @@ namespace Queries
 	Query GetNotifications(std::string);
 
 	Query GetFiles(std::string);
+
+	Query GetFileAccessUsers(std::string);
 };

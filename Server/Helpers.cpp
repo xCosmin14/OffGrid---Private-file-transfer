@@ -133,7 +133,7 @@ std::vector<std::string> Helpers::getFields(json::object& obj, const std::unorde
 	return fields;
 }
 
-Async<json::array> Helpers::getGeneralData(Query q, DatabaseController& db)
+Async<json::array> Helpers::getGeneralData(Query q, DatabaseController& db, std::string group_by_column)
 {
 
 
@@ -147,13 +147,21 @@ Async<json::array> Helpers::getGeneralData(Query q, DatabaseController& db)
 			co_return json::array({});
 
 		json::array response_arr;
+		std::unordered_map<std::string, size_t> seenAt;
+
 		for (auto const& row : rows) 
 		{
 			json::object response_obj;
+			std::string group_key;
+
 			for (int i = 0; i < row.size(); i++)
 			{
 				std::string column = results.meta()[i].column_name();
 				auto value = row[i];
+
+
+				if (column == group_by_column && !value.is_null())
+					group_key = value.as_string();
 
 				if (value.is_null()) response_obj[column] = nullptr;
 				else if (value.is_string()) response_obj[column] = value.as_string();
@@ -178,7 +186,37 @@ Async<json::array> Helpers::getGeneralData(Query q, DatabaseController& db)
 				}
 
 			}
-			response_arr.push_back(response_obj);
+
+			if (!group_by_column.empty() && seenAt.count(group_key))
+			{
+				auto& existing = response_arr[seenAt[group_key]].as_object();
+				if (!response_obj.contains("username") && !response_obj["username"].is_null())
+				{
+					if (!existing.contains("collaborators"))
+						existing["collaborators"] = json::array();
+
+					existing["collaborators"].as_array().push_back(response_obj["username"]);
+				}
+			}
+			else
+			{
+				if (!group_by_column.empty() && response_obj.contains("username"))
+				{
+					std::string username = response_obj["username"].is_null() ? "" : std::string(response_obj["username"].as_string());
+					response_obj.erase("username");
+					response_obj["collaborators"] = json::array();
+					if (!username.empty())
+						response_obj["collaborators"].as_array().push_back(response_obj["username"]);
+				}
+
+				if (!group_by_column.empty())
+					seenAt[group_key] = response_arr.size();
+
+				response_arr.push_back(response_obj);
+
+			}
+
+
 		}
 
 		co_return response_arr;
