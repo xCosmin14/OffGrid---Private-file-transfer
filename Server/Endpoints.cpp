@@ -43,6 +43,7 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
         else if (target == "/create_file") co_return co_await this->createEntity(obj, session_id, { "name", "folder_id" }, "file");
         else if (target == "/user_data") co_return co_await this->getUserData(obj, session_id);
         else if (target == "/user_files") co_return co_await this->getUserFiles(obj, session_id);
+        
         else if (target.starts_with("/get_file_metadata"))
         {
             auto pos = target.find("?file_id=");
@@ -68,10 +69,9 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
             co_return co_await this->getFile(std::string(target.substr(pos + 9)), session_id);
         }
         else if (target == "/get_notifications")
-        {
             co_return co_await this->getNotifications(session_id);
-        }
-        else if (target == "/get_collaborators_profile")
+        
+        else if (target == "/get_collaborators_profile") // not tested
             co_return co_await this->getProfilePics(session_id);
     }
     else if (method == http::verb::delete_) // fully tested

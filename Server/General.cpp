@@ -83,7 +83,7 @@ Async<HttpResponse> ClientController::getUserFiles(json::object& obj, std::strin
 			{"inTrash", "file.inTrash"},
 			{"created", "file.created" },
 			{"modified", "file.modified" },
-			{"owner", "creator.username"}
+			{"owner", "creator.username AS creator_username" }
 			}, "file_fields");
 
 		folder_fields = Helpers::getFields(obj, {
@@ -96,7 +96,7 @@ Async<HttpResponse> ClientController::getUserFiles(json::object& obj, std::strin
 			{"inTrash", "folder.inTrash"},
 			{"created", "folder.created" },
 			{"modified", "folder.modified" },
-			{ "ownser", "creator.username" }
+			{ "owner", "creator.username AS creator_username" }
 			}, "folder_fields");
 
 	}
@@ -275,9 +275,14 @@ Async<HttpResponse> ClientController::getProfilePics(std::string session_id)
 		if (rows.empty()) 
 			co_return Helpers::makeResponse(http::status::not_found, "no collaborators found");
 
+		json::array paths;
+		for (auto row : rows)
+		{
+			std::string id = row[0].as_string();
+			paths.emplace_back(id + ".png");
+		}
 
-
-		co_return Helpers::makeResponse(http::status::ok, "pictures found", "", { {"path", uid + ".png"}, {"content_type", "image/png"} });
+		co_return Helpers::makeResponse(http::status::ok, "pictures found", "", { {"paths", paths}, {"content_type", "image/png"} });
 
 
 	}

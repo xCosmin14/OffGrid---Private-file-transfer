@@ -149,23 +149,28 @@ Async<json::array> Helpers::getGeneralData(Query q, DatabaseController& db, std:
 		json::array response_arr;
 		std::unordered_map<std::string, size_t> seenAt;
 
-		for (auto const& row : rows) 
+		for (auto const& row : rows)
 		{
 			json::object response_obj;
 			std::string group_key;
+			bool group_is_null = true;
 
-			for (int i = 0; i < row.size(); i++)
+			for (std::size_t i = 0; i < row.size(); i++)
 			{
 				std::string column = results.meta()[i].column_name();
 				auto value = row[i];
 
-
-				if (column == group_by_column && !value.is_null())
-					group_key = value.as_string();
+				if (column == group_by_column)
+				{
+					group_is_null = value.is_null();
+					if (!group_is_null) group_key = value.as_string();
+				}
 
 				if (value.is_null()) response_obj[column] = nullptr;
 				else if (value.is_string()) response_obj[column] = value.as_string();
 				else if (value.is_int64()) response_obj[column] = value.as_int64();
+				else if (value.is_uint64()) response_obj[column] = value.as_uint64();
+				else if (value.is_double()) response_obj[column] = value.as_double();
 				else if (value.is_datetime())
 				{
 					std::ostringstream oss;
@@ -184,41 +189,40 @@ Async<json::array> Helpers::getGeneralData(Query q, DatabaseController& db, std:
 					oss << value.as_time();
 					response_obj[column] = oss.str();
 				}
-
 			}
 
-			if (!group_by_column.empty() && seenAt.count(group_key))
+			if (group_by_column.empty())
+			{
+				response_arr.push_back(response_obj);
+				continue;
+			}
+
+			std::string username;
+			if (response_obj.contains("username") && !response_obj.at("username").is_null())
+				username = std::string(response_obj.at("username").as_string());
+			response_obj.erase("username");
+
+			if (!group_by_column.empty() && !group_is_null && seenAt.count(group_key))
 			{
 				auto& existing = response_arr[seenAt[group_key]].as_object();
-				if (!response_obj.contains("username") && !response_obj["username"].is_null())
-				{
-					if (!existing.contains("collaborators"))
-						existing["collaborators"] = json::array();
-
-					existing["collaborators"].as_array().push_back(response_obj["username"]);
-				}
+				if (!username.empty())
+					existing["collaborators"].as_array().emplace_back(username);
 			}
 			else
 			{
-				if (!group_by_column.empty() && response_obj.contains("username"))
+				if (!group_by_column.empty())
 				{
-					std::string username = response_obj["username"].is_null() ? "" : std::string(response_obj["username"].as_string());
-					response_obj.erase("username");
 					response_obj["collaborators"] = json::array();
 					if (!username.empty())
-						response_obj["collaborators"].as_array().push_back(response_obj["username"]);
+						response_obj["collaborators"].as_array().emplace_back(username);
 				}
 
-				if (!group_by_column.empty())
+				if (!group_by_column.empty() && !group_is_null)
 					seenAt[group_key] = response_arr.size();
 
 				response_arr.push_back(response_obj);
-
 			}
-
-
 		}
-
 		co_return response_arr;
 
 

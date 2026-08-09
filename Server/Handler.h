@@ -168,31 +168,82 @@ public:
 		if (stat == http::status::ok)
 		{
 			json::object meta = json::parse(body).as_object();
-			std::string file_path = json::value_to<std::string>(meta["path"]);
 			std::string content_type = json::value_to<std::string>(meta["content_type"]);
 
-			std::string full_path;
-			if (req.target() == "/get_profile_photo") {
-				full_path = "FileSystem/profile_photos/" + file_path;
+
+			if (req.target() == "/get_collaborators_profile")
+			{
+				json::array paths = json::value_to<json::array>(meta["paths"]);
+
+				std::string boundary = "offgrid-boundary-7f3a9c1e";
+				std::string multipart_body;
+
+				for (auto& path : paths)
+				{
+					std::string full_path = "FileSystem/profile_photos/" +
+						json::value_to<std::string>(path);
+
+					if (!std::filesystem::exists(full_path)) continue;
+
+					std::ifstream in(full_path, std::ios::binary);
+					std::ostringstream fbuf;
+					fbuf << in.rdbuf();
+					std::string file_bytes = fbuf.str();
+
+					multipart_body += "--" + boundary + "\r\n";
+					multipart_body += "Content-Disposition: form-data; name=\"file\"; filename=\"" + 
+						json::value_to<std::string>(path) + "\"\r\n";
+					multipart_body += "Content-Type: image/png\r\n\r\n";
+					multipart_body += file_bytes;
+					multipart_body += "\r\n";
+
+				}
+
+
+				multipart_body += "--" + boundary + "--\r\n";
+
+				std::string tmp_path = "FileSystem/tmp/" + boundary + ".tmp";
+				std::ofstream out(tmp_path, std::ios::binary);
+				out << multipart_body;
+				out.close();
+
+				boost::beast::error_code e;
+				res.body().open(tmp_path.c_str(), boost::beast::file_mode::read, e);
+				if (e) {
+					res.result(http::status::internal_server_error);
+					co_return res;
+				}
+				res.result(http::status::ok);
+				res.set(http::field::content_type, "multipart/form-data; boundary=" + boundary);
+				co_return res;
+
 			}
 			else {
-				std::string uid = json::value_to<std::string>(meta["creator_id"]);
-				full_path = "FileSystem/files/" + uid + "/" + file_path;
-			}
+				std::string file_path = json::value_to<std::string>(meta["path"]);
 
-			if (!std::filesystem::exists(full_path)) {
-				res.result(http::status::not_found);
-				co_return res;
-			}
+				std::string full_path;
+				if (req.target() == "/get_profile_photo") {
+					full_path = "FileSystem/profile_photos/" + file_path;
+				}
+				else {
+					std::string uid = json::value_to<std::string>(meta["creator_id"]);
+					full_path = "FileSystem/files/" + uid + "/" + file_path;
+				}
 
-			boost::beast::error_code e;
-			res.body().open(full_path.c_str(), boost::beast::file_mode::read, e);
-			if (e) {
-				res.result(http::status::internal_server_error);
-				co_return res;
+				if (!std::filesystem::exists(full_path)) {
+					res.result(http::status::not_found);
+					co_return res;
+				}
+
+				boost::beast::error_code e;
+				res.body().open(full_path.c_str(), boost::beast::file_mode::read, e);
+				if (e) {
+					res.result(http::status::internal_server_error);
+					co_return res;
+				}
+				res.result(http::status::ok);
+				res.set(http::field::content_type, content_type);
 			}
-			res.result(http::status::ok);
-			res.set(http::field::content_type, content_type);
 		}
 		else {
 			co_return res;
