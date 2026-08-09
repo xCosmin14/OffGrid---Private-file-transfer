@@ -276,13 +276,16 @@ Async<HttpResponse> ClientController::getProfilePics(std::string session_id)
 			co_return Helpers::makeResponse(http::status::not_found, "no collaborators found");
 
 		json::array paths;
+		json::array usernames;
 		for (auto row : rows)
 		{
 			std::string id = row[0].as_string();
+			std::string name = row[1].as_string();
 			paths.emplace_back(id + ".png");
+			usernames.emplace_back(name);
 		}
 
-		co_return Helpers::makeResponse(http::status::ok, "pictures found", "", { {"paths", paths}, {"content_type", "image/png"} });
+		co_return Helpers::makeResponse(http::status::ok, "pictures found", "", { {"paths", paths}, {"usernames", usernames}, {"content_type", "image/png"}});
 
 
 	}

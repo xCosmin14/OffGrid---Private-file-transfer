@@ -174,12 +174,14 @@ public:
 			if (req.target() == "/get_collaborators_profile")
 			{
 				json::array paths = json::value_to<json::array>(meta["paths"]);
+				json::array usernames = json::value_to<json::array>(meta["usernames"]);
 
 				std::string boundary = "offgrid-boundary-7f3a9c1e";
 				std::string multipart_body;
 
-				for (auto& path : paths)
+				for (int i = 0; i < paths.size(); i++)
 				{
+					auto path = paths[i];
 					std::string full_path = "FileSystem/profile_photos/" +
 						json::value_to<std::string>(path);
 
@@ -192,7 +194,7 @@ public:
 
 					multipart_body += "--" + boundary + "\r\n";
 					multipart_body += "Content-Disposition: form-data; name=\"file\"; filename=\"" + 
-						json::value_to<std::string>(path) + "\"\r\n";
+						json::value_to<std::string>(usernames[i]) + "\"\r\n";
 					multipart_body += "Content-Type: image/png\r\n\r\n";
 					multipart_body += file_bytes;
 					multipart_body += "\r\n";
