@@ -15,29 +15,31 @@ export default function Login() {
     const [showError, setShowError] = useState("") 
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        e.preventDefault()
 
-        const formData = new FormData(e.currentTarget); 
+        const formData = new FormData(e.currentTarget);
         formData.set("email", formData.get("email").replace(/['`"/{};?,#$%^&*()]+/g, ''))
         formData.set("password", formData.get("password").replace(/['`"<>]+/g, ''))
 
-        let DataObject = Object.fromEntries(formData.entries());
+        let DataObject = Object.fromEntries(formData.entries())
 
-        let response = await fetch("http://localhost:18080/log_in", {
-            method: "POST",
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify(DataObject)
-        })
+        try {
+            let response = await fetch("http://localhost:18080/log_in", {
+                method: "POST",
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(DataObject)
+            })
 
-        let data = await response.json()
-        setShowError(data.message)
+            let data = await response.json()
 
-        if (showError === "user logged in") {
-            localStorage.setItem("isLogged", "true")
-            window.location.href = "/"
-            setShowError(null)
-        } 
+            if (data.message === "user logged in") {
+                localStorage.setItem("isLogged", "true")
+                window.location.href = "/"
+            } else setShowError(data.message)
+        } catch (err) {
+            setShowError("An error occurred during login")
+        }
     }
     
     useTitle("OffGrid - Login")

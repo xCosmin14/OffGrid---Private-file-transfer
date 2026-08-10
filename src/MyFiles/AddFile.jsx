@@ -122,11 +122,20 @@ export default function AddFile(props) {
         const files = e.target.files
         if (!files || files.length === 0) return
 
+        if (files.length > 100) {
+            alert("You cannot upload more than 100 files at once.")
+            e.target.value = ""
+            setShow(false)
+            return
+        }
+
         var totalBytes = 0
         for (let i = 0; i < files.length; i++) totalBytes += files[i].size
         
         const uploadId = crypto.randomUUID()
         activeUploads.set(uploadId, { xhr: null, transaction_id: null })
+
+        let hasUploaded = false
 
         for (let i = 0; i < files.length; i++) {
             if (files[i].size / (1024 * 1024 * 1024) > 50) {
@@ -179,12 +188,14 @@ export default function AddFile(props) {
                     xhr.send(formData)
                 })
                 
-                if (props.onUploadSuccess) props.onUploadSuccess()
+                hasUploaded = true
             } catch (error) {
                 if (error.message === "Aborted") break 
             } 
         }
 
+        if (hasUploaded && props.onUploadSuccess) props.onUploadSuccess()
+        
         activeUploads.delete(uploadId)
         window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false, uploadId } }))
         setShow(false)
@@ -222,6 +233,13 @@ export default function AddFile(props) {
     const handleFolderUpload = async (e) => {
         const files = Array.from(e.target.files)
         if (files.length === 0) return
+        
+        if (files.length > 100) {
+            alert("Folders cannot contain more than 100 files.")
+            e.target.value = "" 
+            setShow(false)
+            return
+        }
 
         const uploadId = crypto.randomUUID()
         activeUploads.set(uploadId, { xhr: null, transaction_id: null })
@@ -291,7 +309,7 @@ export default function AddFile(props) {
                     })
 
                     xhr.addEventListener("error", () => reject(new Error("Network error")))
-                    xhr.addEventListener("abort", () => reject(new Error("Aborted"))) // Handle abort
+                    xhr.addEventListener("abort", () => reject(new Error("Aborted")))
 
                     xhr.open("POST", `http://localhost:18080/upload_file?transaction_id=${data.transaction_id}`)
                     xhr.withCredentials = true 

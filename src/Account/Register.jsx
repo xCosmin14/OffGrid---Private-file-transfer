@@ -126,7 +126,6 @@ export default function Register() {
                 {showError == "password mismatch" && <h3 style={{color: "red"}}>Passwords don't match</h3>}
                 {showError == "invalid invite code" && <h3 style={{color: "red"}}>Invalid invite code</h3>}
 
-                <Link to="/passwordreset">Forgot your password?</Link>
                 <Link to="/login">Log into your account</Link>
             </form>
         </div>

@@ -351,9 +351,6 @@ export default function File(props) {
     const renderAccessModal = () => {
         if (!displayAccess) return null
 
-        // Am șters: var collaboratorPhotos = []
-        // Am șters: if (localCollaborators.length > 0) collaboratorPhotos = getUserPhotos()
-
         return (
             <div className="modalOverlay" onClick={(e) => {
                 e.stopPropagation()
@@ -371,7 +368,6 @@ export default function File(props) {
                             <div className="collaboratorsList">
                                 {localCollaborators.map((collab, index) => (
                                     <div key={`${collab}-${index}`} className="collaborator">
-                                        {/* Afișăm poza dacă există la indexul respectiv */}
                                         {collaboratorPhotos[index] && (
                                             <img 
                                                 src={collaboratorPhotos[index]} 

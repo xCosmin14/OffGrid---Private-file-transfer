@@ -39,6 +39,12 @@ export const UserProvider = ({ children }) => {
 
     const wsRef = useRef(null)
 
+    useEffect(() => {
+        return () => {
+            if (avatar && avatar.startsWith("blob:")) URL.revokeObjectURL(avatar) 
+        }
+    }, [avatar])
+
     const loadData = async () => {
         try {
             const res = await customFetch("http://localhost:18080/user_data", {
@@ -55,7 +61,11 @@ export const UserProvider = ({ children }) => {
             if (photoRes.ok) {
                 const blob = await photoRes.blob()
                 const imageUrl = URL.createObjectURL(blob)
-                setAvatar(imageUrl)
+
+                setAvatar(prevAvatar => {
+                    if (prevAvatar && prevAvatar.startsWith("blob:")) URL.revokeObjectURL(prevAvatar)
+                    return imageUrl
+                })
             }
         } catch (error) {
             console.error("Failed to fetch user data:", error)

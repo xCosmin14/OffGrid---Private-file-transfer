@@ -99,7 +99,7 @@ export default function Header() {
                 {isMobile() == 0 && <span id="headerVerticalLine"></span>}
 
                 {isMobile() == 0 && (
-                    <Link to={getUID() === null ? "/login" : "/settings"} id="accountSettingsToggle">
+                    <Link to={isLogged ? "/settings" : "/login"} id="accountSettingsToggle">
                         <img src={avatar} alt="User Avatar" />
                         <h3>{user?.username}</h3>
                     </Link>

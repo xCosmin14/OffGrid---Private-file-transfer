@@ -24,7 +24,7 @@ export default function PhotoViewer(props) {
 
     return (
         <div id="photoViewer">
-            {(ext === "png" || ext === "bmp" || ext === "webp" || ext === "jpg" || ext === "jpeg" || ext === "gif") && (
+            {(ext === "png" || ext === "bmp" || ext === "webp" || ext === "jpg" || ext === "jpeg" || ext === "gif"|| ext === "heif") && (
                 <img src={props.fileContent} id="normalPhoto" alt={props.file?.name || "Preview"} />
             )}
 
