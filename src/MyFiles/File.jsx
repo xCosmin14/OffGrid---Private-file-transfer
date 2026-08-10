@@ -5,6 +5,8 @@ import { FileIcon, defaultStyles } from 'react-file-icon'
 import { customFetch } from "../UserContext.jsx"
 import { FileContext } from "../GetFiles.jsx"
 
+import MockUserImg from "../Assets/MockUserImg.jpg"
+
 import Add from "../assets/SVG/FileIcons/Add.svg?react"
 import Dots from "../assets/SVG/Dots.svg?react"
 import Folder from "../assets/SVG/FileIcons/Folder.svg?react"
@@ -31,7 +33,7 @@ export default function File(props) {
 
     const [displayAccess, setDisplayAccess] = useState(false)
     const [localCollaborators, setLocalCollaborators] = useState(props.collaborators || [])
-    const [collaboratorPhotos, setCollaboratorPhotos] = useState([])
+    const [collaboratorPhotos, setCollaboratorPhotos] = useState({})
 
     const accessRef = useRef(null)
 
@@ -95,12 +97,11 @@ export default function File(props) {
     }, [props.collaborators])
 
     useEffect(() => {
-        let isMounted = true
-        let createdUrls = []
+        let isMounted = true, createdUrls = []
 
         const fetchPhotos = async () => {
             if (!displayAccess || localCollaborators.length === 0) {
-                setCollaboratorPhotos([])
+                setCollaboratorPhotos({})
                 return
             }
 
@@ -115,9 +116,12 @@ export default function File(props) {
 
                     createdUrls = files.map(file => URL.createObjectURL(file))
 
-                    if (isMounted) {
-                        setCollaboratorPhotos(createdUrls)
-                    }
+                    const photosMap = {}
+                    localCollaborators.forEach((collab, index) => {
+                        if (createdUrls[index]) photosMap[collab] = createdUrls[index]
+                    })
+
+                    if (isMounted) setCollaboratorPhotos(photosMap)
                 }
             } catch (err) {
                 console.error("Error fetching collaborator photos:", err)
@@ -243,24 +247,6 @@ export default function File(props) {
         }
     }
 
-    async function getUserPhotos (paths) {
-        const res = await fetch('http://localhost:18080/get_collaborators_profile', {
-            method: 'GET', 
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include'
-        })
-
-        if (res.ok) {
-           const formData = await res.formData()
-            const files = formData.getAll('file')
-
-            const imageUrls = files.map(file => URL.createObjectURL(file))
-            return imageUrls 
-        }
-
-        return []
-    }
-
     const submitAccess = async () => {
         if (!usernameToSend) return
 
@@ -359,7 +345,36 @@ export default function File(props) {
                 <div id="createFolder" ref={accessRef} onClick={(e) => e.stopPropagation()}>
                     <h2>{isFolder ? "Share folder" : "Share file"}</h2>
                     
-                    {/* ... Restul modalului ... */}
+                    <input
+                        type="text" name="username" required
+                        placeholder="Username" value={usernameToSend}
+                        onChange={(e) => setUsernameToSend(e.target.value)}
+                        onBeforeInput={(e) => {
+                            if (!/[a-zA-Z0-9]/.test(e.data)) e.preventDefault()    
+                        }}
+
+                    />
+
+                    <div id="permissions">  
+                        <h3>Permissions:</h3>
+
+                        <select name="permissions" value={permissionsToSend} onChange={(e) => setPermissionsToSend(e.target.value)}>
+                            <option value="view">Read</option>
+                            <option value="edit">Edit</option>
+                        </select>
+                    </div>
+                    
+                    <div className="createFolderActions">
+                        <button onClick={(e) => {
+                            e.stopPropagation()
+                            setDisplayAccess(false)
+                        }}>Cancel</button>
+
+                        <button onClick={(e) => {
+                            e.stopPropagation()
+                            submitAccess()
+                        }}>Share</button>
+                    </div>
 
                     {localCollaborators.length > 0 && (
                         <div className="accessInfo">
@@ -368,9 +383,17 @@ export default function File(props) {
                             <div className="collaboratorsList">
                                 {localCollaborators.map((collab, index) => (
                                     <div key={`${collab}-${index}`} className="collaborator">
-                                        {collaboratorPhotos[index] && (
+                                        {collaboratorPhotos[collab] && (
                                             <img 
-                                                src={collaboratorPhotos[index]} 
+                                                src={collaboratorPhotos[collab]} 
+                                                alt={collab} 
+                                                className="collaboratorAvatar" 
+                                            />
+                                        )}
+
+                                        {!collaboratorPhotos[collab] && (
+                                            <img 
+                                                src={MockUserImg}
                                                 alt={collab} 
                                                 className="collaboratorAvatar" 
                                             />

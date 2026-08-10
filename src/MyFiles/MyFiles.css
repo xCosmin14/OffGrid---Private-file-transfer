@@ -250,11 +250,10 @@
 }
 
 #permissions {
-    position: relative; left: 25px; top: 15px;
+    position: relative; left: 40px; top: 10px;
     width:auto; height: 30px;
     display: flex; flex-direction: row; align-items: center; 
     scale: 1.1;
-    margin-bottom: 10px;
 }
 #permissions select {
     position: relative; left: 20px; top: 2px;
@@ -266,18 +265,13 @@
 #createFolder:has(#permissions) {
     height: 460px;
     justify-content: flex-start;
-    padding-top: 30px;
-    padding-bottom: 20px;
+    padding-top: 20px;
     box-sizing: border-box;
 }
 
-#permissions {
-    margin-left: 10px;
-    margin-top: 20px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    color: var(--text);
+#createFolder {
+    padding-bottom: 40px;
+    z-index: 999;
 }
 
 #permissions h3 {
@@ -309,8 +303,7 @@
 }
 
 .accessInfo {
-    margin-left: 10px;
-    margin-top: 25px;
+    margin-left: 10px; margin-top: 30px;
     width: calc(100% - 20px);
     display: flex;
     flex-direction: column;
@@ -348,7 +341,6 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
     width: 100%;
     min-height: 40px;
     box-sizing: border-box;
@@ -373,10 +365,17 @@
     text-overflow: ellipsis;
 }
 
+.collaborator img {
+    width: 24px; height: 24px;
+    margin-left: 15px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
 .collaborator svg {
     width: 24px;
     height: 24px;
-    margin-right: 15px;
+    position: absolute; right: 45px;
     cursor: pointer;
     color: var(--text); 
     transform: rotate(45deg); 
@@ -398,7 +397,7 @@
         border-radius: 10px;
         padding-top: 8px; padding-bottom: 8px; padding-inline: 10px;
         
-        z-index: 10; 
+        z-index: 0; 
     }
 
     #fileSearchFilters .parameterSearch:nth-child(1),
