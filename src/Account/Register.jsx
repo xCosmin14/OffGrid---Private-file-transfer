@@ -21,15 +21,11 @@ export default function Register() {
         e.preventDefault();
 
         const formData = new FormData(e.currentTarget)
-        const date = new Date()
-        const mysqlDate = date.toISOString().slice(0, 19).replace('T', ' ');
 
         formData.set("username", formData.get("username").replace(/['`"/{};?,#$%^&*()]+/g, ''))
         formData.set("email", formData.get("email").replace(/['`"/{};?,#$%^&*()]+/g, ''))
         formData.set("password", formData.get("password").replace(/['`"<>]+/g, ''))
         formData.set("confirmPassword", formData.get("confirmPassword").replace(/['`"<>]+/g, ''))
-        formData.set("invite_code", formData.get("invite_code").replace(/['`"<>]+/g, ''))
-        formData.set("join_date", mysqlDate)
         
         if (formData.get("password") !== formData.get("confirmPassword")) {
             setShowError("password mismatch")
@@ -121,19 +117,6 @@ export default function Register() {
                     </button>
 
                     <Password />
-                </div>
-
-                <div id="accountFormField">
-                    <input type="text" name="invite_code" placeholder="Invite code"
-                        pattern="[a-zA-Z0-9!#$%^?]+" required
-                        onChange={() => setShowError("")}
-                        onBeforeInput={(e) => {
-                            if (!/[a-zA-Z0-9!#$%^?]/.test(e.data)) {
-                                e.preventDefault()
-                            }
-                        }} 
-                    />
-                    <Group />
                 </div>
 
                 <button type="submit">Register</button>

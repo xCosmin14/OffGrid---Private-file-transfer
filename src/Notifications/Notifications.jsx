@@ -1,19 +1,59 @@
-import { useState } from "react"
+import { useState, useContext, useEffect } from "react" 
 
-import AcceptFriendNotification from "./AcceptFriendNotification.jsx"
 import InviteNotification from "./InviteNotification.jsx"
 import FilePreviewNotification from "./FilePreviewNotification.jsx"
 import TextNotification from "./TextNotification.jsx"
 
-import {useTitle} from "../UseTitle.js"
-
+import { customFetch, UserContext } from "../UserContext.jsx"
 import Seen from "../assets/SVG/Seen.svg?react"
 
 import "./Notifications.css"
 
+const getNotifications = async () => {
+    try {
+        const response = await customFetch(`http://localhost:18080/get_notifications`, {
+            method: "GET",
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+        })
+
+        const resp = await response.json()
+        return resp.notifications || []
+    } catch (err) {
+        console.error("Error fetching notifications:", err)
+        return []
+    }
+}
+
+const formatTime = (dateStr) => {
+    if (!dateStr) return ""
+    const timePart = dateStr.split(" ")[1]
+    return timePart ? timePart.slice(0, 5) : dateStr
+}
+
 export default function Notifications() {
     const [scrollable, setScrollable] = useState(false)
-    let notificationsNumber = localStorage.getItem("notificationsNumber")
+    const [notifications, setNotifications] = useState([])
+
+    const { notifications: wsNotifications } = useContext(UserContext) || {}
+
+    useEffect(() => {
+        const fetchInitialNotifications = async () => {
+            const data = await getNotifications()
+            setNotifications(data)
+        }
+        fetchInitialNotifications()
+    }, [])
+
+    useEffect(() => {
+        if (wsNotifications && wsNotifications.length > 0) {
+            setNotifications(prev => {
+                const existingIds = new Set(prev.map(n => n.notification_id))
+                const newOnly = wsNotifications.filter(n => !existingIds.has(n.notification_id))
+                return [...prev, ...newOnly]
+            })
+        }
+    }, [wsNotifications])
 
     const handleScroll = (e) => {
         const el = e.target
@@ -22,24 +62,71 @@ export default function Notifications() {
     }
 
     const deleteNotifications = () => {
-        const notifications = document.querySelectorAll(".notification")
-        notifications.forEach(notification => {
-            notification.remove()
-        })
-        notificationsNumber=0
-        localStorage.setItem("notificationsNumber", 0)
+        setNotifications([])
+    }
+
+    const renderNotification = (notif, index) => {
+        let info = {}
+
+        if (typeof notif.info === "string") 
+            info = JSON.parse(notif.info)
+        else if (notif.info) info = notif.info
+        
+        const id = notif.notification_id || `notif-${index}`
+        const sender = info.sender_username || notif.username || "System"
+        const type = info.type || notif.type
+        const entity = info.entity || notif.entity
+        const itemName = info.folder_name || info.file_name || "" 
+        const formattedTime = formatTime(notif.sent)
+
+        if (type === "access_granted" && entity === "folder") {
+            return (
+                <InviteNotification 
+                    key={id} 
+                    sender={sender} 
+                    sent={formattedTime} 
+                    folderName={itemName} 
+                    folderID={info.entity_id}
+                />
+            )
+        }
+
+        if (type === "access_granted" && entity === "file") {
+            const extension = itemName.includes(".") ? itemName.split(".").pop().toLowerCase() : "file"
+
+            return (
+                <FilePreviewNotification 
+                    key={id} 
+                    senderId={sender} 
+                    sent={formattedTime}
+                    actionType={1} 
+                    fileType={extension} 
+                    fileName={itemName}
+                />
+            )
+        }
+
+        return (
+            <TextNotification 
+                key={id} 
+                sender={sender} 
+                sent={formattedTime}
+                fileName={itemName}
+                actionType={0}
+            />
+        )
     }
 
     return (
         <div id="notificationsCenter" 
             className={scrollable ? "showAll" : ""}
-            style={{overflowY: scrollable ? "scroll" : "hidden"}}
+            style={{ overflowY: scrollable ? "scroll" : "hidden" }}
             onScroll={handleScroll}
         >
             <h2>Notifications</h2>
 
             <div id="notificationsHeader">
-                <button onClick={() => deleteNotifications()}>
+                <button onClick={deleteNotifications}>
                     <Seen />
                     <h4>Mark all as read</h4>
                 </button>   
@@ -47,44 +134,11 @@ export default function Notifications() {
                 <button onClick={() => setScrollable(true)}><h4>View all</h4></button> 
             </div>
 
-            { notificationsNumber != 0 &&
-            <div id="notificationsList">
-                <AcceptFriendNotification id="acceptFriend" className="notification" 
-                    className="notification" senderId="" sendDate=""
-                />
-
-                <InviteNotification id="InviteNotification" className="notification"
-                    senderId="" sendDate="" folderID="" 
-                />
-
-                <FilePreviewNotification id="previewNotification" className="notification"
-                    actionType="0" fileType="folder" senderId="" sendDate="" fileID="" folderID="" folderName=""
-                    //fileType se completeaza cu extensia, actionType="0 - a incarcat un fisier in folder comun, 1 - ti-a trimis un fisier/folder"
-                />
-
-                <FilePreviewNotification id="previewNotification" className="notification"
-                    actionType="1" fileType="pdf" senderId="" sendDate="" fileID="" folderID="" folderName=""
-                    //fileType se completeaza cu extensia, actionType="0 - a incarcat un fisier in folder comun, 1 - ti-a trimis un fisier/folder"
-                />
-
-                <FilePreviewNotification id="previewNotification" className="notification"
-                    actionType="1" fileType="apk" senderId="" sendDate="" fileID="" folderID="" folderName=""
-                    //fileType se completeaza cu extensia, actionType="0 - a incarcat un fisier in folder comun, 1 - ti-a trimis un fisier/folder"
-                />
-
-                <TextNotification id="textNotification" className="notification"
-                    actionType="0" senderId="" sendDate="" inviteCode="" fileID="" folderName=""
-                />
-
-                <TextNotification id="textNotification" className="notification"
-                    actionType="1" senderId="" sendDate="" inviteCode="" fileID="" folderName=""
-                />
-
-                <TextNotification id="textNotification" className="notification"
-                    actionType="2" senderId="" sendDate="" inviteCode="" fileID="" folderName=""
-                />
-            </div>
-            }
+            {notifications.length > 0 && (
+                <div id="notificationsList">
+                    {notifications.map((notification, index) => renderNotification(notification, index))}
+                </div>
+            )}
         </div>
     )
 }

@@ -486,6 +486,15 @@ export default function Favourites() {
                         }}/>}
                         Last modified
                     </div>
+
+                    <div style={{color: sortFilter.crit === "creator_username" ? "var(--hoverCol)" : "var(--text)"}}
+                        onClick={() => setSortFilter({crit: "creator_username", order: sortFilter.order === "asc" ? "desc" : "asc"})}>
+                        {sortFilter.crit === "creator_username" && <ArrowUp style={{ 
+                            transform: sortFilter.order === "asc" ? "rotate(0deg)" : "rotate(180deg)",
+                            transition: "transform 0.2s ease"
+                        }}/>}
+                        Owner
+                    </div>
                 </div>
                 
                 <hr className="fileTableDivider"/>
@@ -514,6 +523,8 @@ export default function Favourites() {
                                         created={!isLoading && formatDate(folder.created)}
                                         lastModified={!isLoading && formatDate(folder.modified)}
                                         onFileClick={() => { setSearchQuery(""); navigate(pathForLink); }}
+                                        owner={folder.owner}
+                                        collaborators={folder.collaborators}
                                     />
                                 )
                             })}
@@ -531,6 +542,8 @@ export default function Favourites() {
                                     lastModified={!isLoading && formatDate(file.modified)}
                                     onFileClick = {() => setOpenFile(file)}
                                     hideType={isViewerSmall}
+                                    owner={file.owner}
+                                    collaborators={file.collaborators}
                                 />
                             ))}
                         </>

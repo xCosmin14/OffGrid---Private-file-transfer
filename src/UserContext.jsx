@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect } from "react"
+import { createContext, useState, useEffect, useRef } from "react"
 import MockUserImg from "./assets/MockUserImg.jpg"
 
 export const UserContext = createContext()
@@ -37,6 +37,8 @@ export const UserProvider = ({ children }) => {
     const [avatar, setAvatar] = useState(MockUserImg)
     const [isLogged, setIsLogged] = useState(localStorage.getItem("isLogged") === "true")
 
+    const wsRef = useRef(null)
+
     const loadData = async () => {
         try {
             const res = await customFetch("http://localhost:18080/user_data", {
@@ -46,7 +48,8 @@ export const UserProvider = ({ children }) => {
             })
             
             const data = await res.json()
-            setUser({ username: data.data[0].username, email: data.data[0].email, preferences: data.data[0].preferences })
+            const userData = data.data ? data.data[0] : data
+            setUser({ username: userData.username, email: userData.email, preferences: userData.preferences })
 
             const photoRes = await customFetch("http://localhost:18080/get_profile_photo", { method: 'GET' })
             if (photoRes.ok) {
@@ -59,7 +62,27 @@ export const UserProvider = ({ children }) => {
         }
     }
 
-    useEffect(() => {if (isLogged) loadData()}, [isLogged])
+    useEffect(() => {
+        if (!isLogged) return
+
+        loadData()
+
+        const socket = new WebSocket("ws://localhost:18080")
+        wsRef.current = socket
+        
+        socket.onopen = () => {
+            
+        }
+
+        socket.onerror = (error) => {
+            console.error("WebSocket error:", error)
+        }
+
+        return () => {
+            socket.close()
+            wsRef.current = null
+        }
+    }, [isLogged])
 
     useEffect(() => {
         if (!user?.preferences) return
@@ -79,7 +102,13 @@ export const UserProvider = ({ children }) => {
     }, [user?.preferences])
 
     return (
-        <UserContext.Provider value={{ user, avatar, refreshData: loadData, isLogged, setIsLogged }}>
+        <UserContext.Provider value={{ 
+            user, 
+            avatar, 
+            refreshData: loadData, 
+            isLogged, 
+            setIsLogged, 
+        }}>
             {children}
         </UserContext.Provider>
     )

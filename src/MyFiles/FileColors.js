@@ -237,7 +237,7 @@ export const viewerComponentsMap = {
     "md": "DocumentViewer",
 
     "xls": "DocumentViewer", "xlsx": "DocumentViewer", 
-    "csv": "DocumentViewer", "ods": "DocumentViewer",
+    "csv": "DocumentViewer", 
 
     "txt": "DocumentViewer"
 };

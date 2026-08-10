@@ -496,6 +496,15 @@ export default function PhotoAlbum() {
                         }}/>}
                         Last modified
                     </div>
+
+                    <div style={{color: sortFilter.crit === "creator_username" ? "var(--hoverCol)" : "var(--text)"}}
+                        onClick={() => setSortFilter({crit: "creator_username", order: sortFilter.order === "asc" ? "desc" : "asc"})}>
+                        {sortFilter.crit === "creator_username" && <ArrowUp style={{ 
+                            transform: sortFilter.order === "asc" ? "rotate(0deg)" : "rotate(180deg)",
+                            transition: "transform 0.2s ease"
+                        }}/>}
+                        Owner
+                    </div>
                 </div>
                 
                 <hr className="fileTableDivider"/>
@@ -527,6 +536,8 @@ export default function PhotoAlbum() {
                                             favourite={folder.favourite}
                                             created={!isLoading && formatDate(folder.created)}
                                             lastModified={!isLoading && formatDate(folder.modified)}
+                                            owner={folder.creator_username}
+                                            collaborators={folder.collaborators}
                                         />
                                     </div>
                                 )
@@ -545,6 +556,8 @@ export default function PhotoAlbum() {
                                     lastModified={!isLoading && formatDate(file.modified)}
                                     onFileClick = {() => setOpenFile(file)}
                                     hideType={isViewerSmall}
+                                    owner={file.creator_username}
+                                    collaborators={file.collaborators}
                                 />
                             ))}
                         </>

@@ -68,21 +68,12 @@
     z-index: 999;
 }
 
-.notification #plainText {
-    margin-top: -5px; 
-    display: flex; flex-direction: column;
-    gap: 15px;
-    cursor: pointer;
-}
-#plainText h4 {font-weight: 600;}
 
-.notification img {
-    width: 36px; height: 36px;
-    border-radius: 50%;
-}
+#plainText h4 {font-weight: 600;}
 
 #highlight {color: var(--hoverCol); font-weight: bold;}
 
+#notifBody {width: 100%;}
 #notifBody #buttons {
     width: 50%;
     display: flex; flex-direction: row; justify-content: space-between;
@@ -94,9 +85,7 @@
     border-radius: 8px;
     transition: .3s ease;
 }
-#notifBody #buttons button:first-of-type {
-    background-color: var(--hoverCol);
-}
+
 #notifBody #buttons button:last-of-type {border: 1px solid var(--boxShadowCol);}
 #notifBody #buttons button:hover {
     box-shadow: var(--boxShadowCol) 0px 6px 12px;
@@ -105,7 +94,7 @@
 #notifFilePreview {
     width: 100%; height: 40px;
     display: flex; align-items: center;
-    margin-top: 15px;
+    margin-top: 15px; margin-bottom: 15px;
     background: var(--bgCol);
     border-radius: 8px;
     transition: .3s ease; cursor: pointer;

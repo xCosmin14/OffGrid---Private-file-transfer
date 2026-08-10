@@ -5,6 +5,7 @@ import { FileIcon, defaultStyles } from 'react-file-icon'
 import { customFetch } from "../UserContext.jsx"
 import { FileContext } from "../GetFiles.jsx"
 
+import Add from "../assets/SVG/FileIcons/Add.svg?react"
 import Dots from "../assets/SVG/Dots.svg?react"
 import Folder from "../assets/SVG/FileIcons/Folder.svg?react"
 import Download from "../assets/SVG/FileIcons/Download.svg?react"
@@ -16,7 +17,6 @@ import ArrowDown from "../assets/SVG/ArrowDown.svg?react"
 
 export default function File(props) {
     const { pathname } = useLocation()
-    const displayOwner = (pathname.includes("shared") || pathname.includes("favorites") || pathname.includes("trash"))
     const isFolder = props.extension === "Folder"
     const { refreshFiles } = useContext(FileContext)
 
@@ -26,9 +26,17 @@ export default function File(props) {
 
     const [displayRename, setDisplayRename] = useState(false)
     const renameRef = useRef(null)
-
     const [newName, setNewName] = useState(props.name || "")
     const [newFolderColor, setNewFolderColor] = useState(props.color || "#000000")
+
+    const [displayAccess, setDisplayAccess] = useState(false)
+    const [localCollaborators, setLocalCollaborators] = useState(props.collaborators || [])
+    const [collaboratorPhotos, setCollaboratorPhotos] = useState([])
+
+    const accessRef = useRef(null)
+
+    const [usernameToSend, setUsernameToSend] = useState("")
+    const [permissionsToSend, setPermissionsToSend] = useState("view")
 
     useEffect(() => {
         const handleClickOutsideRename = (event) => {
@@ -49,6 +57,24 @@ export default function File(props) {
     }, [displayRename])
 
     useEffect(() => {
+        const handleClickOutsideAccess = (event) => {
+            if (accessRef.current && !accessRef.current.contains(event.target)) {
+                setDisplayAccess(false)
+            }
+        }
+
+        if (displayAccess) {
+            document.addEventListener("mousedown", handleClickOutsideAccess)
+            document.addEventListener("touchstart", handleClickOutsideAccess)
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutsideAccess)
+            document.removeEventListener("touchstart", handleClickOutsideAccess)
+        }
+    }, [displayAccess])
+
+    useEffect(() => {
         const handleClickOutside = (event) => {
             if (menuRef.current && !menuRef.current.contains(event.target)) setShowMenu(false)
         }
@@ -63,6 +89,48 @@ export default function File(props) {
             document.removeEventListener("touchstart", handleClickOutside)
         }
     }, [showMenu])
+
+    useEffect(() => {
+        setLocalCollaborators(props.collaborators || [])
+    }, [props.collaborators])
+
+    useEffect(() => {
+        let isMounted = true
+        let createdUrls = []
+
+        const fetchPhotos = async () => {
+            if (!displayAccess || localCollaborators.length === 0) {
+                setCollaboratorPhotos([])
+                return
+            }
+
+            try {
+                const res = await customFetch('http://localhost:18080/get_collaborators_profile', {
+                    method: 'GET'
+                })
+
+                if (res.ok) {
+                    const formData = await res.formData()
+                    const files = formData.getAll('file')
+
+                    createdUrls = files.map(file => URL.createObjectURL(file))
+
+                    if (isMounted) {
+                        setCollaboratorPhotos(createdUrls)
+                    }
+                }
+            } catch (err) {
+                console.error("Error fetching collaborator photos:", err)
+            }
+        }
+
+        fetchPhotos()
+
+        return () => {
+            isMounted = false
+            createdUrls.forEach(url => URL.revokeObjectURL(url))
+        }
+    }, [displayAccess, localCollaborators])
 
     const handleAction = async (e, action) => {
         e.stopPropagation()
@@ -120,6 +188,12 @@ export default function File(props) {
                 break
             }
 
+            case "access": {
+                setUsernameToSend("")
+                setDisplayAccess(true)
+                break
+            }
+
             default: return
         }
     }
@@ -143,7 +217,78 @@ export default function File(props) {
                 setDisplayRename(false)
                 if (refreshFiles) await refreshFiles()
             }
-        } catch (err) {}
+        } catch (err) {
+            console.error("Rename error:", err)
+        }
+    }
+
+    const removeCollaborator = async (username) => {
+        try {
+            const response = await customFetch(`http://localhost:18080/revoke_access`, {
+                method: "POST",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: username,
+                    file_id: props.id,
+                    resource: isFolder ? "folder" : "file"
+                })
+            })
+
+            if (response.ok) {
+                setLocalCollaborators(prev => prev.filter(user => user !== username))
+                if (refreshFiles) await refreshFiles()
+            }
+        } catch (err) {
+            console.error("Remove error:", err)
+        }
+    }
+
+    async function getUserPhotos (paths) {
+        const res = await fetch('http://localhost:18080/get_collaborators_profile', {
+            method: 'GET', 
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        })
+
+        if (res.ok) {
+           const formData = await res.formData()
+            const files = formData.getAll('file')
+
+            const imageUrls = files.map(file => URL.createObjectURL(file))
+            return imageUrls 
+        }
+
+        return []
+    }
+
+    const submitAccess = async () => {
+        if (!usernameToSend) return
+
+        try {
+            const response = await customFetch(`http://localhost:18080/grant_access`, {
+                method: "POST",
+                headers: { 'Content-Type': 'application/json' },
+                body: isFolder ? JSON.stringify({ 
+                    username: usernameToSend,
+                    folder_id: props.id,
+                    type: permissionsToSend,
+                    resource: "folder"
+                }) : JSON.stringify({
+                    username: usernameToSend,
+                    file_id: props.id,
+                    type: permissionsToSend,
+                    resource: "file"
+                })
+            })
+
+            if (response.ok) {
+                setLocalCollaborators(prev => [...prev, usernameToSend])
+                setUsernameToSend("")
+                if (refreshFiles) await refreshFiles()
+            }
+        } catch (err) {
+            console.error("Share error:", err)
+        }
     }
 
     const handleRowClick = () => {
@@ -162,8 +307,9 @@ export default function File(props) {
                     <h2>{isFolder ? "Edit folder" : "Rename file"}</h2>
                     
                     <input 
-                        type="text" 
-                        name="newFileName" placeholder="Name" 
+                        type="text" required
+                        name="newFileName" 
+                        placeholder="Name" 
                         value={newName}
                         onChange={(e) => setNewName(e.target.value)}
                         onBeforeInput={(e) => {
@@ -178,7 +324,8 @@ export default function File(props) {
                                     .trim().replace("light-dark(", "").replace(", ", " / ").replace(")", "") : 
                                     newFolderColor}</h3>
                             <input 
-                                type="color" name="newFolderColor" 
+                                type="color" 
+                                name="newFolderColor" 
                                 value={newFolderColor}
                                 onChange={(e) => setNewFolderColor(e.target.value)}
                             />
@@ -201,10 +348,52 @@ export default function File(props) {
         )
     }
 
+    const renderAccessModal = () => {
+        if (!displayAccess) return null
+
+        // Am șters: var collaboratorPhotos = []
+        // Am șters: if (localCollaborators.length > 0) collaboratorPhotos = getUserPhotos()
+
+        return (
+            <div className="modalOverlay" onClick={(e) => {
+                e.stopPropagation()
+                setDisplayAccess(false)
+            }}>
+                <div id="createFolder" ref={accessRef} onClick={(e) => e.stopPropagation()}>
+                    <h2>{isFolder ? "Share folder" : "Share file"}</h2>
+                    
+                    {/* ... Restul modalului ... */}
+
+                    {localCollaborators.length > 0 && (
+                        <div className="accessInfo">
+                            <h3>Collaborators:</h3>
+
+                            <div className="collaboratorsList">
+                                {localCollaborators.map((collab, index) => (
+                                    <div key={`${collab}-${index}`} className="collaborator">
+                                        {/* Afișăm poza dacă există la indexul respectiv */}
+                                        {collaboratorPhotos[index] && (
+                                            <img 
+                                                src={collaboratorPhotos[index]} 
+                                                alt={collab} 
+                                                className="collaboratorAvatar" 
+                                            />
+                                        )}
+                                        <p>{collab}</p>
+                                        <Add onClick={() => removeCollaborator(collab)} />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className={`fileRow ${isExpanded ? "expanded" : ""}`} onClick={handleRowClick}>
             <div className="fileNameCell">
-                
                 <div className="mobileExpandBtn" onClick={(e) => { 
                     e.stopPropagation() 
                     setIsExpanded(p => !p) 
@@ -229,7 +418,7 @@ export default function File(props) {
             }</h3>
             <h3 className="fileDetail"><span className="mobileLabel">Created: </span>{props.created}</h3>
             <h3 className="fileDetail"><span className="mobileLabel">Modified: </span>{props.lastModified}</h3>
-            {displayOwner && <h3 className="fileDetail"><span className="mobileLabel">Owner: </span>{props.owner}</h3>}
+            <h3 className="fileDetail"><span className="mobileLabel">Owner: </span>{props.owner}</h3>
 
             <div className="fileOptionsContainer" ref={menuRef} 
                 onClick={(e) => {
@@ -262,6 +451,7 @@ export default function File(props) {
             </div>
 
             {renderRenameModal()}
+            {renderAccessModal()}
         </div>
     )
 }

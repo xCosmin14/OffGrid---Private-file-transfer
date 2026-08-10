@@ -1,31 +1,22 @@
-import {Link} from 'react-router-dom'
-
-import NotifFilePreview from './NotifFilePreview'
-
-import MockUserImg from "../assets/MockUserImg.jpg"
-
+import NotifFilePreview from './NotifFilePreview.jsx'
 import "./Notifications.css"
 
-export default function ActionNotification(props) {
-    //de inlocuit cu props
+export default function InviteNotification(props) {
     return (
         <div className="notification">
-            <img src={MockUserImg} onClick={() => window.location.href = '/'}/>
-
             <div id="notifBody">
-                <div id="plainText">
-                    <h4>
-                        <span id="highlight" onClick={() => window.location.href = '/'}>Nume Prenume</span> invited you in their shared folder
-                    </h4>
-                    <h6>6.6.2026</h6>
-                </div>
+                <h4>
+                    <span id="highlight" onClick={() => window.location.href = '/'}>{props.sender}</span> invited you in their shared folder
+                </h4>
 
-                <NotifFilePreview fileType="folder" />
+                <NotifFilePreview fileType="folder" fileName={props.folderName} />
+                
+                <h5>{props.sent}</h5>
 
                 <div id="buttons">
-                    <button>Accept</button>
                     <button>Delete</button>
                 </div>
+                
             </div>
         </div>
     )

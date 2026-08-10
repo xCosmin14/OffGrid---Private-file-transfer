@@ -100,7 +100,7 @@
 .fileTableHeader,
 .fileRow {
     display: grid;
-    grid-template-columns: 3fr 0.8fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: 3.2fr 0.5fr 0.7fr 0.9fr 0.9fr 1fr;
     align-items: center; box-sizing: border-box;
     border: 1px solid transparent;
     min-width: 800px;
@@ -247,6 +247,144 @@
     position: relative;
     margin: auto; bottom: 15%;
     opacity: .6;
+}
+
+#permissions {
+    position: relative; left: 25px; top: 15px;
+    width:auto; height: 30px;
+    display: flex; flex-direction: row; align-items: center; 
+    scale: 1.1;
+    margin-bottom: 10px;
+}
+#permissions select {
+    position: relative; left: 20px; top: 2px;
+    background: none; background-color: transparent; 
+    border: 2px solid var(--boxShadowCol); border-radius: 8px;
+    padding-left: 10px; padding-top: 2px; padding-bottom: 2px;
+}
+
+#createFolder:has(#permissions) {
+    height: 460px;
+    justify-content: flex-start;
+    padding-top: 30px;
+    padding-bottom: 20px;
+    box-sizing: border-box;
+}
+
+#permissions {
+    margin-left: 10px;
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: var(--text);
+}
+
+#permissions h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+#permissions select {
+    background: transparent;
+    color: var(--text);
+    border: 2px solid var(--boxShadowCol);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 15px;
+    outline: none;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+#permissions select:hover,
+#permissions select:focus {
+    border-color: var(--hoverCol);
+}
+
+#permissions select option {
+    background-color: var(--menuBgCol);
+    color: var(--text);
+}
+
+.accessInfo {
+    margin-left: 10px;
+    margin-top: 25px;
+    width: calc(100% - 20px);
+    display: flex;
+    flex-direction: column;
+}
+
+.accessInfo h3 {font-size: 16px;}
+
+.collaboratorsList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 140px; 
+    overflow-y: auto; 
+    padding-right: 5px; 
+    
+    scrollbar-width: thin;
+    scrollbar-color: var(--boxShadowCol) transparent;
+}
+
+.collaboratorsList::-webkit-scrollbar {
+    width: 6px;
+}
+.collaboratorsList::-webkit-scrollbar-track {
+    background: transparent;
+}
+.collaboratorsList::-webkit-scrollbar-thumb {
+    background-color: var(--boxShadowCol);
+    border-radius: 10px;
+}
+.collaboratorsList:hover::-webkit-scrollbar-thumb {
+    background-color: var(--hoverCol); 
+}
+
+.collaborator {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 40px;
+    box-sizing: border-box;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    transition: 0.3s ease;
+}
+
+.collaborator:hover {
+    border-color: var(--hoverCol);
+    box-shadow: 0px 4px 12px var(--boxShadowCol); 
+}
+
+.collaborator p {
+    margin: 0;
+    padding-left: 15px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.collaborator svg {
+    width: 24px;
+    height: 24px;
+    margin-right: 15px;
+    cursor: pointer;
+    color: var(--text); 
+    transform: rotate(45deg); 
+    visibility: hidden;
+}
+.collaborator:hover svg {
+    visibility: visible;
+    color: var(--hoverCol);
 }
 
 @media screen and (max-width: 500px) {

@@ -109,7 +109,7 @@ export default function MyFiles() {
                 calculatedSize: calculateFolderSize(folder.path, safeFiles)
             }))
             .filter(folder => {
-                if (folder.inTrash == 1 || getParentPath(folder.path) !== currentPathStr) return false
+                if (getParentPath(folder.path) !== currentPathStr) return false
                 if (appliedFilters.extensionFilter && appliedFilters.extensionFilter !== "Folder") return false
                 if (searchQuery && !folder.name.toLowerCase().includes(searchQuery.toLowerCase())) return false
                 
@@ -123,7 +123,7 @@ export default function MyFiles() {
             })
 
         let filteredFiles = safeFiles.filter(file => {
-            if (file.inTrash == 1 || getParentPath(file.path) !== currentPathStr) return false
+            if (getParentPath(file.path) !== currentPathStr) return false
             if (appliedFilters.extensionFilter && file.extension !== appliedFilters.extensionFilter) return false
             if (searchQuery && !file.name.toLowerCase().includes(searchQuery.toLowerCase())) return false
             
@@ -152,8 +152,6 @@ export default function MyFiles() {
             return { sizeByTypes: [], totalFileSize: 0 } 
 
         files.forEach(file => {
-            if (file.inTrash == 1) return 
-
             const fileSizeNum = parseFloat(file.size) || 0
             const fileSizeMB = fileSizeNum / 1048576.0 
 
@@ -481,6 +479,15 @@ export default function MyFiles() {
                         }}/>}
                         Last modified
                     </div>
+
+                    <div style={{color: sortFilter.crit === "creator_username" ? "var(--hoverCol)" : "var(--text)"}}
+                        onClick={() => setSortFilter({crit: "creator_username", order: sortFilter.order === "asc" ? "desc" : "asc"})}>
+                        {sortFilter.crit === "creator_username" && <ArrowUp style={{ 
+                            transform: sortFilter.order === "asc" ? "rotate(0deg)" : "rotate(180deg)",
+                            transition: "transform 0.2s ease"
+                        }}/>}
+                        Owner
+                    </div>
                 </div>
                 
                 <hr className="fileTableDivider"/>
@@ -492,13 +499,13 @@ export default function MyFiles() {
                         <h2 id="emptyMessage">No files to show</h2>
                     ) : (
                         <>
-                            {processedFolders.map(folder => {
+                            {processedFolders.map((folder, idx) => {
                                 const nextPath = currentPathStr ? `${currentPathStr}/${folder.name}` : folder.name
                                 const pathForLink = `/?dir=${encodeURIComponent(nextPath)}`
                                 
                                 return (
                                     <File 
-                                        key={`folder-${folder.path}`}
+                                        key={folder.folder_id ? `folder-${folder.folder_id}` : `folder-${folder.path}-${idx}`}
                                         path={folder.path}
                                         id={folder.folder_id}
                                         name={folder.name} 
@@ -512,15 +519,17 @@ export default function MyFiles() {
                                             setSearchQuery("")
                                             navigate(pathForLink)
                                         }}
+                                        owner={folder.owner}
+                                        collaborators={folder.collaborators}
                                     />
                                 )
                             })}
-                            
-                            {processedFiles.map(file => (
+
+                            {processedFiles.map((file, idx) => (
                                 <File 
+                                    key={file.file_id ? `file-${file.file_id}` : `file-${file.path}-${idx}`}
                                     path={file.path}
                                     id={file.file_id} 
-                                    key={`file-${file.path}`}
                                     name={file.name} 
                                     extension={file.extension ? file.extension.charAt(0).toUpperCase() + file.extension.slice(1) : ""} 
                                     size={file.size}
@@ -529,6 +538,8 @@ export default function MyFiles() {
                                     lastModified={!isLoading && formatDate(file.modified)}
                                     onFileClick={() => setOpenFile(file)}
                                     hideType={isViewerSmall}
+                                    owner={file.creator_username}
+                                    collaborators={file.collaborators}
                                 />
                             ))}
                         </>
