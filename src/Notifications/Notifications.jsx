@@ -9,9 +9,11 @@ import Seen from "../assets/SVG/Seen.svg?react"
 
 import "./Notifications.css"
 
+const key = import.meta.env.VITE_HOST_ADDRESS
+
 const getNotifications = async () => {
     try {
-        const response = await customFetch(`http://localhost:18080/get_notifications`, {
+        const response = await customFetch(`http://${key}:18080/get_notifications`, {
             method: "GET",
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },

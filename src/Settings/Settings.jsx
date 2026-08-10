@@ -32,6 +32,8 @@ const formatColor = (hex, alpha) => {
 }
 
 export default function Settings() {
+    const key = import.meta.env.VITE_HOST_ADDRESS
+
     const { user, avatar, refreshData } = useContext(UserContext)
     useTitle("Settings - OffGrid") 
 
@@ -91,7 +93,7 @@ export default function Settings() {
     }
 
     const saveColors = async () => {
-        const response = await customFetch(`http://localhost:18080/change_data`, {
+        const response = await customFetch(`http://${key}:18080/change_data`, {
             method: "PATCH",
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ preferences: colors })
@@ -107,7 +109,7 @@ export default function Settings() {
         formData.append('photo', file, file.name) 
 
         try {
-            const response = await customFetch("http://localhost:18080/upload_photo", {
+            const response = await customFetch(`http://${key}:18080/upload_photo`, {
                 method: 'POST',
                 credentials: 'include',
                 body: formData
@@ -129,7 +131,7 @@ export default function Settings() {
         } 
 
         try {
-            const response = await customFetch("http://localhost:18080/change_username", {
+            const response = await customFetch(`http://${key}:18080/change_username`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': "application/json" },
                 body: JSON.stringify(payload)
@@ -153,7 +155,7 @@ export default function Settings() {
         } 
 
         try {
-            const response = await customFetch("http://localhost:18080/change_password", {
+            const response = await customFetch(`http://${key}:18080/change_password`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': "application/json" },
                 body: JSON.stringify(payload)
@@ -169,7 +171,7 @@ export default function Settings() {
     } 
     
     const logOut = async () => {
-        await customFetch("http://localhost:18080/log_out", {
+        await customFetch(`http://${key}:18080/log_out`, {
             method: 'POST',
             headers: { 'Content-Type': "application/json" },
             keepalive: true,

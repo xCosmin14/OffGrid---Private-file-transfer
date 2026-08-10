@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "preview": "vite preview",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -13,6 +14,7 @@
     "@zip.js/zip.js": "^2.8.34",
     "docx-preview": "^0.4.0",
     "dompurify": "^3.4.12",
+    "dotenv": "^17.4.2",
     "jszip": "^3.10.1",
     "music-metadata": "^11.14.0",
     "react": "^19.2.6",
@@ -23,6 +25,7 @@
     "react-router-dom": "^7.11.0",
     "react-syntax-highlighter": "^16.1.1",
     "remark-gfm": "^4.0.1",
+    "serve": "^14.2.6",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

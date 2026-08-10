@@ -19,6 +19,8 @@ const CodeViewer = lazy(() => import("./CodeViewer.jsx"))
 const ArchiveViewer = lazy(() => import("./ArchiveViewer.jsx"))
 
 export default function FileViewer(props) {
+    const key = import.meta.env.VITE_HOST_ADDRESS
+
     const [fileUrl, setFileUrl] = useState(null)
     const [fileBlob, setFileBlob] = useState(null) 
     const [loadingContent, setLoadingContent] = useState(true)
@@ -47,7 +49,7 @@ export default function FileViewer(props) {
             setFetchError(null)
 
             try {
-                const response = await customFetch(`http://localhost:18080/get_file?file_id=${fileId}`, {
+                const response = await customFetch(`http://${key}:18080/get_file?file_id=${fileId}`, {
                     method: "GET",
                     headers: { 'Content-Type': 'application/json' },
                 })
@@ -81,7 +83,7 @@ export default function FileViewer(props) {
     }, [fileId])
 
     const downloadFile = async () => {
-        const response = await customFetch(`http://localhost:18080/get_file?file_id=${fileId}`, {
+        const response = await customFetch(`http://${key}:18080/get_file?file_id=${fileId}`, {
             method: "GET",
             headers: { 'Content-Type': 'application/json' },
         })

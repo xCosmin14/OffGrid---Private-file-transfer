@@ -70,6 +70,8 @@ const sortItems = (items, crit, order) => {
 }
 
 export default function MyFiles() {
+    const key = import.meta.env.VITE_HOST_ADDRESS
+
     useTitle("OffGrid - Private file transfer")
 
     const { files, setFiles, folders, setFolders, isLoading, refreshFiles, searchQuery, setSearchQuery } = useContext(FileContext)
@@ -197,7 +199,7 @@ export default function MyFiles() {
 
         switch (action) {
             case "download": {
-                const response = await customFetch(`http://localhost:18080/get_file?file_id=${targetId}`, {
+                const response = await customFetch(`http://${key}:18080/get_file?file_id=${targetId}`, {
                     method: "GET",
                     headers: { 'Content-Type': 'application/json' },
                 })
@@ -216,7 +218,7 @@ export default function MyFiles() {
                 break
             }
             case "delete": {
-                const response = await customFetch(`http://localhost:18080/delete_file?${targetId}`, {
+                const response = await customFetch(`http://${key}:18080/delete_file?${targetId}`, {
                     method: "DELETE",
                     headers: { 'Content-Type': 'application/json' },
                 })
@@ -243,7 +245,7 @@ export default function MyFiles() {
                     setFiles(prev => prev.map(f => (f.file_id || f.id) === targetId ? { ...f, favourite: newFavStatus } : f))
                 
                 try {
-                    const response = await customFetch(`http://localhost:18080/change_data/file/${targetId}`, {
+                    const response = await customFetch(`http://${key}:18080/change_data/file/${targetId}`, {
                         method: "PATCH",
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ favourite: newFavStatus })
@@ -519,7 +521,7 @@ export default function MyFiles() {
                                             setSearchQuery("")
                                             navigate(pathForLink)
                                         }}
-                                        owner={folder.owner}
+                                        owner={folder.creator_username}
                                         collaborators={folder.collaborators}
                                     />
                                 )

@@ -3,6 +3,8 @@ import MockUserImg from "./assets/MockUserImg.jpg"
 
 export const UserContext = createContext()
 
+const key = import.meta.env.VITE_HOST_ADDRESS
+
 export const customFetch = async (url, options = {}) => {
     const fetchOptions = {
         ...options,
@@ -47,7 +49,7 @@ export const UserProvider = ({ children }) => {
 
     const loadData = async () => {
         try {
-            const res = await customFetch("http://localhost:18080/user_data", {
+            const res = await customFetch(`http://${key}:18080/user_data`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ fields: ["username", "email", "preferences"] })
@@ -57,7 +59,7 @@ export const UserProvider = ({ children }) => {
             const userData = data.data ? data.data[0] : data
             setUser({ username: userData.username, email: userData.email, preferences: userData.preferences })
 
-            const photoRes = await customFetch("http://localhost:18080/get_profile_photo", { method: 'GET' })
+            const photoRes = await customFetch(`http://${key}:18080/get_profile_photo`, { method: 'GET' })
             if (photoRes.ok) {
                 const blob = await photoRes.blob()
                 const imageUrl = URL.createObjectURL(blob)
@@ -77,7 +79,7 @@ export const UserProvider = ({ children }) => {
 
         loadData()
 
-        const socket = new WebSocket("ws://localhost:18080")
+        const socket = new WebSocket(`ws://${key}:18080`)
         wsRef.current = socket
         
         socket.onopen = () => {

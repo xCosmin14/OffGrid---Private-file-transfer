@@ -3,6 +3,8 @@ import {Link} from "react-router-dom"
 
 import {useTitle} from "../UseTitle.js"
 
+import {customFetch} from "../UserContext.jsx"
+
 import Email from "../assets/SVG/UserIcons/Email.svg?react"
 import Password from "../assets/SVG/UserIcons/Password.svg?react"
 import EyeShow from "../assets/SVG/EyeShow.svg?react"
@@ -14,6 +16,8 @@ export default function Login() {
     const [showPass, setShowPass] = useState(false)
     const [showError, setShowError] = useState("") 
 
+    const key = import.meta.env.VITE_HOST_ADDRESS
+
     const handleSubmit = async (e) => {
         e.preventDefault()
 
@@ -24,7 +28,7 @@ export default function Login() {
         let DataObject = Object.fromEntries(formData.entries())
 
         try {
-            let response = await fetch("http://localhost:18080/log_in", {
+            let response = await customFetch(`http://${key}:18080/log_in`, {
                 method: "POST",
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',

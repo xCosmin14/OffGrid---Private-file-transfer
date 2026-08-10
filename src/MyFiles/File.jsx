@@ -4,6 +4,7 @@ import { FileIcon, defaultStyles } from 'react-file-icon'
 
 import { customFetch } from "../UserContext.jsx"
 import { FileContext } from "../GetFiles.jsx"
+import { UserContext } from "../UserContext.jsx"
 
 import MockUserImg from "../Assets/MockUserImg.jpg"
 
@@ -18,9 +19,13 @@ import Group from "../assets/SVG/UserIcons/Group.svg?react"
 import ArrowDown from "../assets/SVG/ArrowDown.svg?react" 
 
 export default function File(props) {
+    const key = import.meta.env.VITE_HOST_ADDRESS
+
     const { pathname } = useLocation()
     const isFolder = props.extension === "Folder"
+
     const { refreshFiles } = useContext(FileContext)
+    const { user } = useContext(UserContext)
 
     const [showMenu, setShowMenu] = useState(false)
     const [isExpanded, setIsExpanded] = useState(false) 
@@ -106,7 +111,7 @@ export default function File(props) {
             }
 
             try {
-                const res = await customFetch('http://localhost:18080/get_collaborators_profile', {
+                const res = await customFetch(`http://${key}:18080/get_collaborators_profile`, {
                     method: 'GET'
                 })
 
@@ -150,7 +155,7 @@ export default function File(props) {
 
             case "delete": {
                 const endpoint = isFolder ? "delete_folder" : "delete_file"
-                const url = `http://localhost:18080/${endpoint}?${props.id}`
+                const url = `http://${key}:18080/${endpoint}?${props.id}`
 
                 const response = await customFetch(url, {
                     method: "DELETE",
@@ -162,7 +167,7 @@ export default function File(props) {
             }
 
             case "download": {
-                const response = await customFetch(`http://localhost:18080/get_file?file_id=${props.id}`, {
+                const response = await customFetch(`http://${key}:18080/get_file?file_id=${props.id}`, {
                     method: "GET",
                     headers: { 'Content-Type': 'application/json' },
                 })
@@ -182,7 +187,7 @@ export default function File(props) {
 
             case "favorites": {
                 const type = isFolder ? "folder" : "file"
-                const response = await customFetch(`http://localhost:18080/change_data/${type}/${props.id}`, {
+                const response = await customFetch(`http://${key}:18080/change_data/${type}/${props.id}`, {
                     method: "PATCH",
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ favourite: props.favourite ? 0 : 1 })
@@ -211,7 +216,7 @@ export default function File(props) {
             : { name: newName }
 
         try {
-            const response = await customFetch(`http://localhost:18080/change_data/${type}/${props.id}`, {
+            const response = await customFetch(`http://${key}:18080/change_data/${type}/${props.id}`, {
                 method: "PATCH",
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
@@ -228,7 +233,7 @@ export default function File(props) {
 
     const removeCollaborator = async (username) => {
         try {
-            const response = await customFetch(`http://localhost:18080/revoke_access`, {
+            const response = await customFetch(`http://${key}:18080/revoke_access`, {
                 method: "POST",
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -251,7 +256,7 @@ export default function File(props) {
         if (!usernameToSend) return
 
         try {
-            const response = await customFetch(`http://localhost:18080/grant_access`, {
+            const response = await customFetch(`http://${key}:18080/grant_access`, {
                 method: "POST",
                 headers: { 'Content-Type': 'application/json' },
                 body: isFolder ? JSON.stringify({ 
@@ -437,7 +442,7 @@ export default function File(props) {
             }</h3>
             <h3 className="fileDetail"><span className="mobileLabel">Created: </span>{props.created}</h3>
             <h3 className="fileDetail"><span className="mobileLabel">Modified: </span>{props.lastModified}</h3>
-            <h3 className="fileDetail"><span className="mobileLabel">Owner: </span>{props.owner}</h3>
+            <h3 className="fileDetail"><span className="mobileLabel">Owner: </span>{props.owner === user.username ? "You" : props.owner}</h3>
 
             <div className="fileOptionsContainer" ref={menuRef} 
                 onClick={(e) => {

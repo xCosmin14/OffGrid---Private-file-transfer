@@ -71,6 +71,8 @@ const sortItems = (items, crit, order) => {
 }
 
 export default function MusicLibrary() {
+    const key = import.meta.env.VITE_HOST_ADDRESS
+
     useTitle("Music library")
 
     const { files, setFiles, folders, setFolders, isLoading, refreshFiles, searchQuery, setSearchQuery } = useContext(FileContext)
@@ -216,7 +218,7 @@ export default function MusicLibrary() {
     
         switch (action) {
             case "download": {
-                const response = await customFetch(`http://localhost:18080/get_file?file_id=${openFile.file_id || openFile.id}`, {
+                const response = await customFetch(`http://${key}:18080/get_file?file_id=${openFile.file_id || openFile.id}`, {
                     method: "GET",
                     headers: { 'Content-Type': 'application/json' },
                 })
@@ -235,7 +237,7 @@ export default function MusicLibrary() {
                 break
             }
             case "delete": {
-                const response = await customFetch(`http://localhost:18080/delete_file?${openFile.file_id || openFile.id}`, {
+                const response = await customFetch(`http://${process.env.HOST_ADDRESS}:18080/delete_file?${openFile.file_id || openFile.id}`, {
                     method: "DELETE",
                     headers: { 'Content-Type': 'application/json' },
                 })
@@ -261,7 +263,7 @@ export default function MusicLibrary() {
                     setFiles(prev => prev.map(f => (f.file_id || f.id) === targetId ? { ...f, favourite: newFavStatus } : f))
                 
                 try {
-                    const response = await customFetch(`http://localhost:18080/change_data/file/${targetId}`, {
+                    const response = await customFetch(`http://${process.env.HOST_ADDRESS}:18080/change_data/file/${targetId}`, {
                         method: "PATCH",
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ favourite: newFavStatus })

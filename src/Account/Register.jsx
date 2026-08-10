@@ -12,6 +12,8 @@ import EyeHide from "../assets/SVG/EyeHide.svg?react"
 import "./Account.css"
 
 export default function Register() {
+    const key = import.meta.env.VITE_HOST_ADDRESS
+
     const [showPass, setShowPass] = useState(false)
     const [showConfirm, setShowConfirm] = useState(false)
     
@@ -38,7 +40,7 @@ export default function Register() {
         const dataObject = Object.fromEntries(formData.entries())
 
         try {
-            let response = await fetch("http://localhost:18080/register", {
+            let response = await customFetch(`http://${key}:18080/register`, {
                 method: "POST",
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',

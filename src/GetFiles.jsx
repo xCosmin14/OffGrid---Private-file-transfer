@@ -4,6 +4,8 @@ import { customFetch } from "./UserContext.jsx"
 export const FileContext = createContext()
 
 export const FileProvider = ({ children }) => {
+    const key = import.meta.env.VITE_HOST_ADDRESS
+
     const [files, setFiles] = useState([])
     const [folders, setFolders] = useState([])
     const [isLoading, setIsLoading] = useState(true)
@@ -12,7 +14,7 @@ export const FileProvider = ({ children }) => {
 
     const fetchFiles = async () => {
         try {
-            const response = await customFetch("http://localhost:18080/user_files", {
+            const response = await customFetch(`http://${key}:18080/user_files`, {
                 method: "POST",
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

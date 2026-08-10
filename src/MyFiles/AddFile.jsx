@@ -40,6 +40,8 @@ export async function cancelUpload(uploadId) {
 }
 
 export default function AddFile(props) {
+    const key = import.meta.env.VITE_HOST_ADDRESS
+
     const [show, setShow] = useState(false)
     const menuRef = useRef(null)
 
@@ -215,7 +217,7 @@ export default function AddFile(props) {
             parent_folder_id: props.parentFolderID || null 
         }
 
-        const response = await customFetch("http://localhost:18080/create_folder", {
+        const response = await customFetch(`http://${key}:18080/create_folder`, {
             method: "POST",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
@@ -251,7 +253,7 @@ export default function AddFile(props) {
         const totalMB = (totalBytes / (1024 * 1024)).toFixed(1)
 
         try {
-            const response = await customFetch("http://localhost:18080/upload_folder", {
+            const response = await customFetch(`http://${key}:18080/upload_folder`, {
                 method: "POST",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },
@@ -311,7 +313,7 @@ export default function AddFile(props) {
                     xhr.addEventListener("error", () => reject(new Error("Network error")))
                     xhr.addEventListener("abort", () => reject(new Error("Aborted")))
 
-                    xhr.open("POST", `http://localhost:18080/upload_file?transaction_id=${data.transaction_id}`)
+                    xhr.open("POST", `http://${key}:18080/upload_file?transaction_id=${data.transaction_id}`)
                     xhr.withCredentials = true 
                     xhr.send(formData)
                 })
