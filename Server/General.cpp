@@ -272,6 +272,7 @@ Async<HttpResponse> ClientController::getProfilePics(std::string session_id)
 
 		auto rows = results.rows();
 
+
 		if (rows.empty()) 
 			co_return Helpers::makeResponse(http::status::not_found, "no collaborators found");
 
@@ -284,6 +285,7 @@ Async<HttpResponse> ClientController::getProfilePics(std::string session_id)
 			paths.emplace_back(id + ".png");
 			usernames.emplace_back(name);
 		}
+
 
 		co_return Helpers::makeResponse(http::status::ok, "pictures found", "", { {"paths", paths}, {"usernames", usernames}, {"content_type", "image/png"}});
 

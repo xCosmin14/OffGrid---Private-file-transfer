@@ -173,11 +173,12 @@ public:
 
 			if (req.target() == "/get_collaborators_profile")
 			{
-				json::array paths = json::value_to<json::array>(meta["paths"]);
-				json::array usernames = json::value_to<json::array>(meta["usernames"]);
+				json::array paths = meta["paths"].as_array();
+				json::array usernames = meta["usernames"].as_array();
 
 				std::string boundary = "offgrid-boundary-7f3a9c1e";
 				std::string multipart_body;
+
 
 				for (int i = 0; i < paths.size(); i++)
 				{
@@ -193,7 +194,7 @@ public:
 					std::string file_bytes = fbuf.str();
 
 					multipart_body += "--" + boundary + "\r\n";
-					multipart_body += "Content-Disposition: form-data; name=\"file\"; filename=\"" + 
+					multipart_body += "Content-Disposition: form-data; name=\"file\"; filename=\"" +
 						json::value_to<std::string>(usernames[i]) + "\"\r\n";
 					multipart_body += "Content-Type: image/png\r\n\r\n";
 					multipart_body += file_bytes;
@@ -201,9 +202,9 @@ public:
 
 				}
 
-
 				multipart_body += "--" + boundary + "--\r\n";
 
+				std::filesystem::create_directories("FileSystem/tmp");
 				std::string tmp_path = "FileSystem/tmp/" + boundary + ".tmp";
 				std::ofstream out(tmp_path, std::ios::binary);
 				out << multipart_body;
@@ -217,6 +218,7 @@ public:
 				}
 				res.result(http::status::ok);
 				res.set(http::field::content_type, "multipart/form-data; boundary=" + boundary);
+				res.prepare_payload();
 				co_return res;
 
 			}

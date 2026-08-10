@@ -370,6 +370,7 @@ Query Queries::GetNotifications(std::string uid)
 
 Query Queries::GetFileAccessUsers(std::string uid)
 {
-	return { "SELECT user_id, username from offgrid_db.access "
+	return { "SELECT access.user_id, user.username from offgrid_db.access "
+		"JOIN offgrid_db.user on user.uid = access.user_id "
 		"WHERE access.granted_by = ?", {mysql::field(uid)} };
 }
