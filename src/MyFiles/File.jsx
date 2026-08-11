@@ -47,53 +47,71 @@ export default function File(props) {
 
     useEffect(() => {
         const handleClickOutsideRename = (event) => {
-            if (renameRef.current && !renameRef.current.contains(event.target)) {
+            if (renameRef.current && !renameRef.current.contains(event.target)) 
                 setDisplayRename(false)
-            }
+        }
+
+        const handleKeyDownRename = (event) => {
+            if (event.key === "Escape") setDisplayRename(false)
+            else if (event.key === "Enter") submitRename()
         }
 
         if (displayRename) {
             document.addEventListener("mousedown", handleClickOutsideRename)
             document.addEventListener("touchstart", handleClickOutsideRename)
+            window.addEventListener("keydown", handleKeyDownRename)
         }
 
         return () => {
             document.removeEventListener("mousedown", handleClickOutsideRename)
             document.removeEventListener("touchstart", handleClickOutsideRename)
+            window.removeEventListener("keydown", handleKeyDownRename)
         }
-    }, [displayRename])
+    }, [displayRename, newName, newFolderColor])
 
     useEffect(() => {
         const handleClickOutsideAccess = (event) => {
-            if (accessRef.current && !accessRef.current.contains(event.target)) {
+            if (accessRef.current && !accessRef.current.contains(event.target)) 
                 setDisplayAccess(false)
-            }
+        }
+
+        const handleKeyDownAccess = (event) => {
+            if (event.key === "Escape") setDisplayAccess(false)
+            else if (event.key === "Enter") submitAccess()
         }
 
         if (displayAccess) {
             document.addEventListener("mousedown", handleClickOutsideAccess)
             document.addEventListener("touchstart", handleClickOutsideAccess)
+            window.addEventListener("keydown", handleKeyDownAccess)
         }
 
         return () => {
             document.removeEventListener("mousedown", handleClickOutsideAccess)
             document.removeEventListener("touchstart", handleClickOutsideAccess)
+            window.removeEventListener("keydown", handleKeyDownAccess)
         }
-    }, [displayAccess])
+    }, [displayAccess, usernameToSend, permissionsToSend])
 
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (menuRef.current && !menuRef.current.contains(event.target)) setShowMenu(false)
         }
 
+        const handleKeyDownMenu = (event) => {
+            if (event.key === "Escape") setShowMenu(false)
+        }
+
         if (showMenu) {
             document.addEventListener("mousedown", handleClickOutside)
             document.addEventListener("touchstart", handleClickOutside)
+            window.addEventListener("keydown", handleKeyDownMenu)
         }
 
         return () => {
             document.removeEventListener("mousedown", handleClickOutside)
             document.removeEventListener("touchstart", handleClickOutside)
+            window.removeEventListener("keydown", handleKeyDownMenu)
         }
     }, [showMenu])
 
@@ -208,7 +226,7 @@ export default function File(props) {
     }
 
     const submitRename = async () => {
-        if (!newName) return
+        if (!newName || newName === props.name) return
 
         const type = isFolder ? "folder" : "file"
         const body = isFolder 
@@ -253,7 +271,7 @@ export default function File(props) {
     }
 
     const submitAccess = async () => {
-        if (!usernameToSend) return
+        if (!usernameToSend || usernameToSend === props.owner || localCollaborators.includes(usernameToSend)) return
 
         try {
             const response = await customFetch(`http://${key}:18080/grant_access`, {
@@ -357,7 +375,6 @@ export default function File(props) {
                         onBeforeInput={(e) => {
                             if (!/[a-zA-Z0-9]/.test(e.data)) e.preventDefault()    
                         }}
-
                     />
 
                     <div id="permissions">  

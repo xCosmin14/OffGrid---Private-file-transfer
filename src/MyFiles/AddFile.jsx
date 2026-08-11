@@ -11,6 +11,7 @@ import ArrowUp from "../assets/SVG/ArrowUp.svg?react"
 import "./AddFile.css"
 
 const activeUploads = new Map()
+const HOST_ADDRESS = import.meta.env.VITE_HOST_ADDRESS
 
 export async function cancelUpload(uploadId) {
     const uploadTask = activeUploads.get(uploadId)
@@ -29,7 +30,7 @@ export async function cancelUpload(uploadId) {
     }
     
     try {
-        await customFetch(`http://localhost:18080/cancel_upload?transaction_id=${uploadTask.transaction_id}`, {
+        await customFetch(`http://${HOST_ADDRESS}:18080/cancel_upload?transaction_id=${uploadTask.transaction_id}`, {
             method: "DELETE",
             credentials: "include"
         })
@@ -54,7 +55,7 @@ export default function AddFile(props) {
     const [uploadStats, setUploadStats] = useState({ loaded: 0, total: 0})
     const [isUploading, setIsUploading] = useState(false)
     
-    let types=""
+    let types = ""
 
     switch(props.supports) {
         case "documents":
@@ -82,43 +83,50 @@ export default function AddFile(props) {
 
     useEffect(() => {
         const handleClickOutsideFolder = (event) => {
-            if (createFolderRef.current && !createFolderRef.current.contains(event.target)) {
+            if (createFolderRef.current && !createFolderRef.current.contains(event.target)) 
                 setDisplayCreateFolder(false)
-            }
+        }
+
+        const handleKeyDownFolder = (event) => {
+            if (event.key === "Escape") setDisplayCreateFolder(false)
+            else if (event.key === "Enter" && displayCreateFolder === true) createFolder()
         }
 
         if (displayCreateFolder) {
             document.addEventListener("mousedown", handleClickOutsideFolder)
             document.addEventListener("touchstart", handleClickOutsideFolder)
+            window.addEventListener("keydown", handleKeyDownFolder)
         }
 
         return () => {
             document.removeEventListener("mousedown", handleClickOutsideFolder)
             document.removeEventListener("touchstart", handleClickOutsideFolder)
+            window.removeEventListener("keydown", handleKeyDownFolder)
         }
     }, [displayCreateFolder])
 
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (menuRef.current && !menuRef.current.contains(event.target)) {
+            if (menuRef.current && !menuRef.current.contains(event.target))
                 setShow(false)
-            }
+        }
+
+        const handleKeyDown = (event) => {
+            if (event.key === "Escape") setShow(false)
         }
 
         if (show) {
             document.addEventListener("mousedown", handleClickOutside)
             document.addEventListener("touchstart", handleClickOutside)
+            window.addEventListener("keydown", handleKeyDown)
         }
 
         return () => {
             document.removeEventListener("mousedown", handleClickOutside)
             document.removeEventListener("touchstart", handleClickOutside)
+            window.removeEventListener("keydown", handleKeyDown)
         }
     }, [show])
-
-    const showOptions = () => {
-        setShow(prevShow => !prevShow)
-    }
 
     const handleFileUpload = async (e) => {
         const files = e.target.files
@@ -131,7 +139,7 @@ export default function AddFile(props) {
             return
         }
 
-        var totalBytes = 0
+        let totalBytes = 0
         for (let i = 0; i < files.length; i++) totalBytes += files[i].size
         
         const uploadId = crypto.randomUUID()
@@ -185,7 +193,7 @@ export default function AddFile(props) {
                     xhr.addEventListener("error", reject)
                     xhr.addEventListener("abort", () => reject(new Error("Aborted")))
 
-                    xhr.open("POST", "http://localhost:18080/upload_file")
+                    xhr.open("POST", `http://${key}:18080/upload_file`)
                     xhr.withCredentials = true
                     xhr.send(formData)
                 })
@@ -354,12 +362,12 @@ export default function AddFile(props) {
                 <div className="createFolderActions">
                     <button onClick={() => {
                         setDisplayCreateFolder(false)
-                        setNewFolderColor(""), setNewFolderColor("#000000")
+                        setNewFolderColor("#000000")
                     }}>Cancel</button>
-                    <button  onClick={() => {
+                    <button onClick={() => {
                         createFolder()
                         setDisplayCreateFolder(false)
-                        setNewFolderColor(""), setNewFolderColor("#000000")
+                        setNewFolderColor("#000000")
                     }}>Create</button>
                 </div>
             </div>
@@ -368,8 +376,10 @@ export default function AddFile(props) {
 
     return (
         <div id="addContainer" ref={menuRef}>
-            <Add id="addFileBtn" className = {show === true ? "active" : ""} 
-                onClick={() => showOptions()} 
+            <Add 
+                id="addFileBtn" 
+                className={show ? "active" : ""} 
+                onClick={() => setShow(prev => !prev)}
             />
 
             {show && <div id="fileUploadMenu">
@@ -379,7 +389,7 @@ export default function AddFile(props) {
                         type="file" name="fileUpload"
                         accept={types} 
                         multiple="1"
-                        onChange = {handleFileUpload}
+                        onChange={handleFileUpload}
                     />
                     <h3>Upload file</h3>
                 </div>
