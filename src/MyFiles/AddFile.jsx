@@ -51,6 +51,10 @@ export default function AddFile(props) {
     const [newFolderName, setNewFolderName] = useState("")
     const [newFolderColor, setNewFolderColor] = useState("#000000")
 
+    const [displayCreateText, setDisplayCreateText] = useState(false)
+    const createTextRef = useRef(null)
+    const [newTextFileName, setNewTextFileName] = useState("")
+
     const [uploadProgress, setUploadProgress] = useState(0)
     const [uploadStats, setUploadStats] = useState({ loaded: 0, total: 0})
     const [isUploading, setIsUploading] = useState(false)
@@ -87,9 +91,19 @@ export default function AddFile(props) {
                 setDisplayCreateFolder(false)
         }
 
+        const handleClickOutsideText = (event) => {
+            if (createTextRef.current && !createTextRef.current.contains(event.target)) 
+                setDisplayCreateText(false)
+        }
+
         const handleKeyDownFolder = (event) => {
             if (event.key === "Escape") setDisplayCreateFolder(false)
             else if (event.key === "Enter" && displayCreateFolder === true) createFolder()
+        }
+
+        const handleKeyDownText = (event) => {
+            if (event.key === "Escape") setDisplayCreateText(false)
+            else if (event.key === "Enter" && displayCreateText === true) createTextFile()
         }
 
         if (displayCreateFolder) {
@@ -98,12 +112,21 @@ export default function AddFile(props) {
             window.addEventListener("keydown", handleKeyDownFolder)
         }
 
+        if (displayCreateText) {
+            document.addEventListener("mousedown", handleClickOutsideText)
+            document.addEventListener("touchstart", handleClickOutsideText)
+            window.addEventListener("keydown", handleKeyDownText)
+        }
+
         return () => {
             document.removeEventListener("mousedown", handleClickOutsideFolder)
             document.removeEventListener("touchstart", handleClickOutsideFolder)
             window.removeEventListener("keydown", handleKeyDownFolder)
+            document.removeEventListener("mousedown", handleClickOutsideText)
+            document.removeEventListener("touchstart", handleClickOutsideText)
+            window.removeEventListener("keydown", handleKeyDownText)
         }
-    }, [displayCreateFolder])
+    }, [displayCreateFolder, displayCreateText])
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -137,6 +160,17 @@ export default function AddFile(props) {
             e.target.value = ""
             setShow(false)
             return
+        }
+
+        let size=0
+        for (let i = 0; i < files.length; i++) {
+            size += files[i].size
+            if (size / (1024 * 1024 * 1024) > 50) {
+                alert("Total upload size exceeds 50GB.")
+                e.target.value = ""
+                setShow(false)
+                return
+            }
         }
 
         let totalBytes = 0
@@ -212,8 +246,8 @@ export default function AddFile(props) {
     }
 
     const handleCreateFolder = () => {
-        setDisplayCreateFolder(true)
         setShow(false)
+        setDisplayCreateFolder(true)
     }
 
     const createFolder = async () => {
@@ -249,6 +283,17 @@ export default function AddFile(props) {
             e.target.value = "" 
             setShow(false)
             return
+        }
+
+        let size=0
+        for (let i = 0; i < files.length; i++) {
+            size += files[i].size
+            if (size / (1024 * 1024 * 1024) > 50) {
+                alert("Total upload size exceeds 50GB.")
+                e.target.value = ""
+                setShow(false)
+                return
+            }
         }
 
         const uploadId = crypto.randomUUID()
@@ -335,7 +380,39 @@ export default function AddFile(props) {
     }
 
     const handleCreateText = () => {
-        
+        setDisplayCreateText(true)
+        setShow(false)
+    }
+
+    const createTextFile = async () => {
+        if (!newTextFileName) return
+
+        const fileNameWithExt = newTextFileName.toLowerCase().endsWith(".txt") 
+            ? newTextFileName 
+            : `${newTextFileName}.txt`
+
+        const body = {
+            name: fileNameWithExt,
+            folder_id: props.parentFolderID || null,
+       }
+
+        try {
+            const response = await customFetch(`http://${key}:18080/create_file`, {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            })
+            
+            let data = await response.json()
+
+            if (response.ok) {
+                setNewTextFileName("") 
+                if (props.onUploadSuccess) props.onUploadSuccess()
+            }
+        } catch (err) {
+            console.error("Error creating text file:", err)
+        }
     }
 
     const renderCreateFolder = () => {
@@ -348,14 +425,14 @@ export default function AddFile(props) {
                 <input type="text" name="newFolderName" placeholder="Name" value={newFolderName}
                     onChange={(e) => setNewFolderName(e.target.value.trim())}
                     onBeforeInput={(e) => {
-                        if (/[/]/.test(e.data)) e.preventDefault()     
+                        if (/[\/:<>*?"|]/.test(e.data)) e.preventDefault()     
                     }} 
                 />
 
                 <div id="newFolderColor">
                     <h3>Color:  {newFolderColor}</h3>
                     <input type="color" name="newFolderColor" value={newFolderColor}
-                        minLength="1" onChange={(e) => setNewFolderColor(e.target.value)}
+                        minLength="1" onChange={(e) => setNewFolderColor(e.target.value.trim())}
                     />
                 </div>
                 
@@ -368,6 +445,35 @@ export default function AddFile(props) {
                         createFolder()
                         setDisplayCreateFolder(false)
                         setNewFolderColor("#000000")
+                    }}>Create</button>
+                </div>
+            </div>
+        )
+    }
+
+    const renderCreateText = () => {
+        if (!displayCreateText) return null
+
+        return (
+            <div id="createFolder" ref={createTextRef}>
+                <h2>Create text file</h2>
+
+                <input type="text" name="newTextFileName" placeholder="Name" value={newTextFileName}
+                    onChange={(e) => setNewTextFileName(e.target.value.trim())}
+                    onBeforeInput={(e) => {
+                        if (/[\/:<>*?"|]/.test(e.data)) e.preventDefault()     
+                    }} 
+                />
+
+                <div className="createFolderActions">
+                    <button onClick={() => {
+                        setDisplayCreateText(false)
+                        setNewTextFileName("")
+                    }}>Cancel</button>
+                    <button onClick={() => {
+                        createTextFile()
+                        setDisplayCreateText(false)
+                        setNewTextFileName("")
                     }}>Create</button>
                 </div>
             </div>
@@ -429,6 +535,7 @@ export default function AddFile(props) {
             </div>}
             
             {renderCreateFolder()}
+            {renderCreateText()}
         </div>
     )
 }

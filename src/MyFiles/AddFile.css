@@ -152,7 +152,7 @@ hr {color: var(--boxShadowCol);}
     
     box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.3); 
 }
-#createFolder h2 {margin-bottom: 25px;}
+#createFolder h2 {margin-top: 25px; margin-bottom: 25px;}
 
 #createFolder input[type="text"] {
     width: calc(100% - 20px); height: 36px;

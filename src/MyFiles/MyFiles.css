@@ -385,6 +385,10 @@
     visibility: visible;
     color: var(--hoverCol);
 }
+#root:has(#small) .fileTableHeader,
+#root:has(#small) .fileContainer.viewer-open-small .fileRow {
+    grid-template-columns: 2.2fr 0.5fr 0.7fr 0.9fr 0.9fr 1fr;
+}
 
 @media screen and (max-width: 500px) {
     #fileSearchFilters {

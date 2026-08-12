@@ -23,6 +23,7 @@ export default function File(props) {
 
     const { pathname } = useLocation()
     const isFolder = props.extension === "Folder"
+    const cleanExt = (props.extension || "").replace(/^\./, "").toLowerCase()
 
     const { refreshFiles } = useContext(FileContext)
     const { user } = useContext(UserContext)
@@ -308,51 +309,73 @@ export default function File(props) {
         if (!displayRename) return null
 
         return (
-            <div className="modalOverlay" onClick={(e) => {
-                e.stopPropagation()
-                setDisplayRename(false)
-            }}>
-                <div id="createFolder" ref={renameRef} onClick={(e) => e.stopPropagation()}>
-                    <h2>{isFolder ? "Edit folder" : "Rename file"}</h2>
-                    
-                    <input 
-                        type="text" required
-                        name="newFileName" 
-                        placeholder="Name" 
-                        value={newName}
-                        onChange={(e) => setNewName(e.target.value)}
-                        onBeforeInput={(e) => {
-                            if (/[/]/.test(e.data)) e.preventDefault()     
-                        }} 
-                    />
-
-                    {isFolder && (
-                        <div id="newFolderColor">
-                            <h3>Color: {newFolderColor.includes("var") ? 
-                                window.getComputedStyle(document.documentElement).getPropertyValue('--hoverCol')
-                                    .trim().replace("light-dark(", "").replace(", ", " / ").replace(")", "") : 
-                                    newFolderColor}</h3>
-                            <input 
-                                type="color" 
-                                name="newFolderColor" 
-                                value={newFolderColor}
-                                onChange={(e) => setNewFolderColor(e.target.value)}
-                            />
-                        </div>
-                    )}
-                    
-                    <div className="createFolderActions">
-                        <button onClick={(e) => {
-                            e.stopPropagation()
-                            setDisplayRename(false)
-                        }}>Cancel</button>
-
-                        <button onClick={(e) => {
-                            e.stopPropagation()
-                            submitRename()
-                        }}>Save</button>
+            <div className={`fileRow ${isExpanded ? "expanded" : ""}`} onClick={handleRowClick}>
+                <div className="fileNameCell">
+                    <div className="mobileExpandBtn" onClick={(e) => { 
+                        e.stopPropagation() 
+                        setIsExpanded(p => !p) 
+                    }}>
+                        <ArrowDown className={`expandIcon ${isExpanded ? "rotated" : ""}`} />
                     </div>
+
+                    {isFolder ? (
+                        <Folder style={{ color: props.color, fill: props.color }} />
+                    ) : (
+                        <FileIcon extension={cleanExt} {...(defaultStyles[cleanExt] || {})} />
+                    )}
+
+                    <h3 className="itemName">{props.name}</h3>
                 </div>
+                
+                {!props.hideType && (
+                    <h3 className="fileDetail"><span className="mobileLabel">Type: </span>{isFolder ? "Folder" : props.extension}</h3>
+                )}
+                <h3 className="fileDetail"><span className="mobileLabel">Size: </span>{
+                    props.size ? props.size > 1073741824 ? `${Number.parseFloat(props.size/1073741824.0).toFixed(2)} GB` : `${Number.parseFloat(props.size/1048576.0).toFixed(2)} MB` : "0 MB"
+                }</h3>
+                <h3 className="fileDetail"><span className="mobileLabel">Created: </span>{props.created}</h3>
+                <h3 className="fileDetail"><span className="mobileLabel">Modified: </span>{props.lastModified}</h3>
+                <h3 className="fileDetail"><span className="mobileLabel">Owner: </span>{props.owner === user.username ? "You" : props.owner}</h3>
+
+                <div className="fileOptionsContainer" ref={menuRef} 
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        setShowMenu(p => !p)
+                    }}>
+                    <Dots className="fileDots" />
+
+                    {showMenu && <div className="fileDropdownMenu">
+                        <div className="pathMenuOption" onClick={(e) => handleAction(e, "download")}>
+                            <Download /><h5>Download</h5>
+                        </div>
+
+                        <hr />
+
+                        <div className="pathMenuOption" onClick={(e) => handleAction(e, "rename")} >
+                            <Rename /><h5>Rename</h5>
+                        </div>
+
+                        <hr />
+
+                        <div className="pathMenuOption" onClick={(e) => handleAction(e, "delete")}>
+                            <Trash /><h5>Delete</h5>
+                        </div>
+
+                        <div className="pathMenuOption" onClick={(e) => handleAction(e, "favorites")}>
+                            <StarFull style={{ color: props.favourite ? "var(--hoverCol)" : "var(--text)" }} />
+                            <h5>{props.favourite ? "Remove from " : "Add to "}favorites</h5>
+                        </div>
+
+                        <hr />
+                        
+                        <div className="pathMenuOption" onClick={(e) => handleAction(e, "access")}>
+                            <Group /><h5>Manage Access</h5>
+                        </div>
+                    </div>}
+                </div>
+
+                {renderRenameModal()}
+                {renderAccessModal()}
             </div>
         )
     }
@@ -451,9 +474,7 @@ export default function File(props) {
                 <h3 className="itemName">{props.name}</h3>
             </div>
             
-            {!props.hideType && (
-                <h3 className="fileDetail"><span className="mobileLabel">Type: </span>{isFolder ? "Folder" : props.extension}</h3>
-            )}
+            <h3 className="fileDetail"><span className="mobileLabel">Type: </span>{isFolder ? "Folder" : props.extension}</h3>
             <h3 className="fileDetail"><span className="mobileLabel">Size: </span>{
                 props.size ? props.size > 1073741824 ? `${Number.parseFloat(props.size/1073741824.0).toFixed(2)} GB` : `${Number.parseFloat(props.size/1048576.0).toFixed(2)} MB` : "0 MB"
             }</h3>

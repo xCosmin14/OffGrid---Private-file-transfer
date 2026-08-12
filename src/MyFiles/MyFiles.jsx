@@ -435,7 +435,8 @@ export default function MyFiles() {
             )}
 
             <div className={`fileContainer ${isViewerSmall ? "viewer-open-small" : ""}`}
-                style={{width: isViewerSmall ? "75%" : "100%"}}>
+                style={{width: isViewerSmall ? "75%" : "100%"}}
+            >
                 <div className="fileTableHeader">
                     <div style={{color: sortFilter.crit === "name" ? "var(--hoverCol)" : "var(--text)"}}
                         onClick={() => setSortFilter({crit: "name", order: sortFilter.order === "asc" ? "desc" : "asc"})}
@@ -447,14 +448,14 @@ export default function MyFiles() {
                         Name
                     </div>
 
-                    {!isViewerSmall && <div style={{color: sortFilter.crit === "extension" ? "var(--hoverCol)" : "var(--text)"}}
+                    <div style={{color: sortFilter.crit === "extension" ? "var(--hoverCol)" : "var(--text)"}}
                         onClick={() => setSortFilter({crit: "extension", order: sortFilter.order === "asc" ? "desc" : "asc"})}>
                         {sortFilter.crit === "extension" && <ArrowUp style={{ 
                             transform: sortFilter.order === "asc" ? "rotate(0deg)" : "rotate(180deg)",
                             transition: "transform 0.2s ease"
                         }}/>}
                         Type
-                    </div>}
+                    </div>
 
                     <div style={{color: sortFilter.crit === "size" ? "var(--hoverCol)" : "var(--text)"}}
                         onClick={() => setSortFilter({crit: "size", order: sortFilter.order === "asc" ? "desc" : "asc"})}>
