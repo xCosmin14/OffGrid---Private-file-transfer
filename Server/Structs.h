@@ -89,6 +89,33 @@ struct FileData
 
 		return obj;
 	}
+
+	FileData() = default;
+
+	FileData(std::string content, std::string filename, std::string path,
+		std::string content_type, std::string extension, size_t size)
+		: content(std::move(content)), filename(std::move(filename)), path(std::move(path)),
+		content_type(std::move(content_type)), extension(std::move(extension)), size(size)
+	{}
+
+	FileData(json::object obj)
+	{
+		this->filename = obj.at("name").as_string();
+		this->creator_id = obj.at("creator_id").as_string();
+		this->file_id = obj.at("file_id").as_string();
+		this->path = obj.at("path").as_string();
+		this->size = 0;
+
+		if (obj.contains("content_type") && obj.at("content_type").is_string())
+			this->content_type = obj.at("content_type").as_string();
+
+		if(obj.contains("folder_id") && obj.at("folder_id").is_string())
+			this->file_id = obj.at("folder_id").as_string();
+
+		if (obj.contains("extension") && obj.at("extension").is_string())
+			this->file_id = obj.at("extension").as_string();
+
+	}
 };
 
 
