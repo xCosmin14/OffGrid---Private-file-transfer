@@ -137,8 +137,16 @@ Async<HttpResponse> ClientController::createEntity(json::object& obj, std::strin
 			obj["path"] = name;
 		}
 
-		if (entity == "file") q = Queries::InsertFile(obj);
-		else if (entity == "folder") q = Queries::InsertFolder(obj);
+		if (entity == "file")
+		{
+			q = Queries::InsertFile(obj);
+			Helpers::writeToFile(json::value_to<std::string>(obj["path"]), {});
+		}
+		else if (entity == "folder")
+		{
+			q = Queries::InsertFolder(obj);
+			std::filesystem::create_directories(json::value_to<std::string>(obj["path"]));
+		}
 
 		
 	
@@ -147,6 +155,7 @@ Async<HttpResponse> ClientController::createEntity(json::object& obj, std::strin
 	catch (boost::system::system_error& e)
 	{
 		std::cout << "Failed query: " << e.what() << std::endl;
+		std::filesystem::remove_all(json::value_to<std::string>(obj["path"]));
 		co_return Helpers::makeResponse(http::status::internal_server_error, "failed creating " + entity);
 	}
 	catch (std::exception& e)
