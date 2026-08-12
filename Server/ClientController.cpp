@@ -140,15 +140,19 @@ Async<HttpResponse> ClientController::createEntity(json::object& obj, std::strin
 		if (entity == "file")
 		{
 			q = Queries::InsertFile(obj);
-			Helpers::writeToFile("FileSystem/files/" + uid + "/" + json::value_to<std::string>(obj["path"]), obj);
+			std::filesystem::path fullPath = "FileSystem/files/" + uid + "/" + json::value_to<std::string>(obj["path"]);
+			std::filesystem::create_directories(fullPath.parent_path());
+
+			std::ofstream file(fullPath);
+			if (!file)
+				throw std::runtime_error("failed to create file on disk: " + fullPath.string());
+			file.close();
 		}
 		else if (entity == "folder")
 		{
 			q = Queries::InsertFolder(obj);
-
-			std::cout << "CWD: " << std::filesystem::current_path() << std::endl;
-			std::string full_path = "FileSystem/files/" + uid + "/" + json::value_to<std::string>(obj["path"]);
-			std::filesystem::create_directories(full_path);
+			std::filesystem::path full_path = "FileSystem/files/" + uid + "/" + json::value_to<std::string>(obj["path"]);
+			std::filesystem::create_directories(full_path.parent_path());
 		}
 
 		
