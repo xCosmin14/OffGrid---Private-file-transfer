@@ -96,35 +96,33 @@ export default function AddFile(props) {
                 setDisplayCreateText(false)
         }
 
-        const handleKeyDownFolder = (event) => {
-            if (event.key === "Escape") setDisplayCreateFolder(false)
-            else if (event.key === "Enter" && displayCreateFolder === true) createFolder()
-        }
-
-        const handleKeyDownText = (event) => {
-            if (event.key === "Escape") setDisplayCreateText(false)
-            else if (event.key === "Enter" && displayCreateText === true) createTextFile()
+        const handleKeyDownModal = (event) => {
+            if (event.key === "Escape") {
+                setDisplayCreateFolder(false)
+                setDisplayCreateText(false)
+            }
         }
 
         if (displayCreateFolder) {
             document.addEventListener("mousedown", handleClickOutsideFolder)
             document.addEventListener("touchstart", handleClickOutsideFolder)
-            window.addEventListener("keydown", handleKeyDownFolder)
         }
 
         if (displayCreateText) {
             document.addEventListener("mousedown", handleClickOutsideText)
             document.addEventListener("touchstart", handleClickOutsideText)
-            window.addEventListener("keydown", handleKeyDownText)
+        }
+
+        if (displayCreateFolder || displayCreateText) {
+            window.addEventListener("keydown", handleKeyDownModal)
         }
 
         return () => {
             document.removeEventListener("mousedown", handleClickOutsideFolder)
             document.removeEventListener("touchstart", handleClickOutsideFolder)
-            window.removeEventListener("keydown", handleKeyDownFolder)
             document.removeEventListener("mousedown", handleClickOutsideText)
             document.removeEventListener("touchstart", handleClickOutsideText)
-            window.removeEventListener("keydown", handleKeyDownText)
+            window.removeEventListener("keydown", handleKeyDownModal)
         }
     }, [displayCreateFolder, displayCreateText])
 
@@ -162,7 +160,7 @@ export default function AddFile(props) {
             return
         }
 
-        let size=0
+        let size = 0
         for (let i = 0; i < files.length; i++) {
             size += files[i].size
             if (size / (1024 * 1024 * 1024) > 50) {
@@ -182,11 +180,6 @@ export default function AddFile(props) {
         let hasUploaded = false
 
         for (let i = 0; i < files.length; i++) {
-            if (files[i].size / (1024 * 1024 * 1024) > 50) {
-                console.error("File too big (> 50GB)")
-                continue
-            }
-
             const formData = new FormData()
             const finalPath = props.currentPath ? `${props.currentPath}/${files[i].name}` : files[i].name            
             formData.append("file", files[i], finalPath)
@@ -259,18 +252,23 @@ export default function AddFile(props) {
             parent_folder_id: props.parentFolderID || null 
         }
 
-        const response = await customFetch(`http://${key}:18080/create_folder`, {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body)
-        })
-        
-        let data = await response.json()
-        if (response.ok) {
-            setNewFolderColor("#000000")
-            setNewFolderName("")
-            props.onUploadSuccess()
+        try {
+            const response = await customFetch(`http://${key}:18080/create_folder`, {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            })
+            
+            let data = await response.json()
+            if (response.ok) {
+                setNewFolderColor("#000000")
+                setNewFolderName("")
+                setDisplayCreateFolder(false)
+                if (props.onUploadSuccess) props.onUploadSuccess()
+            }
+        } catch (err) {
+            console.error("Error creating folder:", err)
         }
     }
 
@@ -285,7 +283,7 @@ export default function AddFile(props) {
             return
         }
 
-        let size=0
+        let size = 0
         for (let i = 0; i < files.length; i++) {
             size += files[i].size
             if (size / (1024 * 1024 * 1024) > 50) {
@@ -393,8 +391,10 @@ export default function AddFile(props) {
 
         const body = {
             name: fileNameWithExt,
-            folder_id: props.parentFolderID || null,
-       }
+            extension: "txt",
+            content_type: "text/plain",
+            folder_id: props.parentFolderID || null
+        }
 
         try {
             const response = await customFetch(`http://${key}:18080/create_file`, {
@@ -408,6 +408,7 @@ export default function AddFile(props) {
 
             if (response.ok) {
                 setNewTextFileName("") 
+                setDisplayCreateText(false) // Închidem modalul la succes
                 if (props.onUploadSuccess) props.onUploadSuccess()
             }
         } catch (err) {
@@ -422,8 +423,18 @@ export default function AddFile(props) {
             <div id="createFolder" ref={createFolderRef}>
                 <h2>Create folder</h2>
                 
-                <input type="text" name="newFolderName" placeholder="Name" value={newFolderName}
-                    onChange={(e) => setNewFolderName(e.target.value.trim())}
+                <input 
+                    type="text" 
+                    name="newFolderName" 
+                    placeholder="Name" 
+                    value={newFolderName}
+                    onChange={(e) => setNewFolderName(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                            e.preventDefault()
+                            createFolder()
+                        }
+                    }}
                     onBeforeInput={(e) => {
                         if (/[\/:<>*?"|]/.test(e.data)) e.preventDefault()     
                     }} 
@@ -441,11 +452,7 @@ export default function AddFile(props) {
                         setDisplayCreateFolder(false)
                         setNewFolderColor("#000000")
                     }}>Cancel</button>
-                    <button onClick={() => {
-                        createFolder()
-                        setDisplayCreateFolder(false)
-                        setNewFolderColor("#000000")
-                    }}>Create</button>
+                    <button onClick={createFolder}>Create</button>
                 </div>
             </div>
         )
@@ -458,8 +465,18 @@ export default function AddFile(props) {
             <div id="createFolder" ref={createTextRef}>
                 <h2>Create text file</h2>
 
-                <input type="text" name="newTextFileName" placeholder="Name" value={newTextFileName}
-                    onChange={(e) => setNewTextFileName(e.target.value.trim())}
+                <input 
+                    type="text" 
+                    name="newTextFileName" 
+                    placeholder="Name" 
+                    value={newTextFileName}
+                    onChange={(e) => setNewTextFileName(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                            e.preventDefault()
+                            createTextFile()
+                        }
+                    }}
                     onBeforeInput={(e) => {
                         if (/[\/:<>*?"|]/.test(e.data)) e.preventDefault()     
                     }} 
@@ -470,11 +487,7 @@ export default function AddFile(props) {
                         setDisplayCreateText(false)
                         setNewTextFileName("")
                     }}>Cancel</button>
-                    <button onClick={() => {
-                        createTextFile()
-                        setDisplayCreateText(false)
-                        setNewTextFileName("")
-                    }}>Create</button>
+                    <button onClick={createTextFile}>Create</button>
                 </div>
             </div>
         )
