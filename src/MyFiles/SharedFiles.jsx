@@ -33,14 +33,6 @@ const getParentPath = (fullPath) => {
     return lastSlash === -1 ? "" : fullPath.substring(0, lastSlash)
 }
 
-const calculateFolderSize = (folderPath, allFiles) => {
-    if (!allFiles || allFiles.length === 0) return 0
-
-    return allFiles
-        .filter(file => file.creator_username !== user.username && file.path.startsWith(folderPath + "/"))
-        .reduce((accumulator, file) => accumulator + (parseFloat(file.size) || 0), 0)
-}
-
 const formatDate = (dateString) => {
     if (!dateString) return ""
     const d = new Date(dateString.slice(0, dateString.length - 7))
@@ -100,6 +92,14 @@ export default function MyFiles() {
 
     const handleSortChange = (sort) => {
         setSortFilter(sort)
+    }
+
+    const calculateFolderSize = (folderPath, allFiles) => {
+        if (!allFiles || allFiles.length === 0) return 0
+
+        return allFiles
+            .filter(file => file.creator_username !== user.username && file.path.startsWith(folderPath + "/"))
+            .reduce((accumulator, file) => accumulator + (parseFloat(file.size) || 0), 0)
     }
 
     const [openFile, setOpenFile] = useState(null)

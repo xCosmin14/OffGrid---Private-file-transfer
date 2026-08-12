@@ -62,7 +62,7 @@ export default function Login() {
                             }
                         }} 
                     />
-                    <Email />
+                    <Email/>
                 </div>
 
                 <div id="accountFormField">
