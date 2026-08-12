@@ -145,7 +145,10 @@ Async<HttpResponse> ClientController::createEntity(json::object& obj, std::strin
 		else if (entity == "folder")
 		{
 			q = Queries::InsertFolder(obj);
-			std::filesystem::create_directories("FileSystem/files/" + uid + "/" + json::value_to<std::string>(obj["path"]));
+
+			std::cout << "CWD: " << std::filesystem::current_path() << std::endl;
+			std::string full_path = "FileSystem/files/" + uid + "/" + json::value_to<std::string>(obj["path"]);
+			std::filesystem::create_directories(full_path);
 		}
 
 		
