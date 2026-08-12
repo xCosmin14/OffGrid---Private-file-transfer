@@ -39,8 +39,8 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
 
         else if (target.starts_with("/upload_folder")) co_return co_await this->uploadFolder(obj, session_id);
 
-        else if (target == "/create_folder") co_return co_await this->createEntity(obj, session_id, { "color", "name", "type", "parent_folder_id" }, "folder");
-        else if (target == "/create_file") co_return co_await this->createEntity(obj, session_id, { "name", "folder_id" }, "file");
+        else if (target == "/create_folder") co_return co_await this->createEntity(obj, session_id, { "color", "name", "type", "parent_folder_id"}, "folder");
+        else if (target == "/create_file") co_return co_await this->createEntity(obj, session_id, { "name", "folder_id", "extension", "content_type"}, "file");
         else if (target == "/user_data") co_return co_await this->getUserData(obj, session_id);
         else if (target == "/user_files") co_return co_await this->getUserFiles(obj, session_id);
         
