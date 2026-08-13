@@ -19,6 +19,34 @@ export default function DocumentViewer(props) {
 
     const [scale, setScale] = useState(props.viewerSize === "full" ? 0.75 : 0.45)
 
+    const handleKeyDownTab = (e) => {
+        if (e.key === "Tab") {
+            e.preventDefault()
+            const { selectionStart, selectionEnd, value } = e.target
+            const newValue = value.substring(0, selectionStart) + "    " + value.substring(selectionEnd)
+
+            if (props.file.extension === "md") setMdContent(newValue)
+            else setTextContent(newValue)
+            
+            setTimeout(() => {
+                e.target.selectionStart = e.target.selectionEnd = selectionStart + 4
+            }, 0)
+        }
+    }
+
+    const textEditor = () => {
+        if (!props.edit) return null
+
+        return (
+            <textarea 
+                className="fileTextEditor"
+                value={textContent}
+                onChange={(e) => setTextContent(e.target.value)}
+                onKeyDown={handleKeyDownTab}
+            />
+        )
+    }
+
     const handleScroll = (e) => {
         const el = e.target
         const maxScroll = el.scrollHeight - el.clientHeight
@@ -51,7 +79,7 @@ export default function DocumentViewer(props) {
                                     setDocHeight(docxContainerRef.current.scrollHeight)
                             })
                     }
-                }).catch()
+                }).catch(err => console.warn("Eroare ignorată la fetch docx:", err))
         } else if (props.file.extension === "xlsx" || props.file.extension === "xls" || props.file.extension === "csv") {
             fetch(props.fileContent)
                 .then(res => res.arrayBuffer())
@@ -62,7 +90,7 @@ export default function DocumentViewer(props) {
                     
                     const html = XLSX.utils.sheet_to_html(worksheet)
                     setHtmlTable(html)
-                }).catch()
+                }).catch(err => console.warn("Eroare ignorată la fetch tabel:", err))
 
         } else if (props.file.extension === "txt" || props.file.extension === "md") {
             fetch(props.fileContent)
@@ -70,7 +98,7 @@ export default function DocumentViewer(props) {
                 .then(text => {
                     if (props.file.extension === "md") setMdContent(text)
                     else setTextContent(text)
-                }).catch()
+                }).catch(err => console.warn("Eroare ignorată la fetch text/md:", err))
         }
     }, [props.fileContent, props.file.extension])
 
@@ -122,15 +150,36 @@ export default function DocumentViewer(props) {
 
     if (props.file.extension === "txt")
         return (
-            <pre id="txtViewer" onScroll={handleScroll}>{textContent}</pre>
+            <>
+                {!props.edit && <pre id="txtViewer" onScroll={handleScroll}>{textContent}</pre>}
+                {textEditor()}
+            </>
         )
 
-    if (props.file.extension === "md") 
+    if (props.file.extension === "md") {
+        if (props.edit) {
+            return (
+                <div className="mdEditorContainer">
+                    <textarea 
+                        className="mdTextEditor"
+                        value={mdContent}
+                        onChange={(e) => setMdContent(e.target.value)}
+                        onKeyDown={handleKeyDownTab}
+                    />
+
+                    <div id="mdViewer" onScroll={handleScroll}>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{mdContent}</ReactMarkdown>
+                    </div>
+                </div>
+            )
+        }
+
         return (
             <div id="mdViewer" onScroll={handleScroll}>
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{mdContent}</ReactMarkdown>
             </div>
         )
+    }
         
     return <div className="unsupported">Cannot read this file format</div>
 }

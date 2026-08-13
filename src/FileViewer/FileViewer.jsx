@@ -7,6 +7,7 @@ import isMobile from "../IsMobile.js"
 import Add from "../assets/SVG/FileIcons/Add.svg?react"
 import Enlarge from "../assets/SVG/Enlarge.svg?react"
 import Shrink from "../assets/SVG/Shrink.svg?react"
+import Edit from "../assets/SVG/Edit.svg?react"
 
 import "./FileViewers.css"
 import DocumentViewer from "./DocumentViewer.jsx"
@@ -26,11 +27,16 @@ export default function FileViewer(props) {
     const [loadingContent, setLoadingContent] = useState(true)
     const [fetchError, setFetchError] = useState(null)
 
+    const [editOpen, setEditOpen] = useState(false)
+
     const fileId = props.file?.file_id || props.id
 
     useEffect(() => {
         const handleKeyDown = (event) => {
-            event.key === "Escape" && props.onExit() 
+            if (event.key === "Escape") {
+                props.onExit()
+                setEditOpen(false)
+            } 
         }
 
         window.addEventListener("keydown", handleKeyDown)
@@ -82,6 +88,13 @@ export default function FileViewer(props) {
         }
     }, [fileId])
 
+    const openEdit = () => {
+        if (editOpen === false) {
+            setEditOpen(true)
+            setSize("full")
+        } else setEditOpen(false)
+    }
+
     const downloadFile = async () => {
         const response = await customFetch(`http://${key}:18080/get_file?file_id=${fileId}`, {
             method: "GET",
@@ -119,12 +132,19 @@ export default function FileViewer(props) {
     return (
         <div className="fileViewer" id={size}>
             <div id="windowActions">
+                {(props.file.extension === "txt" || props.file.extension === "md") && <Edit id="editBtn" 
+                    onClick = {() => openEdit()}
+                    style = {{color: editOpen === true ? "var(--hoverCol)" : "var(--text)"}}
+                />}
                 {size !== "full" ? 
-                    isMobile() == 0 && <Enlarge onClick={() => setSize("full")} /> : 
+                    isMobile() == 0 && <Enlarge 
+                        style={{marginRight: (props.file.extension === "txt" || props.file.extension === "md") ? "-12px" : "0px"}}
+                        onClick={() => setSize("full")} /> : 
                     isMobile() == 0 && <Shrink onClick={() => setSize("small")} />
                 }
                 <Add id="closeFileViewer" onClick={() => {
                     props.onExit()
+                    setEditOpen(false)
                 }} />
             </div>
 
@@ -139,6 +159,7 @@ export default function FileViewer(props) {
                     <Suspense fallback={<div className="unsupported">Loading viewer...</div>}>
                         <ViewerComponent file={props.file} viewerSize={size}
                             fileContent={fileUrl} fileBlob={fileBlob}
+                            edit={editOpen}
                         />
                     </Suspense>
                 ) : (
