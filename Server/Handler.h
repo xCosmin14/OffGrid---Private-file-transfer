@@ -55,6 +55,7 @@ class Handler
 			res.set(http::field::access_control_allow_methods, "GET, POST, PATCH, DELETE, OPTIONS");
 			res.set(http::field::access_control_allow_headers, "Content-Type, Authorization, X-Requested-With");
 			res.set(http::field::access_control_allow_credentials, "true");
+			res.set(http::field::access_control_expose_headers, "Content-Disposition");
 			res.set(http::field::content_type, content_type);
 		}
 
