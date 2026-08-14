@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useContext, useMemo } from "react"
-import { Link, useSearchParams, useNavigate } from 'react-router-dom' 
+import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom' 
 
 import { useTitle } from "../UseTitle.js"
 
@@ -64,7 +64,7 @@ const sortItems = (items, crit, order) => {
     })
 }
 
-export default function MyFiles() {
+export default function SharedFiles() {
     const key = import.meta.env.VITE_HOST_ADDRESS
 
     useTitle("Shared files")
@@ -74,6 +74,7 @@ export default function MyFiles() {
 
     const [searchParams] = useSearchParams()
     const navigate = useNavigate()
+    const location = useLocation()
     const currentPathStr = searchParams.get("dir") || ""
     const currentPath = currentPathStr ? currentPathStr.split("/") : []
 
@@ -150,22 +151,19 @@ export default function MyFiles() {
         filteredFiles = sortItems(filteredFiles, sortFilter.crit, sortFilter.order)
 
         return { processedFolders: filteredFolders, processedFiles: filteredFiles }
-    }, [files, folders, currentPathStr, appliedFilters, searchQuery, sortFilter])
+    }, [files, folders, currentPathStr, appliedFilters, searchQuery, sortFilter, user])
 
     const { sizeByTypes, totalFileSize } = useMemo(() => {
-    const sizes = {}
-    let total = 0 
+        const sizes = {}
+        let total = 0 
 
-    if (!processedFiles || processedFiles.length === 0) 
-        return { sizeByTypes: [], totalFileSize: 0 } 
+        if (!processedFiles || processedFiles.length === 0) 
+            return { sizeByTypes: [], totalFileSize: 0 } 
 
         processedFiles.forEach(file => {
-            const fileSizeNum = parseFloat(file.size) || 0
-            const fileSizeMB = fileSizeNum / 1048576.0 
+            const fileSizeNum = parseFloat(file.size) || 0, fileSizeMB = fileSizeNum / 1048576.0 
 
-            const ext = file.extension 
-                ? file.extension.charAt(0).toUpperCase() + file.extension.slice(1).toLowerCase() 
-                : "Unknown"
+            const ext = file.extension ? file.extension.charAt(0).toUpperCase() + file.extension.slice(1).toLowerCase() : "Unknown"
 
             sizes[ext] = (sizes[ext] || 0) + fileSizeMB
             total += fileSizeMB 
@@ -198,16 +196,81 @@ export default function MyFiles() {
         }
     }, [showPathMenu])
 
-    const handleFileAction = async (action) => {
-        if (!openFile) return
+    const handlePathAction = async (action) => {
+        if (!currentFolderObj) return
         setShowPathMenu(false)
-    
-        const targetId = openFile.file_id || openFile.id
-        const isFolder = 'folder_id' in openFile || openFile.extension === "Folder"
+
+        const targetId = currentFolderObj.folder_id || currentFolderObj.id
 
         switch (action) {
             case "download": {
                 const response = await customFetch(`http://${key}:18080/get_file?file_id=${targetId}`, {
+                    method: "GET",
+                    headers: { 'Content-Type': 'application/json' },
+                })
+
+                let buffer = await response.arrayBuffer()
+                const url = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }))
+                const a = document.createElement('a')
+
+                a.href = url
+                a.download = currentFolderObj.name
+                document.body.appendChild(a)
+                a.click()
+
+                document.body.removeChild(a)
+                URL.revokeObjectURL(url)
+                break
+            }
+            case "delete": {
+                const response = await customFetch(`http://${key}:18080/delete_file?${targetId}`, {
+                    method: "DELETE",
+                    headers: { 'Content-Type': 'application/json' },
+                })
+                if (response.ok) {
+                    if (setFolders) 
+                        setFolders(prev => prev.filter(f => (f.folder_id || f.id) !== targetId))
+                    
+                    const parentPath = getParentPath(currentPathStr)
+                    navigate(`${location.pathname}${parentPath ? `?dir=${encodeURIComponent(parentPath)}` : ""}`)
+                }
+                break
+            }
+            case "favorites": {
+                const currentFav = currentFolderObj.favourite
+                const newFavStatus = currentFav ? 0 : 1
+                
+                if (setFolders) 
+                    setFolders(prev => prev.map(f => (f.folder_id || f.id) === targetId ? { ...f, favourite: newFavStatus } : f))
+                
+                try {
+                    const response = await customFetch(`http://${key}:18080/change_data/file/${targetId}`, {
+                        method: "PATCH",
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ favourite: newFavStatus })
+                    })
+                    
+                    if (!response.ok) throw new Error("Update failed")
+                } catch (error) {
+                    if (setFolders) 
+                        setFolders(prev => prev.map(f => (f.folder_id || f.id) === targetId ? { ...f, favourite: currentFav } : f))
+                }
+                break
+            }
+            default: break
+        }
+    }
+
+    const handleFileAction = async (action) => {
+        if (!openFile) return
+        setShowPathMenu(false)
+
+        const targetId = openFile.file_id || openFile.id
+        const isFolder = 'folder_id' in openFile || openFile.extension === "Folder"
+    
+        switch (action) {
+            case "download": {
+                const response = await customFetch(`http://${key}:18080/get_file?file_id=${openFile.file_id || openFile.id}`, {
                     method: "GET",
                     headers: { 'Content-Type': 'application/json' },
                 })
@@ -226,11 +289,10 @@ export default function MyFiles() {
                 break
             }
             case "delete": {
-                const response = await customFetch(`http://${key}:18080/delete_file?${targetId}`, {
+                const response = await customFetch(`http://${key}:18080/delete_file?${openFile.file_id || openFile.id}`, {
                     method: "DELETE",
                     headers: { 'Content-Type': 'application/json' },
                 })
-                
                 if (response.ok) {
                     setOpenFile(null) 
                     
@@ -279,30 +341,30 @@ export default function MyFiles() {
 
         if (currentPathStr) return (
             <div id="pathDropdownMenu">
-                <div className="pathMenuOption" onClick={() => handleFileAction("download")}>
+                <div className="pathMenuOption" onClick={() => handlePathAction("download")}>
                     <Download />
                     <h5>Download</h5>
                 </div>
                 <hr />
-                <div className="pathMenuOption" onClick={() => handleFileAction("rename")}>
+                <div className="pathMenuOption" onClick={() => handlePathAction("rename")}>
                     <Rename />
                     <h5>Rename</h5>
                 </div>
-                <div className="pathMenuOption" onClick={() => handleFileAction("color")}>
+                <div className="pathMenuOption" onClick={() => handlePathAction("color")}>
                     <ChangeColor />
                     <h5>Change color</h5>
                 </div>
                 <hr />
-                <div className="pathMenuOption" onClick={() => handleFileAction("delete")}>
+                <div className="pathMenuOption" onClick={() => handlePathAction("delete")}>
                     <Trash />
                     <h5>Delete</h5>
                 </div>
-                <div className="pathMenuOption" onClick={() => handleFileAction("favorites")}>
-                    <StarFull />
-                    <h5>Add to Favorites</h5>
+                <div className="pathMenuOption" onClick={() => handlePathAction("favorites")}>
+                    <StarFull style={{ color: currentFolderObj?.favourite ? "var(--hoverCol)" : "var(--text)" }} />
+                    <h5>{currentFolderObj?.favourite ? "Remove from favorites" : "Add to Favorites"}</h5>
                 </div>
                 <hr />
-                <div className="pathMenuOption" onClick={() => handleFileAction("access")}>
+                <div className="pathMenuOption" onClick={() => handlePathAction("access")}>
                     <Group />
                     <h5>Manage Access</h5>
                 </div>
@@ -361,7 +423,7 @@ export default function MyFiles() {
                         {renderPathMenu()}
                     </div>
                 ) : (
-                    <Link to="/" onClick={() => { setSearchQuery(""); setOpenFile(null); }}>Shared files</Link>
+                    <Link to="/shared" onClick={() => { setSearchQuery(""); setOpenFile(null); }}>Shared files</Link>
                 )}
 
                 {currentPath.map((folderName, index) => {
@@ -385,7 +447,7 @@ export default function MyFiles() {
                                     {renderPathMenu()}
                                 </div>
                             ) : (
-                                <Link to={`/?dir=${encodeURIComponent(breadcrumbPath)}`}
+                                <Link to={`${location.pathname}?dir=${encodeURIComponent(breadcrumbPath)}`}
                                     onClick={() => { setSearchQuery(""); setOpenFile(null); }} 
                                 >
                                     {folderName}
@@ -509,44 +571,45 @@ export default function MyFiles() {
                         <h2 id="emptyMessage">No files to show</h2>
                     ) : (
                         <>
-                            {processedFolders.map((folder, idx) => {
+                            {processedFolders.map(folder => {
                                 const nextPath = currentPathStr ? `${currentPathStr}/${folder.name}` : folder.name
-                                const pathForLink = `/?dir=${encodeURIComponent(nextPath)}`
+                                const pathForLink = `${location.pathname}?dir=${encodeURIComponent(nextPath)}`                                
                                 
                                 return (
-                                    <File 
-                                        key={folder.folder_id ? `folder-${folder.folder_id}` : `folder-${folder.path}-${idx}`}
-                                        path={folder.path}
-                                        id={folder.folder_id}
-                                        name={folder.name} 
-                                        extension="Folder" 
-                                        color={folder.color}
-                                        size={folder.calculatedSize} 
-                                        favourite={folder.favourite}
-                                        created={!isLoading && formatDate(folder.created)}
-                                        lastModified={!isLoading && formatDate(folder.modified)}
-                                        onFileClick={() => {
-                                            setSearchQuery("")
-                                            navigate(pathForLink)
-                                        }}
-                                        owner={folder.owner}
-                                        collaborators={folder.collaborators}
-                                    />
+                                    <div 
+                                        key={`folder-${folder.path}`} 
+                                        onClick={() => {setSearchQuery(""); navigate(pathForLink);}}
+                                        style={{ display: "contents", textDecoration: "none", color: "inherit", cursor: "pointer" }}
+                                    >
+                                        <File 
+                                            path={folder.path}
+                                            id={folder.folder_id}
+                                            name={folder.name} 
+                                            extension="Folder" 
+                                            color={folder.color}
+                                            size={folder.calculatedSize} 
+                                            favourite={folder.favourite}
+                                            created={!isLoading && formatDate(folder.created)}
+                                            lastModified={!isLoading && formatDate(folder.modified)}
+                                            owner={folder.creator_username}
+                                            collaborators={folder.collaborators}
+                                        />
+                                    </div>
                                 )
                             })}
-
-                            {processedFiles.map((file, idx) => (
+                            
+                            {processedFiles.map(file => (
                                 <File 
-                                    key={file.file_id ? `file-${file.file_id}` : `file-${file.path}-${idx}`}
                                     path={file.path}
                                     id={file.file_id} 
+                                    key={`file-${file.path}`}
                                     name={file.name} 
                                     extension={file.extension ? file.extension.charAt(0).toUpperCase() + file.extension.slice(1) : ""} 
                                     size={file.size}
                                     favourite={file.favourite}
                                     created={!isLoading && formatDate(file.created)}
                                     lastModified={!isLoading && formatDate(file.modified)}
-                                    onFileClick={() => setOpenFile(file)}
+                                    onFileClick = {() => setOpenFile(file)}
                                     hideType={isViewerSmall}
                                     owner={file.creator_username}
                                     collaborators={file.collaborators}

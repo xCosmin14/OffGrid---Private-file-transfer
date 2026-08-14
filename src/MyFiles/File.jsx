@@ -186,21 +186,36 @@ export default function File(props) {
             }
 
             case "download": {
-                const response = await customFetch(`http://${key}:18080/get_file?file_id=${props.id}`, {
-                    method: "GET",
-                    headers: { 'Content-Type': 'application/json' },
-                })
+                let response
 
-                let buffer = await response.arrayBuffer()
-                const url = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }))
-                const a = document.createElement('a')
-                a.href = url
-                a.download = props.name
-                document.body.appendChild(a)
-                a.click()
+                if (props.extension === "Folder") 
+                    response = await customFetch(`http://${key}:18080/get_folder?folder_id=${props.id}`, {
+                        method: "GET",
+                        credentials: "include",
+                        headers: { 'Content-Type': 'application/json' },
+                    })
+                    
+                else 
+                    response = await customFetch(`http://${key}:18080/get_file?file_id=${props.id}`, {
+                        method: "GET",
+                        credentials: "include",
+                        headers: { 'Content-Type': 'application/json' },
+                    })
 
-                document.body.removeChild(a)
-                URL.revokeObjectURL(url)
+                if (response.ok) {
+
+                    let buffer = await response.arrayBuffer()
+                    const url = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }))
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = `${props.name}.zip`
+                    document.body.appendChild(a)
+                    a.click()
+
+                    document.body.removeChild(a)
+                    URL.revokeObjectURL(url)
+                }
+                    
                 break
             }
 
@@ -227,7 +242,7 @@ export default function File(props) {
     }
 
     const submitRename = async () => {
-        if (!newName || newName === props.name) return
+        if (!newName || (newName === props.name && newFolderColor === props.color)) return
 
         const type = isFolder ? "folder" : "file"
         const body = isFolder 
@@ -309,73 +324,51 @@ export default function File(props) {
         if (!displayRename) return null
 
         return (
-            <div className={`fileRow ${isExpanded ? "expanded" : ""}`} onClick={handleRowClick}>
-                <div className="fileNameCell">
-                    <div className="mobileExpandBtn" onClick={(e) => { 
-                        e.stopPropagation() 
-                        setIsExpanded(p => !p) 
-                    }}>
-                        <ArrowDown className={`expandIcon ${isExpanded ? "rotated" : ""}`} />
-                    </div>
+            <div className="modalOverlay" onClick={(e) => {
+                e.stopPropagation()
+                setDisplayRename(false)
+            }}>
+                <div id="createFolder" ref={renameRef} onClick={(e) => e.stopPropagation()}>
+                    <h2>{isFolder ? "Edit folder" : "Rename file"}</h2>
+                    
+                    <input 
+                        type="text" required
+                        name="newFileName" 
+                        placeholder="Name" 
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
+                        onBeforeInput={(e) => {
+                            if (/[/]/.test(e.data)) e.preventDefault()     
+                        }} 
+                    />
 
-                    {isFolder ? (
-                        <Folder style={{ color: props.color, fill: props.color }} />
-                    ) : (
-                        <FileIcon extension={cleanExt} {...(defaultStyles[cleanExt] || {})} />
+                    {isFolder && (
+                        <div id="newFolderColor">
+                            <h3>Color: {newFolderColor.includes("var") ? 
+                                window.getComputedStyle(document.documentElement).getPropertyValue('--hoverCol')
+                                    .trim().replace("light-dark(", "").replace(", ", " / ").replace(")", "") : 
+                                    newFolderColor}</h3>
+                            <input 
+                                type="color" 
+                                name="newFolderColor" 
+                                value={newFolderColor}
+                                onChange={(e) => setNewFolderColor(e.target.value)}
+                            />
+                        </div>
                     )}
+                    
+                    <div className="createFolderActions">
+                        <button onClick={(e) => {
+                            e.stopPropagation()
+                            setDisplayRename(false)
+                        }}>Cancel</button>
 
-                    <h3 className="itemName">{props.name}</h3>
+                        <button onClick={(e) => {
+                            e.stopPropagation()
+                            submitRename()
+                        }}>Save</button>
+                    </div>
                 </div>
-                
-                {!props.hideType && (
-                    <h3 className="fileDetail"><span className="mobileLabel">Type: </span>{isFolder ? "Folder" : props.extension}</h3>
-                )}
-                <h3 className="fileDetail"><span className="mobileLabel">Size: </span>{
-                    props.size ? props.size > 1073741824 ? `${Number.parseFloat(props.size/1073741824.0).toFixed(2)} GB` : `${Number.parseFloat(props.size/1048576.0).toFixed(2)} MB` : "0 MB"
-                }</h3>
-                <h3 className="fileDetail"><span className="mobileLabel">Created: </span>{props.created}</h3>
-                <h3 className="fileDetail"><span className="mobileLabel">Modified: </span>{props.lastModified}</h3>
-                <h3 className="fileDetail"><span className="mobileLabel">Owner: </span>{props.owner === user.username ? "You" : props.owner}</h3>
-
-                <div className="fileOptionsContainer" ref={menuRef} 
-                    onClick={(e) => {
-                        e.stopPropagation()
-                        setShowMenu(p => !p)
-                    }}>
-                    <Dots className="fileDots" />
-
-                    {showMenu && <div className="fileDropdownMenu">
-                        <div className="pathMenuOption" onClick={(e) => handleAction(e, "download")}>
-                            <Download /><h5>Download</h5>
-                        </div>
-
-                        <hr />
-
-                        <div className="pathMenuOption" onClick={(e) => handleAction(e, "rename")} >
-                            <Rename /><h5>Rename</h5>
-                        </div>
-
-                        <hr />
-
-                        <div className="pathMenuOption" onClick={(e) => handleAction(e, "delete")}>
-                            <Trash /><h5>Delete</h5>
-                        </div>
-
-                        <div className="pathMenuOption" onClick={(e) => handleAction(e, "favorites")}>
-                            <StarFull style={{ color: props.favourite ? "var(--hoverCol)" : "var(--text)" }} />
-                            <h5>{props.favourite ? "Remove from " : "Add to "}favorites</h5>
-                        </div>
-
-                        <hr />
-                        
-                        <div className="pathMenuOption" onClick={(e) => handleAction(e, "access")}>
-                            <Group /><h5>Manage Access</h5>
-                        </div>
-                    </div>}
-                </div>
-
-                {renderRenameModal()}
-                {renderAccessModal()}
             </div>
         )
     }
@@ -404,7 +397,7 @@ export default function File(props) {
                         <h3>Permissions:</h3>
 
                         <select name="permissions" value={permissionsToSend} onChange={(e) => setPermissionsToSend(e.target.value)}>
-                            <option value="view">Read</option>
+                            <option value="view">View</option>
                             <option value="edit">Edit</option>
                         </select>
                     </div>

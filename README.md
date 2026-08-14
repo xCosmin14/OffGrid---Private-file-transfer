@@ -49,9 +49,9 @@ Upload files, share and preview them, everything in the browser with the smalles
 
 ### Website
 
-- [ ] Sharing files
+- ✅ Sharing files
 - [ ] Notifications
-- [ ] Downloading folders as .ZIP archives
+- ✅ Downloading folders as .ZIP archives
 - [ ] Editing .txt files dirrectly with the ability to collaborate with other users (Google Docs style)
 - [ ] Choosing the style for programming language syntax highlighting
 

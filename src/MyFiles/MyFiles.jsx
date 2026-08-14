@@ -12,15 +12,17 @@ import Filters from "./Filters.jsx"
 import File from "./File.jsx"
 import FileViewer from "../FileViewer/FileViewer.jsx"
 
+import Add from "../assets/SVG/FileIcons/Add.svg?react"
 import ArrowRight from "../assets/SVG/ArrowRight.svg?react"
 import ArrowDown from "../assets/SVG/ArrowDown.svg?react"
 import ArrowUp from "../assets/SVG/ArrowUp.svg?react"
 import Download from "../assets/SVG/FileIcons/Download.svg?react"
 import Rename from "../assets/SVG/FileIcons/Rename.svg?react"
-import ChangeColor from "../assets/SVG/FileIcons/ChangeColor.svg?react"
 import Trash from "../assets/SVG/FileIcons/Trash.svg?react"
 import StarFull from "../assets/SVG/StarFull.svg?react"
 import Group from "../assets/SVG/UserIcons/Group.svg?react"
+
+import MockUserImg from "../assets/MockUserImg.jpg"
 
 import "./MyFiles.css"
 
@@ -89,6 +91,22 @@ export default function MyFiles() {
     
     const [appliedFilters, setAppliedFilters] = useState({})
     const [sortFilter, setSortFilter] = useState({crit: "name", order: "asc"})
+
+    const [currentFav, setCurrentFav] = useState(currentFolderObj?.favourite || false)
+
+    const [openModal, setOpenModal] = useState("")
+    const renameRef = useRef(null), accessRef = useRef(null)
+
+    const [newName, setNewName] = useState("")
+    const [newFolderColor, setNewFolderColor] = useState("#000000")
+
+    const [localCollaborators, setLocalCollaborators] = useState([])
+    const [collaboratorPhotos, setCollaboratorPhotos] = useState({})
+
+    const [usernameToSend, setUsernameToSend] = useState("")
+    const [permissionsToSend, setPermissionsToSend] = useState("view")
+
+    const [isFolder, setIsFolder] = useState(false)
     
     const handleFilterChange = (filters) => { 
         setAppliedFilters(filters) 
@@ -101,6 +119,11 @@ export default function MyFiles() {
     const [openFile, setOpenFile] = useState(null)
     const [viewerSize, setViewerSize] = useState(isMobile() == 0 ? "small" : "full")
     const isViewerSmall = openFile !== null && viewerSize === "small"
+
+    useEffect(() => {
+        currentFolderObj && setIsFolder(true)
+        openFile && setIsFolder(openFile.extension === "folder" ? true : false)
+    }, [openFile, currentFolderObj])
 
     const { processedFolders, processedFiles } = useMemo(() => {
         const safeFiles = files || [], safeFolders = folders || []
@@ -174,28 +197,216 @@ export default function MyFiles() {
     }, [processedFiles, processedFolders])
 
     useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (pathMenuRef.current && !pathMenuRef.current.contains(event.target)) 
-                setShowPathMenu(false)
+        currentFolderObj && setCurrentFav(currentFolderObj.favourite)
+    }, [currentFolderObj])
+
+    useEffect(() => {
+        if (openModal === "rename") {
+            const currentObj = openFile || currentFolderObj
+            if (currentObj) {
+                setNewName(currentObj.name || "")
+                if (currentObj.color) setNewFolderColor(currentObj.color)
+            }
+        }
+    }, [openModal])
+
+    useEffect(() => {
+        if (openModal === "access") {
+            const targetObj = openFile || currentFolderObj
+            if (targetObj) {
+                setLocalCollaborators(targetObj.collaborators || [])
+                setUsernameToSend("")
+                setPermissionsToSend("view")
+            }
+        }
+    }, [openModal, openFile, currentFolderObj])
+
+    useEffect(() => {
+        let isMounted = true, createdUrls = []
+
+        const fetchPhotos = async () => {
+            if (openModal !== "access" || localCollaborators.length === 0) {
+                setCollaboratorPhotos({})
+                return
+            }
+
+            try {
+                const res = await customFetch(`http://${key}:18080/get_collaborators_profile`, {
+                    method: 'GET'
+                })
+
+                if (res.ok) {
+                    const formData = await res.formData()
+                    const files = formData.getAll('file')
+
+                    createdUrls = files.map(file => URL.createObjectURL(file))
+
+                    const photosMap = {}
+                    localCollaborators.forEach((collab, index) => {
+                        if (createdUrls[index]) photosMap[collab] = createdUrls[index]
+                    })
+
+                    if (isMounted) setCollaboratorPhotos(photosMap)
+                }
+            } catch (err) {
+                console.error("Error fetching collaborator photos:", err)
+            }
         }
 
-        if (showPathMenu) {
-            document.addEventListener("mousedown", handleClickOutside)
-            document.addEventListener("touchstart", handleClickOutside)
+        fetchPhotos()
+
+        return () => {
+            isMounted = false
+            createdUrls.forEach(url => URL.revokeObjectURL(url))
+        }
+    }, [openModal, localCollaborators])
+
+    useEffect(() => {
+        const handleClickOutsideRename = (event) => {
+            if (renameRef.current && !renameRef.current.contains(event.target)) 
+                setOpenModal("")
+        }
+
+        const handleKeyDownRename = (event) => {
+            if (event.key === "Escape") setOpenModal("")
+            else if (event.key === "Enter") submitRename()
+        }
+
+        if (openModal === "rename") {
+            document.addEventListener("mousedown", handleClickOutsideRename)
+            document.addEventListener("touchstart", handleClickOutsideRename)
+            window.addEventListener("keydown", handleKeyDownRename)
         }
 
         return () => {
-            document.removeEventListener("mousedown", handleClickOutside)
-            document.removeEventListener("touchstart", handleClickOutside)
+            document.removeEventListener("mousedown", handleClickOutsideRename)
+            document.removeEventListener("touchstart", handleClickOutsideRename)
+            window.removeEventListener("keydown", handleKeyDownRename)
         }
-    }, [showPathMenu])
+    }, [openModal, newName, newFolderColor])
+
+    useEffect(() => {
+        const handleClickOutsideAccess = (event) => {
+            if (accessRef.current && !accessRef.current.contains(event.target)) 
+                setOpenModal("")
+        }
+
+        const handleKeyDownAccess = (event) => {
+            if (event.key === "Escape") setOpenModal("")
+            else if (event.key === "Enter") submitAccess()
+        }
+
+        if (openModal === "access") {
+            document.addEventListener("mousedown", handleClickOutsideAccess)
+            document.addEventListener("touchstart", handleClickOutsideAccess)
+            window.addEventListener("keydown", handleKeyDownAccess)
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutsideAccess)
+            document.removeEventListener("touchstart", handleClickOutsideAccess)
+            window.removeEventListener("keydown", handleKeyDownAccess)
+        }
+    }, [openModal, usernameToSend, permissionsToSend])
+
+    const handlePathAction = async (action) => {
+        if (!currentFolderObj) return
+        setShowPathMenu(false)
+
+        const targetId = currentFolderObj.folder_id || currentFolderObj.id
+
+        switch (action) {
+            case "download": {
+                let response
+
+                if (currentFolderObj) 
+                    response = await customFetch(`http://${key}:18080/get_folder?folder_id=${targetId}`, {
+                        method: "GET",
+                        credentials: "include",
+                        headers: { 'Content-Type': 'application/json' },
+                    })
+                    
+                else 
+                    response = await customFetch(`http://${key}:18080/get_file?file_id=${targetId}`, {
+                        method: "GET",
+                        credentials: "include",
+                        headers: { 'Content-Type': 'application/json' },
+                    })
+
+                if (response.ok) {
+                    let buffer = await response.arrayBuffer()
+                    const url = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }))
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = `${currentFolderObj?.name || openFile}.zip`
+                    document.body.appendChild(a)
+                    a.click()
+
+                    document.body.removeChild(a)
+                    URL.revokeObjectURL(url)
+                }
+                    
+                break
+            }
+            case "delete": {
+                const response = await customFetch(`http://${key}:18080/delete_folder?${targetId}`, {
+                    method: "DELETE",
+                    headers: { 'Content-Type': 'application/json' },
+                })
+                if (response.ok) {
+                    if (setFolders) 
+                        setFolders(prev => prev.filter(f => (f.folder_id || f.id) !== targetId))
+
+                    await refreshFiles()
+                    
+                    const parentPath = getParentPath(currentPathStr)
+                    navigate(`/${parentPath ? `?dir=${encodeURIComponent(parentPath)}` : ""}`)
+                }
+                break
+            }
+            case "favorites": {     
+                const newFavStatus = !currentFav           
+                if (setFolders) 
+                    setFolders(prev => prev.map(f => (f.folder_id || f.id) === targetId ? { ...f, favourite: newFavStatus } : f))
+                
+                try {
+                    const response = await customFetch(`http://${key}:18080/change_data/folder/${targetId}`, {
+                        method: "PATCH",
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ favourite: newFavStatus })
+                    })
+                    
+                    if (response.ok) {
+                        setCurrentFav(newFavStatus)
+                        await refreshFiles()
+                    } else {
+                        throw new Error("Update failed")
+                    }
+                } catch (error) {
+                    if (setFolders) 
+                        setFolders(prev => prev.map(f => (f.folder_id || f.id) === targetId ? { ...f, favourite: currentFav } : f))
+                }
+                break
+            }
+
+            case "rename": {
+                setOpenModal("rename")
+                break
+            }
+
+            case "access": {
+                setOpenModal("access")
+                break
+            }
+            default: break
+        }
+    }
 
     const handleFileAction = async (action) => {
         if (!openFile) return
         setShowPathMenu(false)
     
         const targetId = openFile.file_id || openFile.id
-        const isFolder = 'folder_id' in openFile || openFile.extension === "Folder"
 
         switch (action) {
             case "download": {
@@ -218,7 +429,8 @@ export default function MyFiles() {
                 break
             }
             case "delete": {
-                const response = await customFetch(`http://${key}:18080/delete_file?${targetId}`, {
+                const endpoint = isFolder ? "delete_folder" : "delete_file"
+                const response = await customFetch(`http://${key}:18080/${endpoint}?${targetId}`, {
                     method: "DELETE",
                     headers: { 'Content-Type': 'application/json' },
                 })
@@ -235,7 +447,7 @@ export default function MyFiles() {
             }
             case "favorites": {
                 const currentFav = openFile.favourite
-                const newFavStatus = currentFav ? 0 : 1
+                const newFavStatus = !currentFav
                 
                 setOpenFile(prev => ({ ...prev, favourite: newFavStatus }))
                 
@@ -245,13 +457,18 @@ export default function MyFiles() {
                     setFiles(prev => prev.map(f => (f.file_id || f.id) === targetId ? { ...f, favourite: newFavStatus } : f))
                 
                 try {
-                    const response = await customFetch(`http://${key}:18080/change_data/file/${targetId}`, {
+                    const type = isFolder ? "folder" : "file"
+                    const response = await customFetch(`http://${key}:18080/change_data/${type}/${targetId}`, {
                         method: "PATCH",
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ favourite: newFavStatus })
                     })
                     
-                    if (!response.ok) throw new Error("Update failed")
+                    if (response.ok) {
+                        await refreshFiles()
+                    } else {
+                        throw new Error("Update failed")
+                    }
                 } catch (error) {
                     setOpenFile(prev => ({ ...prev, favourite: currentFav }))
                     
@@ -262,7 +479,123 @@ export default function MyFiles() {
                 }
                 break
             }
+            case "rename": {
+                setOpenModal("rename")
+                break
+            }
+
+            case "access": {
+                setOpenModal("access")
+                break
+            }
+
             default: break
+        }
+    }
+
+    const submitAccess = async () => {
+        const targetObj = openFile || currentFolderObj
+        if (!targetObj || !usernameToSend) return
+
+        const targetId = targetObj.file_id || targetObj.folder_id || targetObj.id
+        if (!targetId) return
+
+        const isTargetFolder = openFile ? openFile.extension === "folder" : true
+        const owner = targetObj.creator_username || targetObj.owner
+
+        if (usernameToSend === owner || localCollaborators.includes(usernameToSend)) return
+
+        try {
+            const response = await customFetch(`http://${key}:18080/grant_access`, {
+                method: "POST",
+                headers: { 'Content-Type': 'application/json' },
+                body: isTargetFolder ? JSON.stringify({ 
+                    username: usernameToSend,
+                    folder_id: targetId,
+                    type: permissionsToSend,
+                    resource: "folder"
+                }) : JSON.stringify({
+                    username: usernameToSend,
+                    file_id: targetId,
+                    type: permissionsToSend,
+                    resource: "file"
+                })
+            })
+
+            if (response.ok) {
+                setLocalCollaborators(prev => [...prev, usernameToSend])
+                setUsernameToSend("")
+                if (refreshFiles) await refreshFiles()
+            }
+        } catch (err) {
+            console.error("Share error:", err)
+        }
+    }
+
+    const removeCollaborator = async (username) => {
+        const targetObj = openFile || currentFolderObj
+        if (!openFile && !currentFolderObj) return
+
+        const targetId = targetObj.id || targetObj.folder_id
+        if (!targetId) return
+
+        const isTargetFolder = openFile ? openFile.extension === "folder" : true
+
+        const body = isTargetFolder ? {
+            username: username,
+            folder_id: targetId,
+            resource: "folder"
+        } : {
+            username: username,
+            file_id: targetId,
+            resource: "file"
+        }
+
+        try {
+            const response = await customFetch(`http://${key}:18080/revoke_access`, {
+                method: "POST",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            })
+
+            if (response.ok) {
+                setLocalCollaborators(prev => prev.filter(u => u !== username))
+                if (refreshFiles) await refreshFiles()
+            }
+        } catch (err) {
+            console.error("Remove error:", err)
+        }
+    }
+
+    const submitRename = async () => {
+        const targetObj = openFile || currentFolderObj
+        if (!targetObj || !newName.trim()) return
+
+        const targetId = targetObj.file_id || targetObj.folder_id || targetObj.id
+        if (!targetId) return
+
+        const isTargetFolder = openFile ? openFile.extension === "folder" : true
+
+        const type = isTargetFolder ? "folder" : "file"
+        const body = isTargetFolder 
+            ? { name: newName, color: newFolderColor }
+            : { name: newName }
+
+        try {
+            const response = await customFetch(`http://${key}:18080/change_data/${type}/${targetId}`, {
+                method: "PATCH",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            })
+
+            if (response.ok) {
+                setOpenModal("")
+                if (refreshFiles) await refreshFiles()
+            } else {
+                console.error(response.status)
+            }
+        } catch (err) {
+            console.error("Rename error:", err)
         }
     }
 
@@ -271,30 +604,28 @@ export default function MyFiles() {
 
         if (currentPathStr) return (
             <div id="pathDropdownMenu">
-                <div className="pathMenuOption" onClick={() => handleFileAction("download")}>
+                <div className="pathMenuOption" onClick={() => handlePathAction("download")}>
                     <Download />
                     <h5>Download</h5>
                 </div>
                 <hr />
-                <div className="pathMenuOption" onClick={() => handleFileAction("rename")}>
+                <div className="pathMenuOption" onClick={() => handlePathAction("rename")}>
                     <Rename />
                     <h5>Rename</h5>
                 </div>
-                <div className="pathMenuOption" onClick={() => handleFileAction("color")}>
-                    <ChangeColor />
-                    <h5>Change color</h5>
-                </div>
                 <hr />
-                <div className="pathMenuOption" onClick={() => handleFileAction("delete")}>
+                <div className="pathMenuOption" onClick={() => handlePathAction("delete")}>
                     <Trash />
                     <h5>Delete</h5>
                 </div>
-                <div className="pathMenuOption" onClick={() => handleFileAction("favorites")}>
+                <div className="pathMenuOption" onClick={() => handlePathAction("favorites")}>
                     <StarFull />
-                    <h5>Add to Favorites</h5>
+                    <h5>
+                        {currentFolderObj?.favourite ? "Remove from favorites" : "Add to Favorites"}
+                    </h5>
                 </div>
                 <hr />
-                <div className="pathMenuOption" onClick={() => handleFileAction("access")}>
+                <div className="pathMenuOption" onClick={() => handlePathAction("access")}>
                     <Group />
                     <h5>Manage Access</h5>
                 </div>
@@ -311,16 +642,26 @@ export default function MyFiles() {
                     <Download />
                     <h5>Download</h5>
                 </div>
+
+                <div className="pathMenuOption" onClick={() => handleFileAction("rename")}>
+                    <Rename />
+                    <h5>Rename</h5>
+                </div>
+
                 <hr />
+
                 <div className="pathMenuOption" onClick={() => handleFileAction("delete")}>
                     <Trash />
                     <h5>Delete</h5>
                 </div>
+
                 <div className="pathMenuOption" onClick={() => handleFileAction("favorites")}>
                     <StarFull style={{ color: openFile.favourite ? "var(--hoverCol)" : "var(--text)" }} />
                     <h5>{openFile.favourite ? "Remove from favorites" : "Add to Favorites"}</h5>
                 </div>
+
                 <hr />
+
                 <div className="pathMenuOption" onClick={() => handleFileAction("access")}>
                     <Group />
                     <h5>Manage Access</h5>
@@ -328,6 +669,131 @@ export default function MyFiles() {
             </div>
         )
     }
+
+    const renderRenameModal = () => {
+        if (openModal !== "rename") return null
+
+        return (
+            <div className="modalOverlay" onClick={(e) => {
+                e.stopPropagation()
+                setOpenModal("") 
+            }}>
+                <div id="createFolder" ref={renameRef} onClick={(e) => e.stopPropagation()}>
+                    <h2>{isFolder ? "Edit folder" : "Rename file"}</h2>
+                    
+                    <input 
+                        type="text" required
+                        name="newFileName" 
+                        placeholder="Name" 
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
+                        onBeforeInput={(e) => {
+                            if (/[/]/.test(e.data)) e.preventDefault()     
+                        }} 
+                    />
+
+                    {isFolder && (
+                        <div id="newFolderColor">
+                            <h3>Color: {newFolderColor}</h3>
+                            <input 
+                                type="color" 
+                                name="newFolderColor" 
+                                value={newFolderColor}
+                                onChange={(e) => setNewFolderColor(e.target.value)}
+                            />
+                        </div>
+                    )}
+                    
+                    <div className="createFolderActions">
+                        <button onClick={(e) => {
+                            e.stopPropagation()
+                            setOpenModal("")
+                        }}>Cancel</button>
+
+                        <button onClick={(e) => {
+                            e.stopPropagation()
+                            submitRename()
+                        }}>Save</button>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+    
+        const renderAccessModal = () => {
+            if (openModal !== "access") return null
+    
+            return (
+                <div className="modalOverlay" onClick={(e) => {
+                    e.stopPropagation()
+                    setOpenModal("")
+                }}>
+                    <div id="createFolder" ref={accessRef} onClick={(e) => e.stopPropagation()}>
+                        <h2>{isFolder === true ? "Share folder" : "Share file"}</h2>
+                        
+                        <input
+                            type="text" name="username" required
+                            placeholder="Username" value={usernameToSend}
+                            onChange={(e) => setUsernameToSend(e.target.value)}
+                            onBeforeInput={(e) => {
+                                if (!/[a-zA-Z0-9]/.test(e.data)) e.preventDefault()    
+                            }}
+                        />
+    
+                        <div id="permissions">  
+                            <h3>Permissions:</h3>
+    
+                            <select name="permissions" value={permissionsToSend} onChange={(e) => setPermissionsToSend(e.target.value)}>
+                                <option value="view">View</option>
+                                <option value="edit">Edit</option>
+                            </select>
+                        </div>
+                        
+                        <div className="createFolderActions">
+                            <button onClick={(e) => {
+                                e.stopPropagation()
+                                setOpenModal("")
+                            }}>Cancel</button>
+    
+                            <button onClick={(e) => {
+                                e.stopPropagation()
+                                submitAccess()
+                            }}>Share</button>
+                        </div>
+    
+                        {localCollaborators.length > 0 && (
+                            <div className="accessInfo">
+                                <h3>Collaborators:</h3>
+    
+                                <div className="collaboratorsList">
+                                    {localCollaborators.map((collab, index) => (
+                                        <div key={`${collab}-${index}`} className="collaborator">
+                                            {collaboratorPhotos[collab] && (
+                                                <img 
+                                                    src={collaboratorPhotos[collab]} 
+                                                    alt={collab} 
+                                                    className="collaboratorAvatar" 
+                                                />
+                                            )}
+    
+                                            {!collaboratorPhotos[collab] && (
+                                                <img 
+                                                    src={MockUserImg}
+                                                    alt={collab} 
+                                                    className="collaboratorAvatar" 
+                                                />
+                                            )}
+                                            <p>{collab}</p>
+                                            <Add onClick={() => removeCollaborator(collab)} />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )
+        }
 
     return (
         <div className="page">
@@ -549,6 +1015,9 @@ export default function MyFiles() {
                     )}
                 </div>
             </div>
-        </div>
+
+            {renderRenameModal()}
+            {renderAccessModal()}
+        </div> 
     )
 }
