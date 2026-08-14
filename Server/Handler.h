@@ -228,7 +228,7 @@ public:
 				co_return res;
 
 			}
-			else if (req.target().starts_with("get_folder"))
+			else if (req.target().starts_with("/get_folder"))
 			{
 				std::string path = json::value_to<std::string>(meta["path"]);
 				std::string uid = json::value_to<std::string>(meta["creator_id"]);

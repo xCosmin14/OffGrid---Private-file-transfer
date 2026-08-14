@@ -73,6 +73,7 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
         
         else if (target == "/get_collaborators_profile")
             co_return co_await this->getProfilePics(session_id);
+
         else if (target.starts_with("/get_folder")) {
 
             auto pos = target.find("?folder_id=");

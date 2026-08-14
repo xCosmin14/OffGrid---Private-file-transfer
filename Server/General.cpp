@@ -443,8 +443,10 @@ Async<HttpResponse> ClientController::downloadFolder(std::string folder_id, std:
 
 		if (rows.empty()) co_return Helpers::makeResponse(http::status::not_found, "folder not found");
 
-		co_return Helpers::makeResponse(http::status::ok, "folder found", "", 
-			{ 
+		std::cout << "got here\n";
+
+		co_return Helpers::makeResponse(http::status::ok, "folder found", "",
+			{
 				{"path", rows[0][0].as_string()},
 				{"creator_id", uid},
 				{"name", rows[0][1].as_string()}
