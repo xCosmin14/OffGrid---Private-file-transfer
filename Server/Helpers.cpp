@@ -10,8 +10,6 @@ namespace fs = std::filesystem;
 
 void Helpers::writeToFile(std::string path, FileData const& filedata)
 {
-	std::cout << path << std::endl;
-
 	try {
 		std::ofstream file(path, std::ios::binary);
 		file.exceptions(std::ofstream::badbit | std::ofstream::failbit);

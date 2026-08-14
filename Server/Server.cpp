@@ -116,7 +116,8 @@ Async<void> handle_session(boost::asio::ip::tcp::socket socket, ClientController
 				str_req.prepare_payload();
 
 
-				if (target.starts_with("/get_file?") || target.find("profile") != std::string::npos)
+				if (target.starts_with("/get_file?") || target.starts_with("/get_folder?")
+					|| target.find("profile") != std::string::npos)
 				{
 					Handler<http::string_body, http::file_body>handler(str_req, c);
 					auto res = co_await handler.getFileResponse();
