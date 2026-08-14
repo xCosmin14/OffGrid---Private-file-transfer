@@ -14,6 +14,8 @@
 
 #include "ClientController.h"
 
+#include "Helpers.h"
+
 namespace http = boost::beast::http;
 namespace err = boost::asio::error;
 
@@ -222,6 +224,48 @@ public:
 				}
 				res.result(http::status::ok);
 				res.set(http::field::content_type, "multipart/form-data; boundary=" + boundary);
+				res.prepare_payload();
+				co_return res;
+
+			}
+			else if (req.target().starts_with("get_folder"))
+			{
+				std::string path = json::value_to<std::string>(meta["path"]);
+				std::string uid = json::value_to<std::string>(meta["creator_id"]);
+				std::string folder_name = json::value_to<std::string>(meta["name"]);
+
+				std::string full_path = "FileSystem/files/" + uid + "/" + path;
+
+
+				if (!std::filesystem::exists(full_path) || !std::filesystem::is_directory(full_path))
+				{
+					res.result(http::status::not_found);
+					co_return res;
+				}
+
+				std::filesystem::create_directories("FileSystem/tmp");
+				std::string tmp_path = "FileSystem/tmp/" + folder_name + "_" + std::to_string(std::time(nullptr)) + ".zip";
+
+				try {
+					Helpers::zipDirectory(full_path, tmp_path);
+				}
+				catch (std::exception& e) {
+					std::cerr << "Zip failed: " << e.what() << std::endl;
+					res.result(http::status::internal_server_error);
+					co_return res;
+				}
+
+				boost::beast::error_code ec;
+				res.body().open(tmp_path.c_str(), boost::beast::file_mode::read, ec);
+				if (ec) {
+					res.result(http::status::internal_server_error);
+					co_return res;
+				}
+
+				std::string folderName = std::filesystem::path(path).filename().string();
+				res.result(http::status::ok);
+				res.set(http::field::content_type, "application/zip");
+				res.set(http::field::content_disposition, "attachment; filename=\"" + folderName + ".zip\"");
 				res.prepare_payload();
 				co_return res;
 

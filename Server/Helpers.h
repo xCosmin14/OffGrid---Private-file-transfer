@@ -28,4 +28,6 @@ namespace Helpers
 	std::string extractSessionId(std::string);
 
 	Async<void> sendWsMessage(std::shared_ptr<WsSession>, json::object);
+
+	void zipDirectory(std::string const&, std::string const&);
 };

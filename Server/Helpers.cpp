@@ -1,5 +1,13 @@
 #include "Helpers.h"
 
+#include <miniz/miniz.h>
+#include <filesystem>
+#include <fstream>
+#include <sstream>
+
+namespace fs = std::filesystem;
+
+
 void Helpers::writeToFile(std::string path, FileData const& filedata)
 {
 	std::cout << path << std::endl;
@@ -276,4 +284,55 @@ std::string Helpers::extractSessionId(std::string cookie)
 		return cookie.substr(start);
 	else
 		return cookie.substr(start, end - start);
+}
+
+
+void Helpers::zipDirectory(std::string const& folderPath, std::string const& outZipPath)
+{
+	if (!fs::exists(folderPath) || !fs::is_directory(folderPath))
+		throw std::runtime_error("source folder does not exist: " + folderPath);
+
+	mz_zip_archive zip{};
+	if (!mz_zip_writer_init_file(&zip, outZipPath.c_str(), 0))
+		throw std::runtime_error("failed to init zip writer for: " + outZipPath);
+
+	try
+	{
+		bool addedAny = false;
+
+		for (auto const& entry : fs::recursive_directory_iterator(folderPath))
+		{
+			if (!entry.is_regular_file())
+				continue;
+
+			std::string relativePath = fs::relative(entry.path(), folderPath).generic_string();
+
+			if (!mz_zip_writer_add_file(&zip, relativePath.c_str(),
+				entry.path().string().c_str(), nullptr, 0, MZ_DEFAULT_COMPRESSION))
+			{
+				throw std::runtime_error("failed to add file to zip: " + entry.path().string());
+			}
+
+			addedAny = true;
+		}
+
+		if (!addedAny)
+		{
+			mz_zip_writer_end(&zip);
+			fs::remove(outZipPath);
+			throw std::runtime_error("folder is empty, nothing to zip: " + folderPath);
+		}
+
+		if (!mz_zip_writer_finalize_archive(&zip))
+			throw std::runtime_error("failed to finalize zip archive: " + outZipPath);
+
+		mz_zip_writer_end(&zip);
+	}
+	catch (...)
+	{
+		mz_zip_writer_end(&zip);
+		std::error_code ec;
+		fs::remove(outZipPath, ec);
+		throw;
+	}
 }

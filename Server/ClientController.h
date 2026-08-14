@@ -67,7 +67,7 @@ class ClientController
 	Async<HttpResponse> getFile(std::string, std::string);
 	Async<HttpResponse> getProfilePhoto(std::string);
 	Async<HttpResponse> getProfilePics(std::string);
-
+	Async<HttpResponse> downloadFolder(std::string, std::string);
 
 	Async<HttpResponse> getFileMetadata(std::string, std::string, json::object&);
 

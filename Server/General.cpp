@@ -417,3 +417,43 @@ Async<HttpResponse> ClientController::getNotifications(std::string session_id)
 
 	}
 }
+
+
+Async<HttpResponse> ClientController::downloadFolder(std::string folder_id, std::string session_id)
+{
+	std::string uid;
+	std::exception_ptr error;
+
+	try {
+		uid = this->getUserId(session_id);
+	}
+	catch (std::exception& e)
+	{
+		error = std::current_exception();
+	}
+
+	if (error)
+		co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
+
+
+	try {
+		mysql::results results = co_await this->db.runQuery(Queries::VerifyFolderId(folder_id, uid));
+
+		auto rows = results.rows();
+
+		if (rows.empty()) co_return Helpers::makeResponse(http::status::not_found, "folder not found");
+
+		co_return Helpers::makeResponse(http::status::ok, "folder found", "", 
+			{ 
+				{"path", rows[0][0].as_string()},
+				{"creator_id", uid},
+				{"name", rows[0][1].as_string()}
+			});
+
+	}
+	catch (boost::system::system_error& e)
+	{
+		std::cerr << "Failed query: " << e.what();
+		co_return Helpers::makeResponse(http::status::internal_server_error, "internal_server_error");
+	}
+}

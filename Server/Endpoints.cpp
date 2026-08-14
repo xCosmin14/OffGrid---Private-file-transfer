@@ -55,7 +55,7 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
         else if (target == "/grant_access") 
             co_return co_await this->manageAccess(obj, session_id);
         
-        else if (target == "/revoke_access") // not tested
+        else if (target == "/revoke_access")
             co_return co_await this->manageAccess(obj, session_id, "revok");
     }
     else if (method == http::verb::get)
@@ -71,8 +71,17 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
         else if (target == "/get_notifications")
             co_return co_await this->getNotifications(session_id);
         
-        else if (target == "/get_collaborators_profile") // not tested
+        else if (target == "/get_collaborators_profile")
             co_return co_await this->getProfilePics(session_id);
+        else if (target.starts_with("/get_folder")) {
+
+            auto pos = target.find("?folder_id=");
+            if (pos == std::string::npos)
+                co_return Helpers::makeResponse(http::status::bad_request, "missing folder id");
+
+
+            co_return co_await this->downloadFolder(std::string(target.substr(pos + 11)), session_id);
+        }
     }
     else if (method == http::verb::delete_) // fully tested
     {
