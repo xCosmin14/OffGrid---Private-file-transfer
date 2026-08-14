@@ -80,7 +80,7 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
             if (pos == std::string::npos)
                 co_return Helpers::makeResponse(http::status::bad_request, "missing folder id");
 
-
+            std::cout << target.substr(pos + 11) << std::endl;
             co_return co_await this->downloadFolder(std::string(target.substr(pos + 11)), session_id);
         }
     }

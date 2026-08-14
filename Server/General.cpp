@@ -436,20 +436,23 @@ Async<HttpResponse> ClientController::downloadFolder(std::string folder_id, std:
 		co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
 
 
+
 	try {
 		mysql::results results = co_await this->db.runQuery(Queries::VerifyFolderId(folder_id, uid));
 
 		auto rows = results.rows();
 
-		if (rows.empty()) co_return Helpers::makeResponse(http::status::not_found, "folder not found");
 
-		std::cout << "got here\n";
+		if (rows.empty() || !rows[0][0].is_string() || !rows[0][1].is_string())
+			co_return Helpers::makeResponse(http::status::not_found, "folder not found");
+
 
 		co_return Helpers::makeResponse(http::status::ok, "folder found", "",
 			{
 				{"path", rows[0][0].as_string()},
 				{"creator_id", uid},
-				{"name", rows[0][1].as_string()}
+				{"name", rows[0][1].as_string()},
+				{"content_type", "application / zip"}
 			});
 
 	}

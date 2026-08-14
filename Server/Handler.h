@@ -174,8 +174,9 @@ public:
 		if (stat == http::status::ok)
 		{
 			json::object meta = json::parse(body).as_object();
-			std::string content_type = json::value_to<std::string>(meta["content_type"]);
-
+			std::string content_type = (meta.contains("content_type") && meta.at("content_type").is_string())
+				? json::value_to<std::string>(meta.at("content_type"))
+				: "application/octet-stream";
 
 			if (req.target() == "/get_collaborators_profile")
 			{
@@ -236,7 +237,6 @@ public:
 
 				std::string full_path = "FileSystem/files/" + uid + "/" + path;
 
-
 				if (!std::filesystem::exists(full_path) || !std::filesystem::is_directory(full_path))
 				{
 					res.result(http::status::not_found);
@@ -262,13 +262,11 @@ public:
 					co_return res;
 				}
 
-				std::string folderName = std::filesystem::path(path).filename().string();
 				res.result(http::status::ok);
 				res.set(http::field::content_type, "application/zip");
-				res.set(http::field::content_disposition, "attachment; filename=\"" + folderName + ".zip\"");
+				res.set(http::field::content_disposition, "attachment; filename=\"" + folder_name + ".zip\"");
 				res.prepare_payload();
 				co_return res;
-
 			}
 			else {
 				std::string file_path = json::value_to<std::string>(meta["path"]);
