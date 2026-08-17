@@ -113,7 +113,8 @@ export default function FileViewer(props) {
         URL.revokeObjectURL(url)
     }        
 
-    const size = props.viewerSize || (isMobile() === 0 ? "small" : "full")
+    const mobile = isMobile()
+    const size = props.viewerSize || (mobile === 0 ? "small" : "full")
     const setSize = props.setViewerSize
 
     const componentName = getViewerComponent(props.file.name, extensionToLanguage)
@@ -137,10 +138,10 @@ export default function FileViewer(props) {
                     style = {{color: editOpen === true ? "var(--hoverCol)" : "var(--text)"}}
                 />}
                 {size !== "full" ? 
-                    isMobile() == 0 && <Enlarge 
+                    mobile == 0 && <Enlarge 
                         style={{marginRight: (props.file.extension === "txt" || props.file.extension === "md") ? "-12px" : "0px"}}
                         onClick={() => setSize("full")} /> : 
-                    isMobile() == 0 && <Shrink onClick={() => setSize("small")} />
+                    mobile == 0 && <Shrink onClick={() => setSize("small")} />
                 }
                 <Add id="closeFileViewer" onClick={() => {
                     props.onExit()

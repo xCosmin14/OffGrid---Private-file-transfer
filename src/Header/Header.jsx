@@ -5,7 +5,6 @@ import { UserContext } from '../UserContext.jsx'
 import { FileContext } from "../GetFiles.jsx"
 
 import isMobile from "../IsMobile.js"
-import { getUID } from "../ColorScheme.js"
 
 import Menu from "../Menu/Menu.jsx"
 import Notifications from "../Notifications/Notifications.jsx"
@@ -29,6 +28,8 @@ export default function Header() {
 
     const [notificationsOpen, setNotificationsOpen] = useState(false)
     const [showMobileMenu, setShowMobileMenu] = useState(false)
+
+    const mobile = isMobile()
 
     const handleToggleTheme = () => {
         setTheme((prevTheme) => (prevTheme === "dark" ? "light" : "dark"))
@@ -56,21 +57,21 @@ export default function Header() {
     return (
         <div className="header">
             <div className="headerLeft">
-                {isMobile() == 0 && (
+                {mobile == 0 && (
                     <Link id="headerLogo" to="/">
                         <img src={Logo} id="logoImg" alt="Logo" />
                         <h1>OffGrid</h1>
                     </Link>
                 )}
 
-                {isMobile() == 1 && (
+                {mobile == 1 && (
                     <HamburgerToggle
                         id="hamburger"  
                         onClick={toggleMobileMenu} 
                     />
                 )}
 
-                {(isMobile() == 1 && showMobileMenu) && <Menu />}
+                {(mobile == 1 && showMobileMenu) && <Menu />}
 
                 {isLogged && <div id="headerFileSearch">
                     <input type="text" placeholder="Search files and folders..." 
@@ -96,9 +97,9 @@ export default function Header() {
                     </button>
                 </div>
 
-                {isMobile() == 0 && <span id="headerVerticalLine"></span>}
+                {mobile == 0 && <span id="headerVerticalLine"></span>}
 
-                {isMobile() == 0 && (
+                {mobile == 0 && (
                     <Link to={isLogged ? "/settings" : "/login"} id="accountSettingsToggle">
                         <img src={avatar} alt="User Avatar" />
                         <h3>{user?.username}</h3>

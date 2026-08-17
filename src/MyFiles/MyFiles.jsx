@@ -32,12 +32,27 @@ const getParentPath = (fullPath) => {
     return lastSlash === -1 ? "" : fullPath.substring(0, lastSlash)
 }
 
-const calculateFolderSize = (folderPath, allFiles) => {
-    if (!allFiles || allFiles.length === 0) return 0
+const buildFolderSizeMap = (allFiles) => {
+    const sizeMap = {}
+    if (!allFiles) return sizeMap
 
-    return allFiles
-        .filter(file => file.inTrash == 0 && file.path.startsWith(folderPath + "/"))
-        .reduce((accumulator, file) => accumulator + (parseFloat(file.size) || 0), 0)
+    for (const file of allFiles) {
+        if (file.inTrash != 0 || !file.path) continue
+
+        // adaugă mărimea fișierului la fiecare folder ascendent din calea lui
+        // ("A/B/C/fisier.txt" contribuie la "A", "A/B" și "A/B/C")
+        let path = file.path
+        let slashIndex = path.lastIndexOf("/")
+        const size = parseFloat(file.size) || 0
+
+        while (slashIndex !== -1) {
+            const ancestorPath = path.substring(0, slashIndex)
+            sizeMap[ancestorPath] = (sizeMap[ancestorPath] || 0) + size
+            slashIndex = ancestorPath.lastIndexOf("/")
+        }
+    }
+
+    return sizeMap
 }
 
 const formatDate = (dateString) => {
@@ -117,7 +132,7 @@ export default function MyFiles() {
     }
 
     const [openFile, setOpenFile] = useState(null)
-    const [viewerSize, setViewerSize] = useState(isMobile() == 0 ? "small" : "full")
+    const [viewerSize, setViewerSize] = useState(() => isMobile() == 0 ? "small" : "full")
     const isViewerSmall = openFile !== null && viewerSize === "small"
 
     useEffect(() => {
@@ -127,11 +142,12 @@ export default function MyFiles() {
 
     const { processedFolders, processedFiles } = useMemo(() => {
         const safeFiles = files || [], safeFolders = folders || []
+        const folderSizeMap = buildFolderSizeMap(safeFiles)
 
         let filteredFolders = safeFolders
             .map(folder => ({
                 ...folder,
-                calculatedSize: calculateFolderSize(folder.path, safeFiles)
+                calculatedSize: folderSizeMap[folder.path] || 0
             }))
             .filter(folder => {
                 if (getParentPath(folder.path) !== currentPathStr) return false
@@ -194,7 +210,7 @@ export default function MyFiles() {
             sizeByTypes: sortedTypes,
             totalFileSize: total
         }
-    }, [processedFiles, processedFolders])
+    }, [files])
 
     useEffect(() => {
         currentFolderObj && setCurrentFav(currentFolderObj.favourite)
@@ -474,7 +490,7 @@ export default function MyFiles() {
                     
                     if (isFolder && setFolders) 
                         setFolders(prev => prev.map(f => (f.folder_id || f.id) === targetId ? { ...f, favourite: currentFav } : f))
-                     else if (setFiles) 
+                    else if (setFiles) 
                         setFiles(prev => prev.map(f => (f.file_id || f.id) === targetId ? { ...f, favourite: currentFav } : f))
                 }
                 break
@@ -591,9 +607,7 @@ export default function MyFiles() {
             if (response.ok) {
                 setOpenModal("")
                 if (refreshFiles) await refreshFiles()
-            } else {
-                console.error(response.status)
-            }
+            } else console.error(response.status)
         } catch (err) {
             console.error("Rename error:", err)
         }

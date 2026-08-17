@@ -104,7 +104,7 @@ export default function SharedFiles() {
     }
 
     const [openFile, setOpenFile] = useState(null)
-    const [viewerSize, setViewerSize] = useState(isMobile() == 0 ? "small" : "full")
+    const [viewerSize, setViewerSize] = useState(() => isMobile() == 0 ? "small" : "full")
     const isViewerSmall = openFile !== null && viewerSize === "small"
 
     const { processedFolders, processedFiles } = useMemo(() => {
