@@ -105,7 +105,12 @@ Async<HttpResponse> ClientController::loginUser(json::object& obj)
 						std::unique_lock lock(users_mutex);
 						this->loggedUsers[session_id] = MapEntry(uid, device_id, os);
 
-						co_return Helpers::makeResponse(http::status::ok, "user logged in", session_id);
+						co_return Helpers::makeResponse(http::status::ok, "user logged in", session_id,
+							{
+								{"public_key", rows[0][2].as_string()},
+								{"encrypted_private_key", rows[0][3].as_string() },
+								{"key_salt", rows[0][4].as_string()}
+							});
 					}
 					catch (boost::system::system_error& e)
 					{

@@ -53,9 +53,8 @@ Query Queries::CreateSessionQuery(std::string session_id, std::string user_id)
 
 Query Queries::SelectPassword(json::object const& obj)
 {
-	std::vector<mysql::field> values;
-	values.emplace_back(json::value_to<std::string>(obj.at("email")));
-	return { "SELECT uid, password FROM offgrid_db.user WHERE email = ?",  values };
+	return { "SELECT uid, password, public_key, encrypted_private_key, key_salt FROM offgrid_db.user "
+		"WHERE email = ?",  {mysql::field(json::value_to<std::string>(obj.at("email")))} };
 
 }
 
