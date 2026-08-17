@@ -16,6 +16,15 @@ Async<HttpResponse> ClientController::registerUser(json::object& obj)
 	if (!obj.contains("password") || !obj.at("password").is_string())
 		co_return Helpers::makeResponse(http::status::conflict, "Password not provided");
 
+	if(!obj.contains("public_key") || !obj.at("public_key").is_string())
+		co_return Helpers::makeResponse(http::status::conflict, "Public key not provided");
+
+	if (!obj.contains("encrypted_private_key") || !obj.at("encrypted_private_key").is_string())
+		co_return Helpers::makeResponse(http::status::conflict, "Private key not provided");
+
+	if (!obj.contains("key_salt") || !obj.at("key_salt").is_string())
+		co_return Helpers::makeResponse(http::status::conflict, "Key salt not provided");
+
 
 	mysql::diagnostics diag;
 
