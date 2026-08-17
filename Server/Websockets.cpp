@@ -421,6 +421,7 @@ Async<void> ClientController::sendNotifications(Notification notif, std::string 
 			obj["notification_id"] = notification_id;
 			obj["receiver_id"] = target_uid;
 			obj["sender_id"] = actor_uid;
+			obj[involvment_entity + "_id"] = involvment_id;
 			obj["info"] = notif.getObject();
 
 
