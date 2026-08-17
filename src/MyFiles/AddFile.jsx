@@ -13,6 +13,17 @@ import "./AddFile.css"
 const activeUploads = new Map()
 const HOST_ADDRESS = import.meta.env.VITE_HOST_ADDRESS
 
+function generateUUID() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') 
+        return crypto.randomUUID()
+    
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0
+        const v = c === 'x' ? r : (r & 0x3) | 0x8
+        return v.toString(16)
+    })
+}
+
 export async function cancelUpload(uploadId) {
     const uploadTask = activeUploads.get(uploadId)
     
@@ -174,7 +185,7 @@ export default function AddFile(props) {
         let totalBytes = 0
         for (let i = 0; i < files.length; i++) totalBytes += files[i].size
         
-        const uploadId = crypto.randomUUID()
+        const uploadId = generateUUID()
         activeUploads.set(uploadId, { xhr: null, transaction_id: null })
 
         let hasUploaded = false
@@ -294,7 +305,7 @@ export default function AddFile(props) {
             }
         }
 
-        const uploadId = crypto.randomUUID()
+        const uploadId = generateUUID()
         activeUploads.set(uploadId, { xhr: null, transaction_id: null })
 
         const paths = files.map(file => 

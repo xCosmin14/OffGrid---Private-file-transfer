@@ -29,8 +29,13 @@ const getNotifications = async () => {
 
 const formatTime = (dateStr) => {
     if (!dateStr) return ""
-    const timePart = dateStr.split(" ")[1]
-    return timePart ? timePart.slice(0, 5) : dateStr
+    const datePart = new Date()
+    const dateTxt = datePart
+        .toLocaleDateString("en-US", {weekday: "long", year: "numeric", month: "long", day: "numeric"})
+        .replace(/, (\d{4})/, ' $1') 
+        
+    const timePart = dateStr.split(" ")[1].slice(0, 5)
+    return `${dateTxt}, ${timePart}`
 }
 
 export default function Notifications() {
@@ -138,7 +143,9 @@ export default function Notifications() {
 
             {notifications.length > 0 && (
                 <div id="notificationsList">
-                    {notifications.map((notification, index) => renderNotification(notification, index))}
+                    {[...notifications]
+                        .sort((a, b) => new Date(b.sent) - new Date(a.sent))
+                        .map((notification, index) => renderNotification(notification, index))}
                 </div>
             )}
         </div>

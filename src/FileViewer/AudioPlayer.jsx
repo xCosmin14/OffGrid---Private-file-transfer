@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, lazy } from "react"
 import { parseBlob } from "music-metadata"
 
 import NoVolume from "../assets/SVG/NoVolume.svg?react"
@@ -8,11 +8,13 @@ import PlayButton from "../assets/SVG/PlayButton.svg?react"
 import SkipBackward from "../assets/SVG/SkipBackward.svg?react"
 import SkipForward from "../assets/SVG/SkipForward.svg?react"
 
+import mockAudioImg from "../assets/MockAudioImg.jpg"
+
 export default function AudioPlayer(props) {
     const audioRef = useRef(null)
     const [metadata, setMetadata] = useState(null)
-    const [coverUrl, setCoverUrl] = useState(null)
 
+    const [coverUrl, setCoverUrl] = useState(null)
     const [isPlaying, setIsPlaying] = useState(false)
     const [isDragging, setIsDragging] = useState(false)
 
@@ -61,9 +63,7 @@ export default function AudioPlayer(props) {
 
                     setCoverUrl(createdCoverUrl)
                 }
-            } catch (err) {
-                console.error("Nu am putut citi metadatele audio:", err)
-            }
+            } catch (err) {}
         }
 
         extractMetadata()
@@ -141,7 +141,7 @@ export default function AudioPlayer(props) {
                     onEnded={() => setIsPlaying(false)}
                 />
 
-                {coverUrl ? (<img src={coverUrl}/>) : (<h2>No cover image</h2>)}
+                {<img src={coverUrl ? coverUrl : mockAudioImg}/>}
 
                 <div>
                     <h2>{metadata?.common?.title || props?.file?.name || "Unknown name"}</h2>

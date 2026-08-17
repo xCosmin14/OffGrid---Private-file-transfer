@@ -16,7 +16,6 @@ export default function InviteNotification(props) {
                 <div id="buttons">
                     <button>Delete</button>
                 </div>
-                
             </div>
         </div>
     )

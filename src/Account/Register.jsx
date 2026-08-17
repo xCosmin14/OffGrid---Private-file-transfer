@@ -2,6 +2,14 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import { useTitle } from "../UseTitle.js"
 
+import sodium from 'libsodium-wrappers'
+import { 
+    initCrypto, generateSalt, deriveKeyFromPassword, 
+    generateKeyPair, generateFEK, encryptDataWithKey 
+} from "../CryptoUtils.js"
+
+import { customFetch } from "../UserContext.jsx"
+
 import Email from "../assets/SVG/UserIcons/Email.svg?react"
 import Password from "../assets/SVG/UserIcons/Password.svg?react"
 import User from "../assets/SVG/UserIcons/UserIcon.svg?react"
@@ -16,11 +24,10 @@ export default function Register() {
 
     const [showPass, setShowPass] = useState(false)
     const [showConfirm, setShowConfirm] = useState(false)
-    
     const [showError, setShowError] = useState("")
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        e.preventDefault()
 
         const formData = new FormData(e.currentTarget)
 
@@ -29,7 +36,9 @@ export default function Register() {
         formData.set("password", formData.get("password").replace(/['`"<>]+/g, ''))
         formData.set("confirmPassword", formData.get("confirmPassword").replace(/['`"<>]+/g, ''))
         
-        if (formData.get("password") !== formData.get("confirmPassword")) {
+        const password = formData.get("password")
+
+        if (password !== formData.get("confirmPassword")) {
             setShowError("password mismatch")
             return
         }
@@ -40,6 +49,23 @@ export default function Register() {
         const dataObject = Object.fromEntries(formData.entries())
 
         try {
+            await initCrypto()
+
+            const saltB64 = await generateSalt()
+            const derivedKey = await deriveKeyFromPassword(password, saltB64)
+            const keyPair = await generateKeyPair()
+            const fek = await generateFEK()
+
+            const privateKeyUint8 = sodium.from_base64(keyPair.privateKey)
+            const encryptedPrivateKey = await encryptDataWithKey(privateKeyUint8, derivedKey)
+            const encryptedPrivateKeyRaw = await encryptDataWithKey(privateKeyUint8, derivedKey)
+
+            const { nonce, ciphertext } = await encryptDataWithKey(privateKeyUint8, derivedKey)
+
+            dataObject.key_salt = saltB64
+            dataObject.public_key = keyPair.publicKey
+            dataObject.encrypted_private_key = encryptedPrivateKey
+
             let response = await customFetch(`http://${key}:18080/register`, {
                 method: "POST",
                 headers: { 'Content-Type': 'application/json' },
@@ -50,10 +76,11 @@ export default function Register() {
             let data = await response.json()
             
             if (!response.ok || data.status === "error") {
-                 setShowError(data.message) 
-                 return
+                setShowError(data.message) 
+                return
             }
-            setShowError(null)
+            setShowError("user registered")
+            window.location.href = "/login"
         } catch (error) {
             setShowError(error.message)
         }
@@ -127,6 +154,7 @@ export default function Register() {
                 {showError == "duplicate email" && <h3 style={{color: "red"}}>Email is already taken</h3>}
                 {showError == "password mismatch" && <h3 style={{color: "red"}}>Passwords don't match</h3>}
                 {showError == "invalid invite code" && <h3 style={{color: "red"}}>Invalid invite code</h3>}
+                {showError == "user registered" && <h3 style={{color: "var(--hoverCol)"}}>User registered successfully</h3>}
 
                 <Link to="/login">Log into your account</Link>
             </form>

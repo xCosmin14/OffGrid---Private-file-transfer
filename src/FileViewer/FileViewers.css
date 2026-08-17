@@ -340,9 +340,17 @@ pre::-webkit-scrollbar-track,
     position: relative; 
 }
 
-.mainAudio img {width: 100%; max-width: 300px;}
-#small .mainAudio img {margin-top: -40px;}
-#full .mainAudio img {width: 120%; max-width: 400px;}
+.mainAudio img {border: 1px solid var(--boxShadowCol)}
+
+#small .mainAudio img {
+    margin-top: -40px;
+    width: 280px; height: 280px;
+    object-fit: cover;
+}
+#full .mainAudio img {
+    width: 380px; height: 380px;
+    object-fit: cover;
+}
 
 #small .mainAudio h2 {
     font-size: 2rem; text-align: center;
@@ -558,6 +566,11 @@ pre::-webkit-scrollbar-track,
     }
     #small .mainAudio:has(video) #audioControls {top: -10px; scale: 1.1;}
     #small .mainAudio:has(video) .progressContainer {margin-top: -5px;}
+
+    #small .mainAudio img {
+        width: 210px; height: 210px;
+        margin-top: -30px;
+    }
 }
 
 @media screen and (max-width: 500px) {

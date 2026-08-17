@@ -333,35 +333,31 @@ export default function MyFiles() {
 
         switch (action) {
             case "download": {
-                let response
+                const isTargetFolder = isFolder || openFile?.extension === "folder" || 'folder_id' in openFile
 
-                if (currentFolderObj) 
-                    response = await customFetch(`http://${key}:18080/get_folder?folder_id=${targetId}`, {
-                        method: "GET",
-                        credentials: "include",
-                        headers: { 'Content-Type': 'application/json' },
-                    })
-                    
-                else 
-                    response = await customFetch(`http://${key}:18080/get_file?file_id=${targetId}`, {
-                        method: "GET",
-                        credentials: "include",
-                        headers: { 'Content-Type': 'application/json' },
-                    })
+                const endpoint = isTargetFolder ? "get_folder" : "get_file"
+                const param = isTargetFolder ? `folder_id=${targetId}` : `file_id=${targetId}`
+
+                const response = await customFetch(`http://${key}:18080/${endpoint}?${param}`, {
+                    method: "GET",
+                    credentials: "include",
+                    headers: { 'Content-Type': 'application/json' },
+                })
 
                 if (response.ok) {
                     let buffer = await response.arrayBuffer()
                     const url = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }))
                     const a = document.createElement('a')
                     a.href = url
-                    a.download = `${currentFolderObj?.name || openFile}.zip`
+                    a.download = isTargetFolder 
+                        ? `${openFile?.name || "folder"}.zip` : openFile.name
+                    
                     document.body.appendChild(a)
                     a.click()
 
                     document.body.removeChild(a)
                     URL.revokeObjectURL(url)
                 }
-                    
                 break
             }
             case "delete": {

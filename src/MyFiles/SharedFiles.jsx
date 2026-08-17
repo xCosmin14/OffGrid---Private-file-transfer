@@ -204,22 +204,31 @@ export default function SharedFiles() {
 
         switch (action) {
             case "download": {
-                const response = await customFetch(`http://${key}:18080/get_file?file_id=${targetId}`, {
+                const isTargetFolder = isFolder || openFile?.extension === "folder" || 'folder_id' in openFile
+
+                const endpoint = isTargetFolder ? "get_folder" : "get_file"
+                const param = isTargetFolder ? `folder_id=${targetId}` : `file_id=${targetId}`
+
+                const response = await customFetch(`http://${key}:18080/${endpoint}?${param}`, {
                     method: "GET",
+                    credentials: "include",
                     headers: { 'Content-Type': 'application/json' },
                 })
 
-                let buffer = await response.arrayBuffer()
-                const url = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }))
-                const a = document.createElement('a')
+                if (response.ok) {
+                    let buffer = await response.arrayBuffer()
+                    const url = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }))
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = isTargetFolder 
+                        ? `${openFile?.name || "folder"}.zip` : openFile.name
+                    
+                    document.body.appendChild(a)
+                    a.click()
 
-                a.href = url
-                a.download = currentFolderObj.name
-                document.body.appendChild(a)
-                a.click()
-
-                document.body.removeChild(a)
-                URL.revokeObjectURL(url)
+                    document.body.removeChild(a)
+                    URL.revokeObjectURL(url)
+                }
                 break
             }
             case "delete": {
@@ -270,22 +279,31 @@ export default function SharedFiles() {
     
         switch (action) {
             case "download": {
-                const response = await customFetch(`http://${key}:18080/get_file?file_id=${openFile.file_id || openFile.id}`, {
+                const isTargetFolder = isFolder || openFile?.extension === "folder" || 'folder_id' in openFile
+
+                const endpoint = isTargetFolder ? "get_folder" : "get_file"
+                const param = isTargetFolder ? `folder_id=${targetId}` : `file_id=${targetId}`
+
+                const response = await customFetch(`http://${key}:18080/${endpoint}?${param}`, {
                     method: "GET",
+                    credentials: "include",
                     headers: { 'Content-Type': 'application/json' },
                 })
 
-                let buffer = await response.arrayBuffer()
-                const url = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }))
-                const a = document.createElement('a')
+                if (response.ok) {
+                    let buffer = await response.arrayBuffer()
+                    const url = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }))
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = isTargetFolder 
+                        ? `${openFile?.name || "folder"}.zip` : openFile.name
+                    
+                    document.body.appendChild(a)
+                    a.click()
 
-                a.href = url
-                a.download = openFile.name
-                document.body.appendChild(a)
-                a.click()
-
-                document.body.removeChild(a)
-                URL.revokeObjectURL(url)
+                    document.body.removeChild(a)
+                    URL.revokeObjectURL(url)
+                }
                 break
             }
             case "delete": {

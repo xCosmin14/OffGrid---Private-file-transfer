@@ -208,7 +208,7 @@ export default function File(props) {
                     const url = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }))
                     const a = document.createElement('a')
                     a.href = url
-                    a.download = `${props.name}.zip`
+                    a.download = props.extension === "Folder" ? `${props.name}.zip` : props.name
                     document.body.appendChild(a)
                     a.click()
 

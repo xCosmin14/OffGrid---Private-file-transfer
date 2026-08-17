@@ -8,6 +8,11 @@ export default defineConfig({
   plugins: [
     react(),
     babel({ presets: [reactCompilerPreset()] }),
-    svgr() 
+    svgr(),
   ],
+
+  preview: {
+    host: true,
+    port: 3000
+  }
 })

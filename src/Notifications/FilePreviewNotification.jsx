@@ -13,6 +13,10 @@ export default function FilePreviewNotification(props) {
                 <NotifFilePreview fileType={props.fileType} fileName={props.fileName} />
                 
                 <h5>{props.sent}</h5>
+
+                <div id="buttons">
+                    <button>Delete</button>
+                </div>
             </div>
         </div>
     )

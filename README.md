@@ -53,7 +53,6 @@ Upload files, share and preview them, everything in the browser with the smalles
 - [ ] Notifications
 - ✅ Downloading folders as .ZIP archives
 - [ ] Editing .txt files dirrectly with the ability to collaborate with other users (Google Docs style)
-- [ ] Choosing the style for programming language syntax highlighting
 
 ### Server
 
@@ -87,6 +86,39 @@ Distributed under the MIT License. See `LICENSE` for more information.
 - ZIP archives (the app only reads the file structure and displays a tree)
 - Documents and spreadsheets: PDF, DOCX, MD, XLS, XLSX, CSV, TXT
 - Code files (every known programming language is properly syntax highlighted)
+
+
+
+## Tech stack
+
+### 	Frontend
+
+​		**React.js**
+
+​		Zip.js, JSZip
+
+​		Docx-preview, React PDF, XLSX
+
+​		Dompurify, React-syntax-highlighter
+
+​		Music-metadata
+
+​		React-file-icon
+
+
+
+### 	Backend
+
+​		**C++**
+
+​		Boost.beast, Boost.asio, Boost.json, Boost.sql, Boost.uuid
+
+​		Argon2
+
+​		Miniz
+
+​		OpenSSL
+
 ---
 
 <div align="center">Made with ❤️ by Cosmin Nichita, Baltag Andreea</div>
