@@ -60,6 +60,7 @@ class SessionManager : public QObject {
 
         Q_INVOKABLE void changeUsername(const QString &newUsername, const QString &password);
         Q_INVOKABLE void changePassword(const QString &currentPassword, const QString &newPassword);
+        Q_INVOKABLE void changePreferences(const QJsonObject &preferences);
 
     public slots:
         void setServerMessage(const QString &message) {
@@ -94,4 +95,6 @@ class SessionManager : public QObject {
 
         void usernameErrorChanged();
         void passwordErrorChanged();
+
+        void preferencesChanged(const QJsonObject &newPrefs);
 };

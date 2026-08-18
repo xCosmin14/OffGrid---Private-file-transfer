@@ -13,6 +13,102 @@ Rectangle {
     property int activeModelIndex: -1
     property string activeFieldName: ""
 
+    function parseColor(colorStr) {
+        if (!colorStr) return { hex: "#ffffff", alpha: 1 }
+        var str = colorStr.toString().trim()
+
+        if (str.indexOf("rgb") === 0) {
+            var match = str.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/)
+            if (match) {
+                var r = parseInt(match[1]).toString(16).padStart(2, '0')
+                var g = parseInt(match[2]).toString(16).padStart(2, '0')
+                var b = parseInt(match[3]).toString(16).padStart(2, '0')
+                var alpha = match[4] !== undefined ? parseFloat(match[4]) : 1.0
+                return { hex: "#" + r + g + b, alpha: alpha }
+            }
+        }
+
+        if (str.indexOf("#") === 0 && str.length === 9) {
+            var hexRgb = str.substring(0, 7)
+            var alphaHex = str.substring(7, 9)
+            var aVal = parseInt(alphaHex, 16) / 255.0
+            return { hex: hexRgb, alpha: aVal }
+        }
+
+        return { hex: str, alpha: 1 }
+    }
+
+    function formatColor(hex, alpha) {
+        if (alpha >= 1) return hex
+        var c = hex.replace('#', '')
+        if (c.length === 3) {
+            c = c.charAt(0) + c.charAt(0) + c.charAt(1) + c.charAt(1) + c.charAt(2) + c.charAt(2)
+        }
+        var r = parseInt(c.substring(0, 2), 16)
+        var g = parseInt(c.substring(2, 4), 16)
+        var b = parseInt(c.substring(4, 6), 16)
+        return "rgba(" + r + ", " + g + ", " + b + ", " + alpha + ")"
+    }
+
+    function colorFromString(colorStr) {
+        var parsed = parseColor(colorStr)
+        var hex = parsed.hex.replace('#', '')
+        var r = parseInt(hex.substring(0, 2), 16) / 255
+        var g = parseInt(hex.substring(2, 4), 16) / 255
+        var b = parseInt(hex.substring(4, 6), 16) / 255
+        return Qt.rgba(r, g, b, parsed.alpha)
+    }
+
+    function loadPreferences() {
+        if (!root.userData || !root.userData.preferences) return;
+
+        var prefs = root.userData.preferences;
+        if (typeof prefs === "string") {
+            try {
+                prefs = JSON.parse(prefs);
+            } catch (e) {
+                return;
+            }
+        }
+
+        if (prefs && prefs.light && prefs.dark) {
+            for (var i = 0; i < colorModel.count; i++) {
+                var item = colorModel.get(i);
+                var k = item.key;
+                if (prefs.light[k] !== undefined) {
+                    colorModel.setProperty(i, "lightC", prefs.light[k]);
+                }
+                if (prefs.dark[k] !== undefined) {
+                    colorModel.setProperty(i, "darkC", prefs.dark[k]);
+                }
+            }
+        }
+    }
+
+    function saveTheme() {
+        var lightObj = {};
+        var darkObj = {};
+        for (var i = 0; i < colorModel.count; i++) {
+            var item = colorModel.get(i);
+            lightObj[item.key] = item.lightC;
+            darkObj[item.key] = item.darkC;
+        }
+        var prefs = {
+            "light": lightObj,
+            "dark": darkObj
+        };
+        var success = sessionMgr.changePreferences(prefs);
+    }
+
+    Component.onCompleted: loadPreferences()
+
+    Connections {
+        target: root
+        function onUserDataChanged() {
+            loadPreferences()
+        }
+    }
+
     component SettingsButton: Rectangle {
         id: btn
         property string text: ""
@@ -216,9 +312,11 @@ Rectangle {
                         Item {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 20
+
                             RowLayout {
                                 anchors.right: parent.right
                                 spacing: 20
+
                                 Text { text: "Light"; color: root.text; font.pixelSize: 14; opacity: 0.8; Layout.preferredWidth: 44; horizontalAlignment: Text.AlignHCenter }
                                 Text { text: "Dark"; color: root.text; font.pixelSize: 14; opacity: 0.8; Layout.preferredWidth: 44; horizontalAlignment: Text.AlignHCenter }
                             }
@@ -228,12 +326,12 @@ Rectangle {
                             id: colorRepeater
                             model: ListModel {
                                 id: colorModel
-                                ListElement { name: "Page background"; cssVar: "--bgCol"; lightC: "#f2effb"; darkC: "#352f44" }
-                                ListElement { name: "Menu background"; cssVar: "--menuBgCol"; lightC: "#ffffff"; darkC: "#655d7a" }
-                                ListElement { name: "Text"; cssVar: "--text"; lightC: "#231e3d"; darkC: "#ffffff" }
-                                ListElement { name: "Accent color"; cssVar: "--hoverCol"; lightC: "#3cbff3"; darkC: "#3cf38f" }
-                                ListElement { name: "Box shadow"; cssVar: "--boxShadowCol"; lightC: "#2e2d2d"; darkC: "#f0f0f0" }
-                                ListElement { name: "Transparency effect"; cssVar: "--boxBgCol"; lightC: "#ffffff"; darkC: "#dbdbdb" }
+                                ListElement { key: "bgCol"; name: "Page background"; cssVar: "--bgCol"; lightC: "#f2effb"; darkC: "#352f44" }
+                                ListElement { key: "menuBgCol"; name: "Menu background"; cssVar: "--menuBgCol"; lightC: "#ffffff"; darkC: "#655d7a" }
+                                ListElement { key: "text"; name: "Text"; cssVar: "--text"; lightC: "#231e3d"; darkC: "#ffffff" }
+                                ListElement { key: "hoverCol"; name: "Accent color"; cssVar: "--hoverCol"; lightC: "#3cbff3"; darkC: "#3cf38f" }
+                                ListElement { key: "boxShadowCol"; name: "Box shadow"; cssVar: "--boxShadowCol"; lightC: "#2e2d2d"; darkC: "#f0f0f0" }
+                                ListElement { key: "boxBgCol"; name: "Transparency effect"; cssVar: "--boxBgCol"; lightC: "#ffffff"; darkC: "#dbdbdb" }
                             }
 
                             delegate: Rectangle {
@@ -268,21 +366,23 @@ Rectangle {
                                         spacing: 20
 
                                         ColorCircle {
-                                            colorValue: model.lightC
+                                            colorValue: settingsPage.colorFromString(model.lightC)
                                             onCircleClicked: {
                                                 settingsPage.activeModelIndex = index
                                                 settingsPage.activeFieldName = "lightC"
-                                                globalColorPicker.selectedColor = model.lightC
+                                                var parsed = settingsPage.parseColor(model.lightC)
+                                                globalColorPicker.selectedColor = parsed.hex
                                                 globalColorPicker.open()
                                             }
                                         }
 
                                         ColorCircle {
-                                            colorValue: model.darkC
+                                            colorValue: settingsPage.colorFromString(model.darkC)
                                             onCircleClicked: {
                                                 settingsPage.activeModelIndex = index
                                                 settingsPage.activeFieldName = "darkC"
-                                                globalColorPicker.selectedColor = model.darkC
+                                                var parsed = settingsPage.parseColor(model.darkC)
+                                                globalColorPicker.selectedColor = parsed.hex
                                                 globalColorPicker.open()
                                             }
                                         }
@@ -301,6 +401,7 @@ Rectangle {
                             SettingsButton {
                                 text: "Save theme"; type: 1
                                 Layout.fillWidth: true
+                                onClicked: settingsPage.saveTheme()
                             }
                             SettingsButton {
                                 text: "Log out"; type: 2
@@ -329,7 +430,7 @@ Rectangle {
                         ColumnLayout {
                             spacing: 10
                             Text {
-                                text: "Profile - " + root.userData.username
+                                text: "Profile - " + (root.userData ? root.userData.username : "")
                                 font.pixelSize: 22
                                 font.weight: Font.Bold
                                 color: root.text
@@ -497,7 +598,13 @@ Rectangle {
 
         onAccepted: {
             if (settingsPage.activeModelIndex !== -1 && settingsPage.activeFieldName !== "") {
-                colorModel.setProperty(settingsPage.activeModelIndex, settingsPage.activeFieldName, selectedColor.toString())
+                var currentVal = colorModel.get(settingsPage.activeModelIndex)[settingsPage.activeFieldName]
+                var currentAlpha = settingsPage.parseColor(currentVal).alpha
+                var newHex = selectedColor.toString()
+                if (newHex.indexOf("#") === 0 && newHex.length === 9) newHex = "#" + newHex.substring(3)
+
+                var colorWithAlpha = settingsPage.formatColor(newHex, currentAlpha)
+                colorModel.setProperty(settingsPage.activeModelIndex, settingsPage.activeFieldName, colorWithAlpha)
             }
         }
     }

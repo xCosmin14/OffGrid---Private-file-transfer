@@ -69,15 +69,15 @@ Rectangle {
                     color: root.text
                     background: null
 
-                    Keys.onEscapePressed: {
-                        header.forceActiveFocus()
-                    }
+                    Keys.onEscapePressed: header.forceActiveFocus()
+
 
                     onTextEdited: {
                         let oldCursor = cursorPosition
                         let oldLength = text.length
 
                         text = textFiltering.TransformAlphaNumeric(text)
+                        handleFilters.setName(searchInput.text)
                         let deletedChars = oldLength - text.length
                         cursorPosition = Math.max(0, oldCursor - deletedChars)
                     }

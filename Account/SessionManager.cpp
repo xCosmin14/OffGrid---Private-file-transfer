@@ -142,7 +142,7 @@ QJsonObject SessionManager::getUserData() {
 
         return returnObj;
     } else {
-        qDebug() << "Eroare server/rețea:" << reply->errorString();
+        qDebug() << reply->errorString();
     }
 
     reply->deleteLater();
@@ -416,5 +416,26 @@ void SessionManager::changePassword(const QString &currentPassword, const QStrin
 
         setPasswordError(token);
         qDebug() << m_passwordError;
+    });
+}
+
+void SessionManager::changePreferences(const QJsonObject &preferences) {
+    if (!SessionManager::instance() || !SessionManager::instance()->hasActiveSession()) return;
+
+    QUrl changeDataUrl("http://localhost:18080/change_data");
+    QNetworkRequest changeDataRequest(changeDataUrl);
+    changeDataRequest.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+    QJsonObject json;
+    json["preferences"] = preferences;
+
+    QByteArray customVerb("PATCH");
+    QNetworkReply *reply = m_manager->sendCustomRequest(changeDataRequest, customVerb, QJsonDocument(json).toJson());
+
+    connect(reply, &QNetworkReply::finished, this, [this, reply, preferences]() {
+        if (reply->error() == QNetworkReply::NoError)
+            emit preferencesChanged(preferences);
+
+        reply->deleteLater();
     });
 }

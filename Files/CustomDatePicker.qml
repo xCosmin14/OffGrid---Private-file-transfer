@@ -8,7 +8,6 @@ Popup {
     height: 340
     padding: 12
 
-    // Animații la deschidere/închidere pentru un aspect fluid
     enter: Transition { NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 150 } }
     exit: Transition { NumberAnimation { property: "opacity"; from: 1.0; to: 0.0; duration: 150 } }
 
@@ -16,7 +15,6 @@ Popup {
     focus: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
-    // Semnal aruncat când se alege o dată
     signal dateAccepted(string formattedDate)
 
     property date selectedDate: new Date()
@@ -32,13 +30,9 @@ Popup {
         anchors.fill: parent
         spacing: 10
 
-        // =====================================
-        // 1. HEADER (Navigare Luni)
-        // =====================================
         RowLayout {
             Layout.fillWidth: true
 
-            // Buton Înapoi
             Button {
                 Layout.preferredWidth: 32
                 Layout.preferredHeight: 32
@@ -56,23 +50,19 @@ Popup {
                     if (monthGrid.month === 0) {
                         monthGrid.month = 11
                         monthGrid.year--
-                    } else {
-                        monthGrid.month--
-                    }
+                    } else monthGrid.month--
                 }
             }
 
-            // Text Lună și An
             Text {
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignHCenter
-                text: monthGrid.title // Titlu generat automat de MonthGrid
+                text: monthGrid.title
                 color: root.text
                 font.pixelSize: 16
                 font.weight: Font.DemiBold
             }
 
-            // Buton Înainte
             Button {
                 Layout.preferredWidth: 32
                 Layout.preferredHeight: 32
@@ -90,32 +80,24 @@ Popup {
                     if (monthGrid.month === 11) {
                         monthGrid.month = 0
                         monthGrid.year++
-                    } else {
-                        monthGrid.month++
-                    }
+                    } else monthGrid.month++
                 }
             }
         }
 
-        // =====================================
-        // 2. ZILELE SĂPTĂMÂNII
-        // =====================================
         DayOfWeekRow {
             Layout.fillWidth: true
-            locale: Qt.locale("en_US") // Pentru ca săptămâna să arate standard englezesc (Sun, Mon, etc.)
+            locale: Qt.locale("en_US")
 
             delegate: Text {
                 text: model.shortName
-                color: root.hoverCol // Folosim culoarea ta de accent
+                color: root.hoverCol
                 font.pixelSize: 12
                 font.weight: Font.Bold
                 horizontalAlignment: Text.AlignHCenter
             }
         }
 
-        // =====================================
-        // 3. CALENDAR GRID
-        // =====================================
         MonthGrid {
             id: monthGrid
             Layout.fillWidth: true
@@ -132,7 +114,6 @@ Popup {
                 height: monthGrid.height / 6
                 radius: 6
 
-                // Colorare adaptată la tema ta
                 color: {
                     if (isSelected) return root.hoverCol
                     if (dayMouseArea.containsMouse) return "#1affffff"
@@ -144,8 +125,8 @@ Popup {
                     text: model.day
                     font.pixelSize: 14
                     color: {
-                        if (isSelected) return root.bgCol // Culoarea textului inversată pe fundal selectat
-                        if (!isCurrentMonth) return "#66" + root.text.toString().substring(1) // Altă lună = mai transparent
+                        if (isSelected) return root.bgCol
+                        if (!isCurrentMonth) return "#66" + root.text.toString().substring(1)
                         return root.text
                     }
                 }
@@ -158,7 +139,6 @@ Popup {
                     onClicked: {
                         datePickerPopup.selectedDate = model.date
 
-                        // Formatăm MM/DD/YYYY pentru a se potrivi cu placeholder-ul tău din Filters.qml
                         let m = (model.date.getMonth() + 1).toString().padStart(2, '0')
                         let d = model.date.getDate().toString().padStart(2, '0')
                         let y = model.date.getFullYear()

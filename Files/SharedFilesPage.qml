@@ -185,7 +185,6 @@ Item {
                                     MenuOption { iconSrc: "../assets/svg/FileIcons/Download.svg"; label: "Download"; onActionTriggered: console.log("Download action") }
                                     MenuDivider {}
                                     MenuOption { iconSrc: "../assets/svg/FileIcons/Rename.svg"; label: "Rename"; onActionTriggered: console.log("Rename action") }
-                                    MenuOption { iconSrc: "../assets/svg/FileIcons/ChangeColor.svg"; label: "Change color"; onActionTriggered: console.log("Color action") }
                                     MenuDivider {}
                                     MenuOption { iconSrc: "../assets/svg/FileIcons/Trash.svg"; label: "Delete"; onActionTriggered: console.log("Delete action") }
                                     MenuOption { iconSrc: "../assets/svg/StarLine.svg"; label: "Add to Favorites"; onActionTriggered: console.log("Fav action") }

@@ -76,8 +76,8 @@ class TextFiltering : public QObject {
             result.reserve(14);
 
             if (digits.length() <= 2) result = digits;
-            else if (digits.length() <= 4) result = digits.left(2) + " / " + digits.mid(2);
-            else result = digits.left(2) + " / " + digits.mid(2, 2) + " / " + digits.mid(4);
+            else if (digits.length() <= 4) result = digits.left(2) + "/" + digits.mid(2);
+            else result = digits.left(2) + "/" + digits.mid(2, 2) + "/" + digits.mid(4);
 
             return result;
         }

@@ -24,19 +24,57 @@ ApplicationWindow {
     property var userData: null
 
     property bool isUserLoggedIn: sessionMgr ? sessionMgr.hasActiveSession : false
-    Connections {
-        target: sessionMgr
-        function onHasActiveSessionChanged() {
-            root.isUserLoggedIn = sessionMgr.hasActiveSession
+
+    function parseToQmlColor(colorStr) {
+        if (!colorStr) return "#ffffff"
+        var str = colorStr.toString().trim()
+
+        if (str.indexOf("rgb") === 0) {
+            var match = str.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/)
+            if (match)
+                return Qt.rgba(
+                    parseFloat(match[1]) / 255.0,
+                    parseFloat(match[2]) / 255.0,
+                    parseFloat(match[3]) / 255.0,
+                    match[4] !== undefined ? parseFloat(match[4]) : 1.0
+                )
         }
+
+        if (str.indexOf("#") === 0 && str.length === 9)
+            return Qt.rgba(
+                parseInt(str.substring(1, 3), 16) / 255.0,
+                parseInt(str.substring(3, 5), 16) / 255.0,
+                parseInt(str.substring(5, 7), 16) / 255.0,
+                parseInt(str.substring(7, 9), 16) / 255.0
+            )
+
+        return str
     }
 
-    property color bgCol: lightMode ? "#f2effb" : "#352F44"
-    property color menuBgCol : lightMode ? "#ccffffff" : "#94655d7a"
-    property color text: lightMode ? "#231e3d" : "#ffffff"
-    property color hoverCol: lightMode ? "#3cbff3" : "#3cf38f"
-    property color boxShadowCol: lightMode ? "#332e2d2d" : "#33f0f0f0"
-    property color boxBgCol: lightMode ? "#d9ffffff" : "#0ddbdbdb"
+    function getThemeColor(colorName, isLight, uData, defaultLight, defaultDark) {
+            var mode = isLight ? "light" : "dark"
+            var rawColor = isLight ? defaultLight : defaultDark
+
+            if (uData && uData.preferences) {
+                var prefs = uData.preferences
+                if (typeof prefs === "string")
+                    try {
+                        prefs = JSON.parse(prefs)
+                    } catch (e) {
+                        return parseToQmlColor(rawColor)
+                    }
+                if (prefs && prefs[mode] && prefs[mode][colorName])
+                    rawColor = prefs[mode][colorName]
+            }
+            return parseToQmlColor(rawColor)
+        }
+
+    property color bgCol: getThemeColor("bgCol", lightMode, userData, "#f2effb", "#352F44")
+    property color menuBgCol: getThemeColor("menuBgCol", lightMode, userData, "#ccffffff", "#94655d7a")
+    property color text: getThemeColor("text", lightMode, userData, "#231e3d", "#ffffff")
+    property color hoverCol: getThemeColor("hoverCol", lightMode, userData, "#3cbff3", "#3cf38f")
+    property color boxShadowCol: getThemeColor("boxShadowCol", lightMode, userData, "#332e2d2d", "#33f0f0f0")
+    property color boxBgCol: getThemeColor("boxBgCol", lightMode, userData, "#d9ffffff", "#0ddbdbdb")
 
     Shortcut {
         sequence: "F11"
@@ -134,6 +172,18 @@ ApplicationWindow {
 
                 replaceEnter: Transition {}
                 replaceExit: Transition {}
+            }
+        }
+    }
+
+    Connections {
+        target: sessionMgr
+
+        function onPreferencesChanged(newPrefs) {
+            if (root.userData) {
+                var newUserData = Object.assign({}, root.userData)
+                newUserData.preferences = newPrefs
+                root.userData = newUserData
             }
         }
     }

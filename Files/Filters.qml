@@ -27,112 +27,115 @@ Rectangle {
         Text { text: "from:"; color: root.text; opacity: 0.8 }
 
         TextField {
-                    id: dateFromInput
-                    horizontalAlignment: TextInput.AlignHCenter
-                    rightPadding: 30
-                    Layout.preferredWidth: 120
-                    Layout.preferredHeight: 28
-                    color: root.text
+            id: dateFromInput
+            horizontalAlignment: TextInput.AlignHCenter
+            rightPadding: 30
+            Layout.preferredWidth: 120
+            Layout.preferredHeight: 28
+            color: root.text
 
-                    background: Rectangle {
-                        color: "transparent"
-                        radius: 5
-                        border.color: parent.activeFocus ? root.hoverCol : root.boxShadowCol
-                        border.width: 1
-                    }
+            background: Rectangle {
+                color: "transparent"
+                radius: 5
+                border.color: parent.activeFocus ? root.hoverCol : root.boxShadowCol
+                border.width: 1
+            }
 
-                    Text {
-                        anchors.right: parent.right
-                        anchors.rightMargin: 8
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "📅"
-                        font.pixelSize: 14
-                        opacity: calMouseArea1.containsMouse ? 1.0 : 0.6
-                        z: 99
+            Text {
+                anchors.right: parent.right
+                anchors.rightMargin: 8
+                anchors.verticalCenter: parent.verticalCenter
+                text: "📅"
+                font.pixelSize: 14
+                opacity: calMouseArea1.containsMouse ? 1.0 : 0.6
+                z: 99
 
-                        MouseArea {
-                            id: calMouseArea1
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                sharedDatePicker.targetInput = dateFromInput
+                MouseArea {
+                    id: calMouseArea1
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        sharedDatePicker.targetInput = dateFromInput
 
-                                let absolutePos = dateFromInput.mapToItem(filterRoot, 0, 0)
-                                sharedDatePicker.x = absolutePos.x
-                                sharedDatePicker.y = absolutePos.y + dateFromInput.height + 5
+                        let absolutePos = dateFromInput.mapToItem(filterRoot, 0, 0)
+                        sharedDatePicker.x = absolutePos.x
+                        sharedDatePicker.y = absolutePos.y + dateFromInput.height + 5
 
-                                sharedDatePicker.open()
-                            }
-                        }
-                    }
-
-                    onTextEdited: {
-                        let oldCursor = cursorPosition
-                        let oldLength = text.length
-                        text = textFiltering.TransformDate(text)
-                        let deletedChars = oldLength - text.length
-                        cursorPosition = Math.max(0, oldCursor - deletedChars)
+                        sharedDatePicker.open()
                     }
                 }
+            }
 
-                Text { text: "to:"; color: root.text; opacity: 0.8 }
+            onTextEdited: {
+                let oldCursor = cursorPosition
+                let oldLength = text.length
+                text = textFiltering.TransformDate(text)
+                handleFilters.setDate(dateFromInput.text, "lower")
+                let deletedChars = oldLength - text.length
+                cursorPosition = Math.max(0, oldCursor - deletedChars)
+            }
+        }
 
-                TextField {
-                    id: dateToInput
-                    horizontalAlignment: TextInput.AlignHCenter
-                    rightPadding: 30
-                    Layout.preferredWidth: 120
-                    Layout.preferredHeight: 28
-                    color: root.text
+        Text { text: "to:"; color: root.text; opacity: 0.8 }
 
-                    background: Rectangle {
-                        color: "transparent"
-                        radius: 5
-                        border.color: parent.activeFocus ? root.hoverCol : root.boxShadowCol
-                        border.width: 1
-                    }
+        TextField {
+            id: dateToInput
+            horizontalAlignment: TextInput.AlignHCenter
+            rightPadding: 30
+            Layout.preferredWidth: 120
+            Layout.preferredHeight: 28
+            color: root.text
 
-                    Text {
-                        anchors.right: parent.right
-                        anchors.rightMargin: 8
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "📅"
-                        font.pixelSize: 14
-                        opacity: calMouseArea2.containsMouse ? 1.0 : 0.6
-                        z: 99
+            background: Rectangle {
+                color: "transparent"
+                radius: 5
+                border.color: parent.activeFocus ? root.hoverCol : root.boxShadowCol
+                border.width: 1
+            }
 
-                        MouseArea {
-                            id: calMouseArea2
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                sharedDatePicker.targetInput = dateToInput
+            Text {
+                anchors.right: parent.right
+                anchors.rightMargin: 8
+                anchors.verticalCenter: parent.verticalCenter
+                text: "📅"
+                font.pixelSize: 14
+                opacity: calMouseArea2.containsMouse ? 1.0 : 0.6
+                z: 99
 
-                                let absolutePos = dateToInput.mapToItem(filterRoot, 0, 0)
-                                sharedDatePicker.x = absolutePos.x
-                                sharedDatePicker.y = absolutePos.y + dateToInput.height + 5
+                MouseArea {
+                    id: calMouseArea2
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        sharedDatePicker.targetInput = dateToInput
 
-                                sharedDatePicker.open()
-                            }
-                        }
-                    }
+                        let absolutePos = dateToInput.mapToItem(filterRoot, 0, 0)
+                        sharedDatePicker.x = absolutePos.x
+                        sharedDatePicker.y = absolutePos.y + dateToInput.height + 5
 
-                    onTextEdited: {
-                        let oldCursor = cursorPosition
-                        let oldLength = text.length
-                        text = textFiltering.TransformDate(text)
-                        let deletedChars = oldLength - text.length
-                        cursorPosition = Math.max(0, oldCursor - deletedChars)
+                        sharedDatePicker.open()
                     }
                 }
+            }
+
+            onTextEdited: {
+                let oldCursor = cursorPosition
+                let oldLength = text.length
+                text = textFiltering.TransformDate(text)
+                handleFilters.setDate(dateToInput.text, "upper")
+                let deletedChars = oldLength - text.length
+                cursorPosition = Math.max(0, oldCursor - deletedChars)
+            }
+        }
 
         Rectangle { width: 1; height: 20; color: root.text }
 
         Text { text: "Size (MB)"; color: root.text; font.bold: true }
         Text { text: "from:"; color: root.text; opacity: 0.8 }
         TextField {
+            id: sizeFromInput
             horizontalAlignment: TextInput.AlignHCenter
             Layout.preferredWidth: 80
             Layout.preferredHeight: 28
@@ -149,6 +152,7 @@ Rectangle {
                 let oldCursor = cursorPosition
                 let oldLength = text.length
                 text = textFiltering.TransformNumber(text)
+                handleFilters.setSize(sizeFromInput.text, "lower")
                 let deletedChars = oldLength - text.length
                 cursorPosition = Math.max(0, oldCursor - deletedChars)
             }
@@ -156,6 +160,7 @@ Rectangle {
 
         Text { text: "to:"; color: root.text; opacity: 0.8 }
         TextField {
+            id: sizeToInput
             horizontalAlignment: TextInput.AlignHCenter
             Layout.preferredWidth: 80
             Layout.preferredHeight: 28
@@ -172,6 +177,7 @@ Rectangle {
                 let oldCursor = cursorPosition
                 let oldLength = text.length
                 text = textFiltering.TransformNumber(text)
+                handleFilters.setSize(sizeToInput.text, "upper")
                 let deletedChars = oldLength - text.length
                 cursorPosition = Math.max(0, oldCursor - deletedChars)
             }
@@ -181,6 +187,7 @@ Rectangle {
 
         Text { text: "Extension:"; color: root.text; font.bold: true }
         ComboBox {
+            id: extensionCombo
             model: [".pptx", ".png"]
             Layout.preferredWidth: 100
             Layout.preferredHeight: 28
@@ -193,12 +200,17 @@ Rectangle {
             }
 
             contentItem: Text { text: parent.currentText; color: root.text; verticalAlignment: Text.AlignVCenter; leftPadding: 10 }
+
+            onActivated: {
+                handleFilters.setExtension(currentText)
+            }
         }
 
         Rectangle { width: 1; height: 20; color: root.text; visible: userFilter }
 
         Text { text: "Sent by:"; color: root.text; font.bold: true; visible: userFilter }
         TextField {
+            id: sentByInput
             Layout.preferredWidth: 140
             Layout.preferredHeight: 28
             color: root.text
@@ -210,6 +222,9 @@ Rectangle {
                 border.color: parent.activeFocus ? root.hoverCol : root.boxShadowCol
                 border.width: 1
             }
+
+            onTextEdited: handleFilters.setSentBy(text)
+
         }
     }
 
@@ -220,6 +235,11 @@ Rectangle {
         onDateAccepted: function(formattedDate) {
             if (targetInput) {
                 targetInput.text = formattedDate
+
+                if (targetInput === dateFromInput)
+                    handleFilters.setDate(formattedDate, "lower")
+                else if (targetInput === dateToInput)
+                    handleFilters.setDate(formattedDate, "upper")
             }
         }
     }

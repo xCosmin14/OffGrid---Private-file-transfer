@@ -5,7 +5,7 @@ import QtQuick.Controls
 Rectangle {
     id: optRoot
     implicitWidth: row.implicitWidth + 15
-    height: 40
+    height: 25
     radius: 4
     color: "transparent"
 
