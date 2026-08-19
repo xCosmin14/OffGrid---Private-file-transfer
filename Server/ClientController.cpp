@@ -245,11 +245,17 @@ Async<HttpResponse> ClientController::manageAccess(json::object& obj, std::strin
 	std::string file_id = json::value_to<std::string>(obj.at(resource + "_id"));
 	std::string type;
 	std::string resource_name;
+	std::string wrapped_fek;
+
 
 	if (action == "grant") {
 		if (!obj.contains("type") || !obj.at("type").is_string())
 			co_return Helpers::makeResponse(http::status::bad_request, "missing type");
 		type = json::value_to<std::string>(obj.at("type"));
+
+		if (!obj.contains("fek") || !obj.at("fek").is_string())
+			co_return Helpers::makeResponse(http::status::bad_request, "missing fek");
+		wrapped_fek = json::value_to<std::string>(obj.at("fek"));
 
 	}
 
@@ -282,7 +288,7 @@ Async<HttpResponse> ClientController::manageAccess(json::object& obj, std::strin
 
 		if (action == "grant") 
 			q = Queries::InsertAccess(this->createId("access"), 
-								other_uid, uid, file_id, resource, type);
+								other_uid, uid, file_id, resource, type, wrapped_fek);
 		else
 			q = Queries::RevokeAccess(file_id, other_uid, uid, resource);
 
@@ -304,7 +310,9 @@ Async<HttpResponse> ClientController::manageAccess(json::object& obj, std::strin
 						uid,
 						current_file_id,
 						"file",
-						type
+						type,
+						row.at(1).as_string()
+
 					);
 					else q = Queries::RevokeAccess(current_file_id, other_uid, uid, "file");
 
@@ -333,4 +341,79 @@ void ClientController::addSocket(std::shared_ptr<WsSession> session)
 {
 	std::unique_lock lock(online_users_mutex);
 	online_users[session->uid].insert(session);
+}
+
+
+Async<HttpResponse> ClientController::storeKey(json::object& obj, std::string session_id)
+{
+	std::string uid;
+	std::exception_ptr error;
+	try {
+		uid = this->getUserId(session_id);
+	}
+	catch (std::exception& e)
+	{
+		error = std::current_exception();
+	}
+	if (error)
+		co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
+
+	if(!obj.contains("fek") || !obj.at("fek").is_string())
+		co_return Helpers::makeResponse(http::status::conflict, "missing encryped key");
+
+	if (!obj.contains("file_id") || !obj.at("file_id").is_string())
+		co_return Helpers::makeResponse(http::status::conflict, "missing file id");
+
+
+	try {
+		mysql::results results = co_await this->db.runQuery(Queries::StoreKey(
+			json::value_to<std::string>(obj.at("fek")),
+			json::value_to<std::string>(obj.at("file_id")),
+			uid));
+
+		if (results.affected_rows() == 0)
+			co_return Helpers::makeResponse(http::status::not_found, "file not found or access denied");
+
+		co_return Helpers::makeResponse(http::status::ok, "key stored successfuly");
+
+	}
+	catch (boost::system::system_error& e)
+	{
+		std::cerr << "Failed query: " << e.what() << std::endl;
+		co_return Helpers::makeResponse(http::status::internal_server_error, "failed storing encrypted fek");
+	}
+}
+
+Async<HttpResponse> ClientController::getPublicKey(std::string username, std::string session_id)
+{
+	std::string uid;
+	std::exception_ptr error;
+	try {
+		uid = this->getUserId(session_id);
+	}
+	catch (std::exception& e)
+	{
+		error = std::current_exception();
+	}
+	if (error)
+		co_return Helpers::makeResponse(http::status::unauthorized, "unauthorized");
+
+
+	try {
+		mysql::results results = co_await this->db.runQuery(Queries::GetPublicKey(username));
+
+		auto rows = results.rows();
+
+		if(rows.empty()) 
+			co_return Helpers::makeResponse(http::status::not_found, "user not found");
+
+		co_return Helpers::makeResponse(http::status::ok, "user found", "",
+			{ {"public_key", rows[0][0].as_string()} });
+
+	}
+	catch (boost::system::system_error& e)
+	{
+		std::cerr << "Failed query: " << e.what() << std::endl;
+		co_return Helpers::makeResponse(http::status::internal_server_error, "failed getting the public key");
+	}
 }

@@ -64,7 +64,7 @@ namespace Queries
 
 	Query UpdateSession(std::string);
 
-	Query InsertAccess(std::string, std::string, std::string, std::string, std::string, std::string);
+	Query InsertAccess(std::string, std::string, std::string, std::string, std::string, std::string, std::string);
 
 	Query RevokeAccess(std::string, std::string, std::string, std::string);
 
@@ -87,4 +87,9 @@ namespace Queries
 	Query GetFiles(std::string);
 
 	Query GetFileAccessUsers(std::string);
+
+	Query StoreKey(std::string, std::string, std::string);
+
+	Query GetPublicKey(std::string);
+
 };

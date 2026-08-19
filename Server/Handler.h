@@ -25,11 +25,12 @@ using Async = boost::asio::awaitable<T>;
 template <typename RequestBody, typename ResponseBody>
 class Handler
 {
-	const std::vector<std::string> allowed_origins = { 
+	const std::vector<std::string> allowed_origins = {
 		"http://localhost:5173",
 		"http://192.168.1.176:5173",
 		"http://127.0.0.1:5173",
-		"http://192.168.1.176:3000"};
+		"http://192.168.1.176:3000"
+	};
 	http::request<RequestBody> req;
 	ClientController& c;
 

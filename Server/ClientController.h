@@ -94,6 +94,10 @@ class ClientController
 		const std::vector<std::string>&, std::string, std::string);
 
 
+	Async<HttpResponse> storeKey(json::object&, std::string);
+
+	Async<HttpResponse> getPublicKey(std::string, std::string);
+
 	void cleanUpCache();
 
 

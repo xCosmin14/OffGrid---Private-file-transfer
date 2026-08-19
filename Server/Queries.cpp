@@ -103,7 +103,9 @@ Query Queries::GetUserFiles(std::vector<std::string> const& vect, std::string en
 		q += it + ", ";
 	q.pop_back(); q.pop_back();
 
-	q += ", user.username, " + entity + "." + entity + "_id FROM offgrid_db." + entity +
+	q += "CASE WHEN " + entity + ".creator_id = ? THEN " + entity + 
+		".owner_fek ELSE access.wrapped_fek END AS fek, "
+		", user.username, " + entity + "." + entity + "_id FROM offgrid_db." + entity +
 		" LEFT JOIN offgrid_db.access ON access." + entity + "_id = " + entity + "." + entity + "_id"
 		" LEFT JOIN offgrid_db.user on user.uid = access.user_id"
 		" LEFT JOIN offgrid_db.user as creator on creator.uid = " + entity + ".creator_id"
@@ -273,13 +275,16 @@ Query Queries::GetFiles(std::string folder_id)
 		"    FROM offgrid_db.folder f "
 		"    INNER JOIN folder_tree ft ON f.parent_folder_id = ft.folder_id "
 		") "
-		"SELECT file_id FROM offgrid_db.file "
+		"SELECT file_id "
+		"CASE WHEN file.creator_id = ? THEN file.owner_fek ELSE access.wrapped_fek END AS fek "
+		"FROM offgrid_db.file "
 		"WHERE folder_id IN (SELECT folder_id FROM folder_tree)";
 
 	return { query, {mysql::field(folder_id)} };
 }
 
-Query Queries::InsertAccess(std::string access_id, std::string user_id, std::string granted_by, std::string id, std::string resource, std::string type)
+Query Queries::InsertAccess(std::string access_id, std::string user_id, std::string granted_by, 
+	std::string id, std::string resource, std::string type, std::string wrapped_fek)
 {
 	std::string query = "INSERT INTO offgrid_db.access(access_id, user_id, granted_by, ";
 
@@ -288,10 +293,10 @@ Query Queries::InsertAccess(std::string access_id, std::string user_id, std::str
 	else
 		query += "file_id, ";
 
-	query += "type) VALUES(?, ?, ?, ?, ?)";
+	query += "type, wrapped_fek) VALUES(?, ?, ?, ?, ?, ?)";
 
-	return { query, {mysql::field(access_id), mysql::field(user_id),
-		mysql::field(granted_by), mysql::field(id), mysql::field(type)} };
+	return { query, {mysql::field(access_id), mysql::field(user_id), mysql::field(granted_by), 
+		mysql::field(id), mysql::field(type), mysql::field(wrapped_fek)}};
 
 }
 
@@ -372,4 +377,18 @@ Query Queries::GetFileAccessUsers(std::string uid)
 	return { "SELECT access.user_id, user.username from offgrid_db.access "
 		"JOIN offgrid_db.user on user.uid = access.user_id "
 		"WHERE access.granted_by = ?", {mysql::field(uid)} };
+}
+
+
+Query Queries::StoreKey(std::string fek, std::string file_id, std::string uid)
+{
+	return { "UPDATE TABLE offgrid_db.file SET owner_fek = ? "
+	"WHERE file_id = ? and creator_id = ?",
+		{mysql::field(fek), mysql::field(file_id), mysql::field(uid)} };
+}
+
+Query Queries::GetPublicKey(std::string username)
+{
+	return { "SELECT public_key FROM offgrid_db.user WHERE username = ?",
+		{ mysql::field(username) } };
 }

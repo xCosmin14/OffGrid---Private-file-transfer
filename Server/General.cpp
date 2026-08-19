@@ -403,7 +403,7 @@ Async<HttpResponse> ClientController::getNotifications(std::string session_id)
 
 
 		if(results_arr.empty())
-			co_return Helpers::makeResponse(http::status::not_found, "no notifications found");
+			co_return Helpers::makeResponse(http::status::ok, "no notifications found");
 		 
 		json::object results;
 		results["notifications"] = results_arr;

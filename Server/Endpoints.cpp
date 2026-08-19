@@ -39,11 +39,15 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
 
         else if (target.starts_with("/upload_folder")) co_return co_await this->uploadFolder(obj, session_id);
 
-        else if (target == "/create_folder") co_return co_await this->createEntity(obj, session_id, { "color", "name", "type", "parent_folder_id"}, "folder");
-        else if (target == "/create_file") co_return co_await this->createEntity(obj, session_id, { "name", "folder_id", "extension", "content_type"}, "file");
+        else if (target == "/create_folder") co_return co_await this->createEntity(obj, session_id, { "color", "name", "type", "parent_folder_id" }, "folder");
+        else if (target == "/create_file") co_return co_await this->createEntity(obj, session_id, { "name", "folder_id", "extension", "content_type" }, "file");
         else if (target == "/user_data") co_return co_await this->getUserData(obj, session_id);
         else if (target == "/user_files") co_return co_await this->getUserFiles(obj, session_id);
-        
+
+
+        else if (target == "/encrypted_fek") co_return co_await this->storeKey(obj, session_id);
+
+
         else if (target.starts_with("/get_file_metadata"))
         {
             auto pos = target.find("?file_id=");
@@ -61,6 +65,22 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
     else if (method == http::verb::get)
     {
         if (target == "/get_profile_photo") co_return co_await this->getProfilePhoto(session_id);
+       
+        else if (target == "/get_notifications")
+            co_return co_await this->getNotifications(session_id);
+        
+        else if (target == "/get_collaborators_profile")
+            co_return co_await this->getProfilePics(session_id);
+
+        else if (target.starts_with("/public_key"))
+        {
+            auto pos = target.find("?");
+            if (pos == std::string::npos)
+                co_return Helpers::makeResponse(http::status::bad_request, "missing username");
+
+            co_return co_await this->getPublicKey(std::string(target.substr(pos + 1)), session_id);
+        }
+
         else if (target.starts_with("/get_file"))
         {
             auto pos = target.find("?file_id=");
@@ -68,11 +88,6 @@ Async<HttpResponse> ClientController::handleRequest(http::verb method, std::stri
                 co_return Helpers::makeResponse(http::status::bad_request, "missing file id");
             co_return co_await this->getFile(std::string(target.substr(pos + 9)), session_id);
         }
-        else if (target == "/get_notifications")
-            co_return co_await this->getNotifications(session_id);
-        
-        else if (target == "/get_collaborators_profile")
-            co_return co_await this->getProfilePics(session_id);
 
         else if (target.starts_with("/get_folder")) {
 
