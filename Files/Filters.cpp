@@ -3,6 +3,8 @@
 
 #include "Filters.h"
 
+QJsonObject Filters::filterParams;
+
 QJsonObject Filters::getDate() {
     QJsonObject date;
     date["lower"] = filterParams.value("dateLowerBound").toString();
@@ -32,6 +34,8 @@ void Filters::setDate(const QString &date, const QString &type) {
 
     if (type == "lower") filterParams["dateLowerBound"] = date;
     else filterParams["dateUpperBound"] = date;
+
+    emit filtersChanged();
 }
 
 void Filters::setSize(double size, const QString &type) {
@@ -39,16 +43,21 @@ void Filters::setSize(double size, const QString &type) {
 
     if (type == "lower") filterParams["sizeLowerBound"] = size;
     else filterParams["sizeUpperBound"] = size;
+
+    emit filtersChanged();
 }
 
 void Filters::setName(const QString &name) {
     filterParams["name"] = name;
+    emit filtersChanged();
 }
 
 void Filters::setExtension(const QString &extension) {
     filterParams["extension"] = extension;
+    emit filtersChanged();
 }
 
 void Filters::setSentBy(const QString &user) {
     filterParams["sentBy"] = user;
+    emit filtersChanged();
 }

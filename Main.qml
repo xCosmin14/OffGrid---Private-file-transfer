@@ -19,10 +19,16 @@ ApplicationWindow {
     visibility: Window.Maximized
 
     property bool lightMode: Application.styleHints.colorScheme === Qt.Light
-    property string currentPath: "/"
+
+    readonly property string currentPath: pageMgr ? pageMgr.currentPath : "/"
+
+    function setRoute(newPath) {
+        if (pageMgr) {
+            pageMgr.setCurrentPath(newPath)
+        }
+    }
 
     property var userData: null
-
     property bool isUserLoggedIn: sessionMgr ? sessionMgr.hasActiveSession : false
 
     function parseToQmlColor(colorStr) {
@@ -52,22 +58,22 @@ ApplicationWindow {
     }
 
     function getThemeColor(colorName, isLight, uData, defaultLight, defaultDark) {
-            var mode = isLight ? "light" : "dark"
-            var rawColor = isLight ? defaultLight : defaultDark
+        var mode = isLight ? "light" : "dark"
+        var rawColor = isLight ? defaultLight : defaultDark
 
-            if (uData && uData.preferences) {
-                var prefs = uData.preferences
-                if (typeof prefs === "string")
-                    try {
-                        prefs = JSON.parse(prefs)
-                    } catch (e) {
-                        return parseToQmlColor(rawColor)
-                    }
-                if (prefs && prefs[mode] && prefs[mode][colorName])
-                    rawColor = prefs[mode][colorName]
-            }
-            return parseToQmlColor(rawColor)
+        if (uData && uData.preferences) {
+            var prefs = uData.preferences
+            if (typeof prefs === "string")
+                try {
+                    prefs = JSON.parse(prefs)
+                } catch (e) {
+                    return parseToQmlColor(rawColor)
+                }
+            if (prefs && prefs[mode] && prefs[mode][colorName])
+                rawColor = prefs[mode][colorName]
         }
+        return parseToQmlColor(rawColor)
+    }
 
     property color bgCol: getThemeColor("bgCol", lightMode, userData, "#f2effb", "#352F44")
     property color menuBgCol: getThemeColor("menuBgCol", lightMode, userData, "#ccffffff", "#94655d7a")
@@ -76,64 +82,50 @@ ApplicationWindow {
     property color boxShadowCol: getThemeColor("boxShadowCol", lightMode, userData, "#332e2d2d", "#33f0f0f0")
     property color boxBgCol: getThemeColor("boxBgCol", lightMode, userData, "#d9ffffff", "#0ddbdbdb")
 
-    Shortcut {
-        sequence: "F11"
-        onActivated: {
-            if (root.visibility === Window.Maximized)
-                root.visibility = Window.Windowed
-            else root.visibility = Window.Maximized
-        }
-    }
+    Shortcut { sequence: "F11"; onActivated: root.visibility = (root.visibility === Window.Maximized) ? Window.Windowed : Window.Maximized }
 
-    Shortcut {
-        sequence: "1"
-        onActivated: currentPath = "/"
-    }
-
-    Shortcut {
-        sequence: "2"
-        onActivated: currentPath = "/myfiles/shared"
-    }
-    Shortcut {
-        sequence: "3"
-        onActivated: currentPath = "/myfiles/favorites"
-    }
-    Shortcut {
-        sequence: "4"
-        onActivated: currentPath = "/myfiles/documents"
-    }
-
-    Shortcut {
-        sequence: "5"
-        onActivated: currentPath = "/myfiles/music"
-    }
-    Shortcut {
-        sequence: "6"
-        onActivated: currentPath = "/myfiles/photos"
-    }
-    Shortcut {
-        sequence: "7"
-        onActivated: currentPath = "/myfiles/trash"
-    }
+    Shortcut { sequence: "1"; onActivated: setRoute("/") }
+    Shortcut { sequence: "2"; onActivated: setRoute("/shared") }
+    Shortcut { sequence: "3"; onActivated: setRoute("/favorites") }
+    Shortcut { sequence: "4"; onActivated: setRoute("/documents") }
+    Shortcut { sequence: "5"; onActivated: setRoute("/music") }
+    Shortcut { sequence: "6"; onActivated: setRoute("/photos") }
 
     function updateRoute() {
         if (!root.isUserLoggedIn) {
-            if (currentPath !== "/login" && currentPath !== "/register") currentPath = "/login"
+            if (currentPath !== "/login" && currentPath !== "/register") {
+                setRoute("/login")
+                return
+            }
+            if (currentPath === "/register") pageStack.replace(null, "Account/Register.qml", StackView.Immediate)
+            else pageStack.replace(null, "Account/Login.qml", StackView.Immediate)
 
-            pageStack.replace(null, "Account/Login.qml", StackView.Immediate)
-            return;
+            return
         }
 
-        if (currentPath === "/") pageStack.replace(null, "Files/MyFilesPage.qml", StackView.Immediate)
-        else if (currentPath === "/myfiles/shared" && isUserLoggedIn) pageStack.replace(null, "Files/SharedFilesPage.qml", StackView.Immediate)
-        else if (currentPath === "/myfiles/favorites" && isUserLoggedIn) pageStack.replace(null, "Files/FavoritesPage.qml", StackView.Immediate)
-        else if (currentPath === "/myfiles/documents" && isUserLoggedIn) pageStack.replace(null, "Files/DocumentsPage.qml", StackView.Immediate)
-        else if (currentPath === "/myfiles/music" && isUserLoggedIn) pageStack.replace(null, "Files/MusicPage.qml", StackView.Immediate)
-        else if (currentPath === "/myfiles/photos" && isUserLoggedIn) pageStack.replace(null, "Files/PhotosPage.qml", StackView.Immediate)
-        else if (currentPath === "/myfiles/trash" && isUserLoggedIn) pageStack.replace(null, "Files/TrashPage.qml", StackView.Immediate)
-        else if (currentPath === "/register") pageStack.replace(null, "Account/Register.qml", StackView.Immediate)
-        else if (currentPath === "/login") pageStack.replace(null, "Account/Login.qml", StackView.Immediate)
-        else if (currentPath === "/settings" && isUserLoggedIn) pageStack.replace(null, "Account/Settings.qml", StackView.Immediate)
+        switch (currentPath) {
+            case "/":
+                pageStack.replace(null, "Files/MyFilesPage.qml", StackView.Immediate); break
+            case "/shared":
+                pageStack.replace(null, "Files/SharedFilesPage.qml", StackView.Immediate); break
+            case "/favorites":
+                pageStack.replace(null, "Files/FavoritesPage.qml", StackView.Immediate); break
+            case "/documents":
+                pageStack.replace(null, "Files/DocumentsPage.qml", StackView.Immediate); break
+            case "/music":
+                pageStack.replace(null, "Files/MusicPage.qml", StackView.Immediate); break
+            case "/photos":
+                pageStack.replace(null, "Files/PhotosPage.qml", StackView.Immediate); break
+            case "/register":
+                pageStack.replace(null, "Account/Register.qml", StackView.Immediate); break
+            case "/login":
+                pageStack.replace(null, "Account/Login.qml", StackView.Immediate); break
+            case "/settings":
+                pageStack.replace(null, "Account/Settings.qml", StackView.Immediate); break
+            default:
+                setRoute("/")
+                break
+        }
     }
 
     onCurrentPathChanged: updateRoute()
@@ -152,7 +144,7 @@ ApplicationWindow {
         anchors.fill: parent
         spacing: 0
 
-        Header {Layout.fillWidth: true}
+        Header { Layout.fillWidth: true }
 
         RowLayout {
             Layout.fillWidth: true

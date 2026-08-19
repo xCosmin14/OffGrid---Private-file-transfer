@@ -7,7 +7,7 @@ class Filters : public QObject {
     Q_OBJECT
 
     private:
-        QJsonObject filterParams;
+        static QJsonObject filterParams;
 
     public:
         explicit Filters(QObject *parent = nullptr) : QObject(parent) {
@@ -30,4 +30,7 @@ class Filters : public QObject {
         Q_INVOKABLE void setName(const QString &name);
         Q_INVOKABLE void setExtension(const QString &extension);
         Q_INVOKABLE void setSentBy(const QString &user);
+
+    signals:
+        void filtersChanged();
 };

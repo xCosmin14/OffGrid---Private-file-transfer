@@ -26,6 +26,8 @@
 #include <QNetworkCookieJar>
 #include <functional>
 
+#include "Filters.h"
+
 struct MultipleFileUploadState {
     QStringList localPaths;
     qint64 totalBytes = 0, uploadedBytes = 0;
@@ -42,6 +44,50 @@ struct FolderUploadState {
 
     std::function<void()> doUpload;
 };
+
+void FileOps::fetchFiles() {
+    if (!SessionManager::instance() || !SessionManager::instance()->hasActiveSession()) return;
+
+    QUrl fetchFilesUrl("http://localhost:18080/user_files");
+
+    QNetworkRequest request(fetchFilesUrl);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+    QJsonObject json;
+    json["file_fields"] = QJsonArray{"path", "content_type", "size", "name", "extension", "favourite", "created", "modified", "owner"};
+    json["folder_fields"] = QJsonArray{"path", "type", "size", "name", "color", "favourite", "created", "modified", "owner"};
+
+    QNetworkReply *reply = SessionManager::instance()->m_manager->post(request, QJsonDocument(json).toJson(QJsonDocument::Compact));
+
+    connect(reply, &QNetworkReply::finished, this, [reply, this]() {
+        reply->deleteLater();
+
+        if (reply->error() == QNetworkReply::NoError) {
+            QByteArray responseData = reply->readAll();
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(responseData);
+
+            if (jsonDoc.isObject()) {
+                QJsonObject data = jsonDoc.object();
+
+                if (data["status"] == "success" && data["message"] != "not found") {
+                    loadingFiles = true;
+                    QJsonArray filesArr = data["files"].toArray(), foldersArr = data["folders"].toArray();
+
+                    files.reserve(filesArr.size()), folders.reserve(foldersArr.size());
+
+                    for (const QJsonValue &file : filesArr)
+                        if (file.isObject()) files.append(file.toObject());
+
+                    for (const QJsonValue &folder : foldersArr)
+                        if (folder.isObject()) folders.append(folder.toObject());
+
+                    loadingFiles = false;
+                }
+            } else if (jsonDoc.isArray())
+                QJsonArray data = jsonDoc.array();
+        }
+    });
+}
 
 void FileOps::uploadFile(const QUrl &fileUrl) {
     uploadFiles(QList<QUrl>{ fileUrl });
@@ -349,4 +395,25 @@ void FileOps::createFile(const QString &name, const QString &folderId) {
             emit operationCompleted(false, "Failed to create file");
         }
     });
+}
+
+//o sa se apeleze cu primul element din vectorul path
+void FileOps::sortFiles(const QString &crit, const QString &ord, const QString &page) {
+    if (page == "documents") {
+        //conditii documente
+    } else if (page == "music") {
+        //conditii muzica
+    } else if (page == "favorites") {
+        //conditii favorite
+    } else if (page == "shared") {
+        //conditii shared
+    } else if (page == "photos") {
+        //conditii photos
+    }
+
+    //restul conditiilor
+}
+
+void FileOps::filterFiles() {
+
 }

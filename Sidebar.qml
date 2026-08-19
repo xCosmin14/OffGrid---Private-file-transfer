@@ -63,7 +63,7 @@ Rectangle {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: {
-                root.currentPath = itemRoot.targetPath
+                root.setRoute(itemRoot.targetPath)
             }
         }
     }
@@ -82,13 +82,13 @@ Rectangle {
         MenuItem {
             label: "Shared files"
             iconSource: "assets/svg/FileIcons/UserFiles.svg"
-            targetPath: "/myfiles/shared"
+            targetPath: "/shared"
         }
 
         MenuItem {
             label: "Favorites"
             iconSource: "assets/svg/StarFull.svg"
-            targetPath: "/myfiles/favorites"
+            targetPath: "/favorites"
         }
 
         Item {
@@ -99,30 +99,24 @@ Rectangle {
         MenuItem {
             label: "Documents"
             iconSource: "assets/svg/FileIcons/Documents.svg"
-            targetPath: "/myfiles/documents"
+            targetPath: "/documents"
         }
 
         MenuItem {
             label: "Music"
             iconSource: "assets/svg/FileIcons/MusicLibrary.svg"
-            targetPath: "/myfiles/music"
+            targetPath: "/music"
         }
 
         MenuItem {
             label: "Photos"
             iconSource: "assets/svg/FileIcons/PhotoAlbum.svg"
-            targetPath: "/myfiles/photos"
+            targetPath: "/photos"
         }
 
         Item {
             Layout.preferredHeight: 15
             Layout.preferredWidth: 2
-        }
-
-        MenuItem {
-            label: "Trash"
-            iconSource: "assets/svg/FileIcons/Trash.svg"
-            targetPath: "/myfiles/trash"
         }
 
         Item {
