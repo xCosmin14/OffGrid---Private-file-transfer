@@ -2,6 +2,11 @@ import NotifFilePreview from './NotifFilePreview.jsx'
 import "./Notifications.css"
 
 export default function FilePreviewNotification(props) {
+    const deleteNotification = async () => {
+        const socket = new WebSocket(`ws://${key}:18080`)
+        socket.send(JSON.stringify({type: "answer_notification", notification_id: props.key, response: "decline"}))
+    }
+
     return (
         <div className="notification">
             <div id="notifBody">
@@ -15,7 +20,7 @@ export default function FilePreviewNotification(props) {
                 <h5>{props.sent}</h5>
 
                 <div id="buttons">
-                    <button>Delete</button>
+                    <button onClick={() => deleteNotification()}>Delete</button>
                 </div>
             </div>
         </div>

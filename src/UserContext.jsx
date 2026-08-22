@@ -16,8 +16,8 @@ export const customFetch = async (url, options = {}) => {
     try {
         let response = await doFetch()
 
-        if (response.status === 401) {
-            await new Promise(resolve => setTimeout(resolve, 600))
+        if (response.status === 401 && !url.includes('/log_in') && !url.includes('/register')) {
+            await new Promise(resolve => setTimeout(resolve, 1000))
             response = await doFetch()
 
             if (response.status === 401) {

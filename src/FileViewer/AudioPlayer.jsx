@@ -19,6 +19,7 @@ export default function AudioPlayer(props) {
     const [isDragging, setIsDragging] = useState(false)
 
     const [currentTime, setCurrentTime] = useState(0)
+    const [volume, setVolume] = useState(75)
     const [duration, setDuration] = useState(0)
     const [sampleRate, setSampleRate] = useState(0)
     const [channelNumber, setChannelNumber] = useState("Stereo")
@@ -106,7 +107,16 @@ export default function AudioPlayer(props) {
         if (audioRef.current) {
             const dur = audioRef.current.duration
             if (!isNaN(dur) && dur !== Infinity) setDuration(dur)
+            audioRef.current.volume = volume / 100
         }
+    }
+
+    const handleVolumeChange = (e) => {
+        const newVolume = Number(e.target.value)
+        setVolume(newVolume)
+        
+        if (audioRef.current) audioRef.current.volume = newVolume / 100
+        
     }
 
     const formatBitrate = (bitrate) => {
@@ -166,6 +176,16 @@ export default function AudioPlayer(props) {
                         onChange={handleSeekChange}
                     />
                     <span className="timeDisplay">{formatTime(duration)}</span>
+                </div>
+
+                <div className="volumeControls">
+                    {volume > 0 ? <Volume /> : <NoVolume />}
+                    <input 
+                        type="range" value={volume}
+                        min="0" max="100" step="5" 
+                        onChange={handleVolumeChange}
+                        style={{ "--progress": `${volume}%` }}
+                    />
                 </div>
             </div>
             

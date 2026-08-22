@@ -80,8 +80,8 @@ export default function Settings() {
     const fileInputRef = useRef(null) 
 
     const handleColorChange = (mode, key, newHex) => {
-        const currentAlpha = parseColor(colors[mode][key]).alpha;
-        const colorWithAlpha = formatColor(newHex, currentAlpha);
+        const currentAlpha = parseColor(colors[mode][key]).alpha
+        const colorWithAlpha = formatColor(newHex, currentAlpha)
 
         setColors(prev => ({
             ...prev,

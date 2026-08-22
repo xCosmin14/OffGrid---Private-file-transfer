@@ -401,14 +401,14 @@ pre::-webkit-scrollbar-track,
     text-align: center;
 }
 
+#full #audioProgress {width: 50%;}
+
 #audioProgress {
     -webkit-appearance: none;
     flex: 1;
     background: transparent;
     cursor: pointer;
 }
-
-#full #audioProgress {width: 50%;}
 
 #audioProgress::-webkit-slider-runnable-track {
   height: 8px; 
@@ -476,6 +476,77 @@ pre::-webkit-scrollbar-track,
     position: relative; top: 15px;
     display: flex; flex-direction: column; gap: 15px;
     text-align: center;
+}
+
+.volumeControls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 25px;
+    width: 60%;
+}
+
+#full .volumeControls {
+    width: 35%;
+}
+
+.volumeControls svg {
+    width: 22px; 
+    height: 22px;
+    color: var(--text);
+    flex-shrink: 0;
+}
+
+.volumeControls input {
+    -webkit-appearance: none;
+    flex: 1;
+    background: transparent;
+    cursor: pointer;
+}
+
+.volumeControls input::-webkit-slider-runnable-track {
+    height: 6px; 
+    background: linear-gradient(
+        to right,
+        var(--hoverCol) var(--progress, 0%),
+        var(--text) var(--progress, 0%)
+    );
+    border-radius: 10px;
+    border: 0px solid #cbd5e1;
+    box-shadow: 0px 2px 0px rgba(0, 0, 0, 0.1);
+}
+
+.volumeControls input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 14px; 
+    width: 14px;
+    background: var(--hoverCol);
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+    margin-top: -4px; 
+}
+
+.volumeControls input::-moz-range-track {
+    height: 6px;
+    background: linear-gradient(
+        to right,
+        var(--hoverCol) var(--progress, 0%),
+        var(--text) var(--progress, 0%)
+    );
+    border-radius: 10px;
+    border: 0px solid #cbd5e1;
+    box-shadow: 0px 2px 0px rgba(0, 0, 0, 0.1);
+}
+
+.volumeControls input::-moz-range-thumb {
+    height: 14px; 
+    width: 14px;
+    background: var(--hoverCol);
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 #small .mainAudio:has(video) {width: 100%; height: 100%;}

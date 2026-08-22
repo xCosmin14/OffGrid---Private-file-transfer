@@ -39,8 +39,6 @@ const buildFolderSizeMap = (allFiles) => {
     for (const file of allFiles) {
         if (file.inTrash != 0 || !file.path) continue
 
-        // adaugă mărimea fișierului la fiecare folder ascendent din calea lui
-        // ("A/B/C/fisier.txt" contribuie la "A", "A/B" și "A/B/C")
         let path = file.path
         let slashIndex = path.lastIndexOf("/")
         const size = parseFloat(file.size) || 0

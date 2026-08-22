@@ -1,8 +1,8 @@
-import { useState } from "react"
-import { Link } from "react-router-dom"
+import { useState, useContext } from "react"
+import { Link, useNavigate } from "react-router-dom"
 
 import { useTitle } from "../UseTitle.js"
-import { customFetch } from "../UserContext.jsx"
+import { customFetch, UserContext } from "../UserContext.jsx"
 import { initCrypto, deriveKeyFromPassword, decryptDataWithKey } from "../CryptoUtils.js"
 import { cachePrivateKey } from "../CryptoCache.js"
 
@@ -14,6 +14,9 @@ import EyeHide from "../assets/SVG/EyeHide.svg?react"
 import "./Account.css"
 
 export default function Login() {
+    const { setIsLogged } = useContext(UserContext)
+    const navigate = useNavigate()
+
     const [showPass, setShowPass] = useState(false)
     const [showError, setShowError] = useState("")
 
@@ -51,7 +54,9 @@ export default function Login() {
                     } catch (cacheErr) {}
 
                     localStorage.setItem("isLogged", "true")
-                    window.location.href = "/"  
+                    setIsLogged(true) 
+                    navigate("/")  
+
                 } catch (cryptoErr) {
                     console.error("Crypto error:", cryptoErr)
                     setShowError("Failed to decrypt account keys")
