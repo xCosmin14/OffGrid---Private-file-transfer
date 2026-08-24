@@ -76,6 +76,8 @@ namespace Queries
 
 	Query ViewNotification(std::string, std::string);
 
+	Query DeleteNotification(std::string, std::string);
+
 	Query AddNotificationResponse(std::string, std::string, std::string);
 
 	Query GetInvolvedUsers(std::string, std::string);

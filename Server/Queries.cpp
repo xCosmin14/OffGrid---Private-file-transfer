@@ -376,7 +376,14 @@ Query Queries::GetNotifications(std::string uid)
 {
 	return { "SELECT notification.notification_id, notification.info, notification.sent, user.username from offgrid_db.notification "
 	"JOIN offgrid_db.user on user.uid = notification.sender_id "
-	"WHERE notification.receiver_id = ? AND notification.response is null", {mysql::field(uid)} };
+	"WHERE notification.receiver_id = ? AND notification.seen = 0", 
+		{mysql::field(uid)} };
+}
+
+Query Queries::DeleteNotification(std::string uid, std::string notification_id)
+{
+	return { "DELETE FROM offgrid_db.notification WHERE receiver_id = ? AND notification_id = ?",
+		{mysql::field(uid), mysql::field(notification_id)} };
 }
 
 

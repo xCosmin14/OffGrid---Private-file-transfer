@@ -324,8 +324,12 @@ Async<void> ClientController::handleNotification(std::shared_ptr<WsSession> sess
 				session->uid,
 				json::value_to<std::string>(obj.at("notification_id")));
 
-		else
+		else if (type == "view_notification")
 			q = Queries::ViewNotification(
+				json::value_to<std::string>(obj.at("notification_id")),
+				session->uid);
+		else if (type == "delete_notification")
+			q = Queries::DeleteNotification(
 				json::value_to<std::string>(obj.at("notification_id")),
 				session->uid);
 
@@ -353,7 +357,7 @@ Async<void> ClientController::handleWsMessage(std::shared_ptr<WsSession> session
 {
 	if(!co_await verifyField(session, obj, "type", json::kind::string)) co_return;
 
-	if (obj.at("type") == "answer_notification" || obj.at("type") == "view_notification")
+	if (obj.at("type").as_string().find("notification") != std::string::npos)
 		co_await handleNotification(session, obj);
 
 	if(! co_await verifyField(session, obj, "file_id", json::kind::string)) co_return;
