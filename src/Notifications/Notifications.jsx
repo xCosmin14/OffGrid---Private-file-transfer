@@ -34,7 +34,7 @@ const formatTime = (dateStr) => {
         .toLocaleDateString("en-US", {weekday: "long", year: "numeric", month: "long", day: "numeric"})
         .replace(/, (\d{4})/, ' $1') 
         
-    const timePart = dateStr.split(" ")[1].slice(0, 5)
+    const timePart = dateStr.split(" ")[1]?.slice(0, 5) || ""
     return `${dateTxt}, ${timePart}`
 }
 
@@ -42,7 +42,7 @@ export default function Notifications() {
     const [scrollable, setScrollable] = useState(false)
     const [notifications, setNotifications] = useState([])
 
-    const { notifications: wsNotifications } = useContext(UserContext) || {}
+    const { notifications: wsNotifications, sendMessage } = useContext(UserContext) || {}
 
     useEffect(() => {
         const fetchInitialNotifications = async () => {
@@ -53,13 +53,12 @@ export default function Notifications() {
     }, [])
 
     useEffect(() => {
-        if (wsNotifications && wsNotifications.length > 0) {
+        if (wsNotifications && wsNotifications.length > 0) 
             setNotifications(prev => {
                 const existingIds = new Set(prev.map(n => n.notification_id))
                 const newOnly = wsNotifications.filter(n => !existingIds.has(n.notification_id))
                 return [...prev, ...newOnly]
             })
-        }
     }, [wsNotifications])
 
     const handleScroll = (e) => {
@@ -69,17 +68,30 @@ export default function Notifications() {
     }
 
     const deleteNotifications = () => {
+        if (!sendMessage || notifications.length === 0) return
+
+        notifications.forEach((notif) => {
+            const notifId = notif.notification_id || notif.key
+            sendMessage({ type: "view_notification", notification_id: notifId })
+        })
+
         setNotifications([])
+    }
+
+    const deleteSingleNotification = (notifId) => {
+        if (sendMessage) sendMessage({ type: "delete_notification", notification_id: notifId })
+        
+        setNotifications(prev => prev.filter(n => (n.notification_id || n.key) !== notifId))
     }
 
     const renderNotification = (notif, index) => {
         let info = {}
 
-        if (typeof notif.info === "string") 
-            info = JSON.parse(notif.info)
+        if (typeof notif.info === "string")  info = JSON.parse(notif.info)
         else if (notif.info) info = notif.info
         
-        const id = notif.notification_id || `notif-${index}`
+        const notifId = notif.notification_id || notif.key 
+        const id = notifId || `notif-${index}`
         const sender = info.sender_username || notif.username || "System"
         const type = info.type || notif.type
         const entity = info.entity || notif.entity
@@ -90,6 +102,8 @@ export default function Notifications() {
             return (
                 <InviteNotification 
                     key={id} 
+                    id={notifId} 
+                    onDelete={deleteSingleNotification} 
                     sender={sender} 
                     sent={formattedTime} 
                     folderName={itemName} 
@@ -104,6 +118,8 @@ export default function Notifications() {
             return (
                 <FilePreviewNotification 
                     key={id} 
+                    id={notifId}
+                    onDelete={deleteSingleNotification} 
                     senderId={sender} 
                     sent={formattedTime}
                     actionType={1} 
@@ -116,6 +132,8 @@ export default function Notifications() {
         return (
             <TextNotification 
                 key={id} 
+                id={notifId}
+                onDelete={deleteSingleNotification} 
                 sender={sender} 
                 sent={formattedTime}
                 fileName={itemName}
@@ -135,7 +153,7 @@ export default function Notifications() {
             <div id="notificationsHeader">
                 <button onClick={deleteNotifications}>
                     <Seen />
-                    <h4>Mark all as read</h4>
+                    <h4>Mark as read</h4>
                 </button>   
 
                 <button onClick={() => setScrollable(true)}><h4>View all</h4></button> 

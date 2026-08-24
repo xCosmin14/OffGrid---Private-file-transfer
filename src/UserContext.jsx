@@ -38,6 +38,7 @@ export const UserProvider = ({ children }) => {
     const [user, setUser] = useState(null)
     const [avatar, setAvatar] = useState(MockUserImg)
     const [isLogged, setIsLogged] = useState(localStorage.getItem("isLogged") === "true")
+    const [notifications, setNotifications] = useState([])
 
     const wsRef = useRef(null)
 
@@ -82,8 +83,16 @@ export const UserProvider = ({ children }) => {
         const socket = new WebSocket(`ws://${key}:18080`)
         wsRef.current = socket
         
-        socket.onopen = () => {
-            
+        socket.onopen = () => {}
+
+        socket.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data)
+                if (data.type === "notification") 
+                    setNotifications(prev => [...prev, data])
+            } catch (err) {
+                console.error("Error parsing WS message:", err)
+            }
         }
 
         socket.onerror = (error) => {
@@ -95,6 +104,14 @@ export const UserProvider = ({ children }) => {
             wsRef.current = null
         }
     }, [isLogged])
+
+    const sendMessage = (data) => {
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify(data))
+        } else {
+            console.warn("WebSocket is not open. Message not sent:", data)
+        }
+    }
 
     useEffect(() => {
         if (!user?.preferences) return
@@ -119,7 +136,9 @@ export const UserProvider = ({ children }) => {
             avatar, 
             refreshData: loadData, 
             isLogged, 
-            setIsLogged, 
+            setIsLogged,
+            notifications,
+            sendMessage
         }}>
             {children}
         </UserContext.Provider>

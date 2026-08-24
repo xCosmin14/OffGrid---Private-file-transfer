@@ -14,9 +14,8 @@ export default function TextNotification(props) {
                 </h4>
                 
                 <h5>{props.sent}</h5>
-
                 <div id="buttons">
-                    <button>Delete</button>
+                    <button onClick={() => props.onDelete(props.id)}>Delete</button>
                 </div>
             </div>
         </div>

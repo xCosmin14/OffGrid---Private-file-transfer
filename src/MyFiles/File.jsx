@@ -290,26 +290,38 @@ export default function File(props) {
         if (!usernameToSend || usernameToSend === props.owner || localCollaborators.includes(usernameToSend)) return
 
         try {
-            const response = await customFetch(`http://${key}:18080/grant_access`, {
-                method: "POST",
+            const keyRequest = await customFetch(`http://${key}:18080/public_key?${usernameToSend}`, {
+                method: "GET",
                 headers: { 'Content-Type': 'application/json' },
-                body: isFolder ? JSON.stringify({ 
-                    username: usernameToSend,
-                    folder_id: props.id,
-                    type: permissionsToSend,
-                    resource: "folder"
-                }) : JSON.stringify({
-                    username: usernameToSend,
-                    file_id: props.id,
-                    type: permissionsToSend,
-                    resource: "file"
-                })
+                credentials: "include"
             })
 
-            if (response.ok) {
-                setLocalCollaborators(prev => [...prev, usernameToSend])
-                setUsernameToSend("")
-                if (refreshFiles) await refreshFiles()
+            if (keyRequest.ok) {
+                const keyJson = await keyRequest.json()
+                const public_key = keyJson.public_key
+                        
+                const response = await customFetch(`http://${key}:18080/grant_access`, {
+                    method: "POST",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: isFolder ? JSON.stringify({ 
+                        username: usernameToSend,
+                        folder_id: props.id,
+                        type: permissionsToSend,
+                        resource: "folder",
+                    }) : JSON.stringify({
+                        username: usernameToSend,
+                        file_id: props.id,
+                        type: permissionsToSend,
+                        resource: "file",
+                        fek: public_key
+                    })
+                })
+
+                if (response.ok) {
+                    setLocalCollaborators(prev => [...prev, usernameToSend])
+                    setUsernameToSend("")
+                    if (refreshFiles) await refreshFiles()
+                }
             }
         } catch (err) {
             console.error("Share error:", err)
