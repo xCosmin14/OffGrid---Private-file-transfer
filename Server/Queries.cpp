@@ -94,6 +94,9 @@ Query Queries::getGeneralUserData(std::vector<std::string> const& vect, std::str
 
 Query Queries::GetUserFiles(std::vector<std::string> const& vect, std::string entity, std::string uid)
 {
+
+	std::vector<mysql::field> params = { mysql::field(uid), mysql::field(uid) };
+
 	if (entity != "file" && entity != "folder")
 		throw std::runtime_error("invalid entity");
 
@@ -103,15 +106,20 @@ Query Queries::GetUserFiles(std::vector<std::string> const& vect, std::string en
 		q += it + ", ";
 	q.pop_back(); q.pop_back();
 
-	q += "CASE WHEN " + entity + ".creator_id = ? THEN " + entity + 
-		".owner_fek ELSE access.wrapped_fek END AS fek, "
-		", user.username, " + entity + "." + entity + "_id FROM offgrid_db." + entity +
+	if (entity == "file") {
+		q += ", CASE WHEN " + entity + ".creator_id = ? THEN " + entity +
+			".owner_fek ELSE access.wrapped_fek END AS fek";
+		params.emplace_back(uid);
+	}
+
+	q +=", user.username, " + entity + "." + entity + "_id FROM offgrid_db." + entity +
 		" LEFT JOIN offgrid_db.access ON access." + entity + "_id = " + entity + "." + entity + "_id"
 		" LEFT JOIN offgrid_db.user on user.uid = access.user_id"
 		" LEFT JOIN offgrid_db.user as creator on creator.uid = " + entity + ".creator_id"
 		" WHERE " + entity + ".creator_id = ? or access.user_id = ? ";
 
-	return { q, {mysql::field(uid), mysql::field(uid)} };
+	
+	return { q, params};
 }
 
 Query Queries::GetUserFolders(std::string uid)
@@ -368,7 +376,7 @@ Query Queries::GetNotifications(std::string uid)
 {
 	return { "SELECT notification.notification_id, notification.info, notification.sent, user.username from offgrid_db.notification "
 	"JOIN offgrid_db.user on user.uid = notification.sender_id "
-	"WHERE notification.receiver_id = ?", {mysql::field(uid)} };
+	"WHERE notification.receiver_id = ? AND notification.response is null", {mysql::field(uid)} };
 }
 
 

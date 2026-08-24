@@ -307,7 +307,10 @@ Async<void> ClientController::handleModify(std::shared_ptr<WsSession> session, j
 Async<void> ClientController::handleNotification(std::shared_ptr<WsSession> session, json::object obj)
 {
 	if (!co_await verifyField(session, obj, "notification_id", json::kind::string)) co_return;
-	if (!co_await verifyField(session, obj, "response", json::kind::string)) co_return;
+
+	if (obj.at("type") == "answer_notification") {
+		if (!co_await verifyField(session, obj, "response", json::kind::string)) co_return;
+	}
 
 	std::string type = json::value_to<std::string>(obj.at("type"));
 
@@ -317,7 +320,7 @@ Async<void> ClientController::handleNotification(std::shared_ptr<WsSession> sess
 		if (type == "answer_notification")
 
 			q = Queries::AddNotificationResponse(
-				json::value_to<std::string>(obj.at("message")),
+				json::value_to<std::string>(obj.at("response")),
 				session->uid,
 				json::value_to<std::string>(obj.at("notification_id")));
 

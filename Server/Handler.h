@@ -118,9 +118,9 @@ public:
 
 		auto set_cookie = [&res](std::string session_id) {
 			if (session_id == "expired")
-				res.set("Set-Cookie", "session_id=; HttpOnly; SameSite=None; Secure; Max-Age=0");
+				res.set("Set-Cookie", "session_id=; HttpOnly; Max-Age=0");
 			else if (!session_id.empty())
-				res.set("Set-Cookie", "session_id=" + session_id + "; HttpOnly; SameSite=None; Secure; Max-Age=2592000");
+				res.set("Set-Cookie", "session_id=" + session_id + "; HttpOnly; Max-Age=2592000");
 			};
 
 		if constexpr (std::is_same_v<RequestBody, http::vector_body<uint8_t>>)
