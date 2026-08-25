@@ -14,7 +14,7 @@ import EyeHide from "../assets/SVG/EyeHide.svg?react"
 import "./Account.css"
 
 export default function Login() {
-    const { setIsLogged } = useContext(UserContext)
+    const { setIsLogged, setPublicKey } = useContext(UserContext)
     const navigate = useNavigate()
 
     const [showPass, setShowPass] = useState(false)
@@ -48,6 +48,9 @@ export default function Login() {
                     await initCrypto()
                     const derivedKey = await deriveKeyFromPassword(password, data.key_salt)
                     const privateKeyUint8 = await decryptDataWithKey(data.encrypted_private_key, derivedKey)
+                    
+                    setPublicKey(data.public_key)
+                    localStorage.setItem("publicKey", data.public_key) 
 
                     try {
                         await cachePrivateKey(privateKeyUint8) 

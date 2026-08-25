@@ -39,6 +39,9 @@ export const UserProvider = ({ children }) => {
     const [avatar, setAvatar] = useState(MockUserImg)
     const [isLogged, setIsLogged] = useState(localStorage.getItem("isLogged") === "true")
     const [notifications, setNotifications] = useState([])
+    const [public_key, setPublic_key] = useState("")
+
+    const setPublicKey = (keyParam) => {setPublic_key(keyParam)}
 
     const wsRef = useRef(null)
 
@@ -58,7 +61,13 @@ export const UserProvider = ({ children }) => {
             
             const data = await res.json()
             const userData = data.data ? data.data[0] : data
-            setUser({ username: userData.username, email: userData.email, preferences: userData.preferences })
+            
+            setUser({ 
+                username: userData.username, 
+                email: userData.email, 
+                preferences: userData.preferences, 
+                public_key: localStorage.getItem("publicKey")
+            })
 
             const photoRes = await customFetch(`http://${key}:18080/get_profile_photo`, { method: 'GET' })
             if (photoRes.ok) {
@@ -138,7 +147,8 @@ export const UserProvider = ({ children }) => {
             isLogged, 
             setIsLogged,
             notifications,
-            sendMessage
+            sendMessage,
+            public_key, setPublicKey: setPublicKey
         }}>
             {children}
         </UserContext.Provider>

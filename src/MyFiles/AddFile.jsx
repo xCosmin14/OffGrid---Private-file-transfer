@@ -8,7 +8,6 @@ import UploadFile from "../assets/SVG/FileIcons/UploadFile.svg?react"
 import TextFile from "../assets/SVG/FileIcons/TextFile.svg?react"
 import ArrowUp from "../assets/SVG/ArrowUp.svg?react"
 
-import { loadCachedPrivateKey } from "../CryptoCache.js"
 import { generateFEK, encryptFile, encryptFekForUser } from "../CryptoUtils.js" 
 
 import "./AddFile.css"
@@ -71,7 +70,6 @@ export default function AddFile(props) {
     const createTextRef = useRef(null)
     const [newTextFileName, setNewTextFileName] = useState("")
 
-    const [uploadProgress, setUploadProgress] = useState(0)
     const [uploadStats, setUploadStats] = useState({ loaded: 0, total: 0})
     const [isUploading, setIsUploading] = useState(false)
     
@@ -215,7 +213,7 @@ export default function AddFile(props) {
                 const encryptedBlob = new Blob([encryptedBytes], { type: files[i].type })
                 
                 formData.append("file", encryptedBlob, finalPath)
-                formData.append("encrypted_fek", encryptedFek)
+                formData.append("owner_fek", encryptedFek)
 
                 await new Promise((resolve, reject) => {
                     const xhr = new XMLHttpRequest()
@@ -373,7 +371,7 @@ export default function AddFile(props) {
 
                 let formData = new FormData()
                 formData.append('file', encryptedBlob, currentPathForFile) 
-                formData.append('encrypted_fek', encryptedFek)
+                formData.append('owner_fek', encryptedFek)
 
                 await new Promise((resolve, reject) => {
                     const xhr = new XMLHttpRequest()
@@ -451,7 +449,7 @@ export default function AddFile(props) {
                 extension: "txt",
                 content_type: "text/plain",
                 folder_id: props.parentFolderID || null,
-                encrypted_fek: encryptedFek
+                owner_fek: encryptedFek
             }
 
             const response = await customFetch(`http://${key}:18080/create_file`, {
