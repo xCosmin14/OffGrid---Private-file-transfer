@@ -215,7 +215,9 @@ export default function AddFile(props) {
                 formData.append("file", encryptedBlob, finalPath)
                 formData.append("owner_fek", encryptedFek)
 
-                await new Promise((resolve, reject) => {
+                console.log("[UPLOAD] Criptez FEK cu public_key:", user.public_key);
+
+                const fileData = await new Promise((resolve, reject) => {
                     const xhr = new XMLHttpRequest()
                     
                     const currentTask = activeUploads.get(uploadId)
@@ -243,11 +245,17 @@ export default function AddFile(props) {
                     })
 
                     xhr.addEventListener("load", () => {
-                        if (xhr.status >= 200 && xhr.status < 300) resolve()
-                        else reject(new Error("Server error"))
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            try {
+                                const responseJson = JSON.parse(xhr.responseText)
+                                resolve(responseJson)
+                            } catch (e) {resolve({})}
+                        } else {
+                            reject(new Error("Server error"))
+                        }
                     })
 
-                    xhr.addEventListener("error", reject)
+                    xhr.addEventListener("error", () => reject(new Error("Network error")))
                     xhr.addEventListener("abort", () => reject(new Error("Aborted")))
 
                     xhr.open("POST", `http://${key}:18080/upload_file`)
@@ -255,10 +263,23 @@ export default function AddFile(props) {
                     xhr.send(formData)
                 })
                 
+                const file_id = fileData.file_id || fileData.id
+                if (file_id) {
+                    await customFetch(`http://${key}:18080/encrypted_fek`, {
+                        method: "POST",
+                        credentials: "include",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            file_id: file_id,
+                            fek: encryptedFek
+                        })
+                    })
+                }
+
                 hasUploaded = true
             } catch (error) {
                 if (error.message === "Aborted") break 
-                console.error("Eroare la criptare/upload:", error)
+                console.error("Upload error:", error)
             } 
         }
 
@@ -346,6 +367,7 @@ export default function AddFile(props) {
                 body: JSON.stringify({ fields: paths })
             })
             let data = await response.json()
+            
             
             if (!response.ok || !data.transaction_id) 
                 throw new Error(data.message || `upload_folder failed: ${response.status}`)
@@ -460,6 +482,11 @@ export default function AddFile(props) {
             })
             
             if (response.ok) {
+                const fekBody = {
+                    file_id: file_id,
+                    fek: encryptedFek
+                }
+
                 setNewTextFileName("") 
                 setDisplayCreateText(false) 
                 if (props.onUploadSuccess) props.onUploadSuccess()

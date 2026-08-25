@@ -53,13 +53,25 @@ async function getDeviceKey() {
 }
 
 export async function cachePrivateKey(privateKeyUint8) {
+    await sodium.ready
+
+    let rawBytes = privateKeyUint8
+
+    if (typeof privateKeyUint8 === 'string') 
+        rawBytes = sodium.from_base64(privateKeyUint8)
+    else if (privateKeyUint8 instanceof Uint8Array && privateKeyUint8.length > 32) {
+        const str = new TextDecoder().decode(privateKeyUint8)
+        rawBytes = sodium.from_base64(str)
+    }
+
     const deviceKey = await getDeviceKey()
     const iv = crypto.getRandomValues(new Uint8Array(12))
     const ciphertext = await crypto.subtle.encrypt(
         { name: 'AES-GCM', iv },
         deviceKey,
-        privateKeyUint8
+        rawBytes
     )
+
     await idbSet('cachedPrivateKey', { iv, ciphertext })
 }
 

@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom"
 
 import { useTitle } from "../UseTitle.js"
 import { customFetch, UserContext } from "../UserContext.jsx"
-import { initCrypto, deriveKeyFromPassword, decryptDataWithKey } from "../CryptoUtils.js"
+import { initCrypto, deriveKeyFromPassword, decryptDataWithKey, decryptPrivateKeyWithPassword } from "../CryptoUtils.js"
 import { cachePrivateKey } from "../CryptoCache.js"
 
 import Email from "../assets/SVG/UserIcons/Email.svg?react"

@@ -1,8 +1,15 @@
 import React, { useState, useEffect, Suspense, lazy } from "react"
+import { useContext } from "react"
+import { UserContext } from "../UserContext.jsx"
 
-import { getFileColor, getViewerComponent, extensionToLanguage } from "../MyFiles/FileColors"
+import { getViewerComponent, extensionToLanguage } from "../MyFiles/FileColors"
 import { customFetch } from "../UserContext.jsx"
 import isMobile from "../IsMobile.js"
+
+import sodium from 'libsodium-wrappers-sumo'
+
+import { loadCachedPrivateKey } from "../CryptoCache.js"
+import { decryptFekForUser, decryptFile } from "../CryptoUtils.js"
 
 import Add from "../assets/SVG/FileIcons/Add.svg?react"
 import Enlarge from "../assets/SVG/Enlarge.svg?react"
@@ -21,6 +28,8 @@ const ArchiveViewer = lazy(() => import("./ArchiveViewer.jsx"))
 
 export default function FileViewer(props) {
     const key = import.meta.env.VITE_HOST_ADDRESS
+
+    const { user } = useContext(UserContext)
 
     const [fileUrl, setFileUrl] = useState(null)
     const [fileBlob, setFileBlob] = useState(null) 
@@ -55,6 +64,32 @@ export default function FileViewer(props) {
             setFetchError(null)
 
             try {
+                const privateKey = await loadCachedPrivateKey()
+                if (!privateKey) throw new Error("Private key not found.")
+
+                if (!props.file.fek) throw new Error("No file key available.")
+                if (!user?.public_key) throw new Error("Missing user public key.")
+
+                const fek = await decryptFekForUser(props.file.fek, user.public_key, privateKey)
+
+                console.log("1. FEK primit din backend:", props.file.fek);
+                console.log("2. Cheie privata (Base64):", user.private_key);
+
+                const cipherTextBuffer = sodium.from_base64(props.file.fek);
+                const publicKeyBuffer = sodium.from_base64(user.public_key);
+                const privateKeyBuffer = sodium.from_base64(user.private_key);
+
+                const fekRaw = sodium.crypto_box_seal_open(
+                    cipherTextBuffer, 
+                    publicKeyBuffer, 
+                    privateKeyBuffer
+                );
+                console.log("DECRIPTARE REUSITA! FEK:", fekRaw);
+
+                const derivedPublic = sodium.to_base64(sodium.crypto_scalarmult_base(privateKey));
+                console.log("[VIEW] Cheia publică derivată din privateKey este:", derivedPublic);
+                console.log("FEK PRIMIT PENTRU FISIER:", props.file.fek);
+
                 const response = await customFetch(`http://${key}:18080/get_file?file_id=${fileId}`, {
                     method: "GET",
                     headers: { 'Content-Type': 'application/json' },
@@ -62,14 +97,17 @@ export default function FileViewer(props) {
 
                 if (!response.ok) throw new Error("File content can't be loaded")
 
-                const buffer = await response.arrayBuffer()
+                const encryptedBuffer = await response.arrayBuffer()
+                const encryptedBytes = new Uint8Array(encryptedBuffer)
+                const decryptedBytes = await decryptFile(encryptedBytes, fek)
+
                 const contentType = response.headers.get('content-type') || 'application/octet-stream'
-                const blob = new Blob([buffer], { type: contentType })
+                const blob = new Blob([decryptedBytes], { type: contentType })
                 objectUrl = URL.createObjectURL(blob)
 
                 if (isMounted) {
                     setFileUrl(objectUrl)
-                    setFileBlob(blob)  
+                    setFileBlob(blob)
                     setLoadingContent(false)
                 }
             } catch (err) {
