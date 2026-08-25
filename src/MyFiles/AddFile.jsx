@@ -1,12 +1,15 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useContext } from "react"
 
-import { customFetch } from "../UserContext.jsx"
+import { customFetch, UserContext } from "../UserContext.jsx"
 
 import Add from "../assets/SVG/FileIcons/Add.svg?react"
 import Folder from "../assets/SVG/FileIcons/Folder.svg?react"
 import UploadFile from "../assets/SVG/FileIcons/UploadFile.svg?react"
 import TextFile from "../assets/SVG/FileIcons/TextFile.svg?react"
 import ArrowUp from "../assets/SVG/ArrowUp.svg?react"
+
+import { loadCachedPrivateKey } from "../CryptoCache.js"
+import { generateFEK, encryptFile, encryptFekForUser } from "../CryptoUtils.js" 
 
 import "./AddFile.css"
 
@@ -53,6 +56,8 @@ export async function cancelUpload(uploadId) {
 
 export default function AddFile(props) {
     const key = import.meta.env.VITE_HOST_ADDRESS
+    
+    const { user } = useContext(UserContext) 
 
     const [show, setShow] = useState(false)
     const menuRef = useRef(null)
@@ -164,6 +169,11 @@ export default function AddFile(props) {
         const files = e.target.files
         if (!files || files.length === 0) return
 
+        if (!user || !user.public_key) {
+            alert("E2EE error: Missing user key.")
+            return
+        }
+
         if (files.length > 100) {
             alert("You cannot upload more than 100 files at once.")
             e.target.value = ""
@@ -193,9 +203,20 @@ export default function AddFile(props) {
         for (let i = 0; i < files.length; i++) {
             const formData = new FormData()
             const finalPath = props.currentPath ? `${props.currentPath}/${files[i].name}` : files[i].name            
-            formData.append("file", files[i], finalPath)
-
+            
             try {
+                const arrayBuffer = await files[i].arrayBuffer()
+                const fileBytes = new Uint8Array(arrayBuffer)
+                
+                const fek = await generateFEK()
+                const encryptedBytes = await encryptFile(fileBytes, fek)
+                const encryptedFek = await encryptFekForUser(fek, user.public_key)
+
+                const encryptedBlob = new Blob([encryptedBytes], { type: files[i].type })
+                
+                formData.append("file", encryptedBlob, finalPath)
+                formData.append("encrypted_fek", encryptedFek)
+
                 await new Promise((resolve, reject) => {
                     const xhr = new XMLHttpRequest()
                     
@@ -239,6 +260,7 @@ export default function AddFile(props) {
                 hasUploaded = true
             } catch (error) {
                 if (error.message === "Aborted") break 
+                console.error("Eroare la criptare/upload:", error)
             } 
         }
 
@@ -271,7 +293,6 @@ export default function AddFile(props) {
                 body: JSON.stringify(body)
             })
             
-            let data = await response.json()
             if (response.ok) {
                 setNewFolderColor("#000000")
                 setNewFolderName("")
@@ -286,6 +307,11 @@ export default function AddFile(props) {
     const handleFolderUpload = async (e) => {
         const files = Array.from(e.target.files)
         if (files.length === 0) return
+
+        if (!user || !user.public_key) {
+            alert("E2EE error: Missing user key.")
+            return
+        }
         
         if (files.length > 100) {
             alert("Folders cannot contain more than 100 files.")
@@ -336,8 +362,18 @@ export default function AddFile(props) {
             for (let i = 0; i < files.length; i++) {
                 let file = files[i], currentPathForFile = paths[i] 
 
+                const arrayBuffer = await file.arrayBuffer()
+                const fileBytes = new Uint8Array(arrayBuffer)
+                
+                const fek = await generateFEK()
+                const encryptedBytes = await encryptFile(fileBytes, fek)
+                const encryptedFek = await encryptFekForUser(fek, user.public_key)
+
+                const encryptedBlob = new Blob([encryptedBytes], { type: file.type })
+
                 let formData = new FormData()
-                formData.append('file', file, currentPathForFile) 
+                formData.append('file', encryptedBlob, currentPathForFile) 
+                formData.append('encrypted_fek', encryptedFek)
 
                 await new Promise((resolve, reject) => {
                     const xhr = new XMLHttpRequest()
@@ -382,7 +418,9 @@ export default function AddFile(props) {
             }
 
             if (props.onUploadSuccess) props.onUploadSuccess()
-        } catch (error) {} finally {
+        } catch (error) {
+            console.error("Eroare la upload folder:", error)
+        } finally {
             activeUploads.delete(uploadId)
             window.dispatchEvent(new CustomEvent('upload-progress', { detail: { isUploading: false, uploadId } }))
         }
@@ -395,19 +433,27 @@ export default function AddFile(props) {
 
     const createTextFile = async () => {
         if (!newTextFileName) return
+        if (!user || !user.public_key) {
+            alert("E2EE error: User public key missing.")
+            return
+        }
 
         const fileNameWithExt = newTextFileName.toLowerCase().endsWith(".txt") 
             ? newTextFileName 
             : `${newTextFileName}.txt`
 
-        const body = {
-            name: fileNameWithExt,
-            extension: "txt",
-            content_type: "text/plain",
-            folder_id: props.parentFolderID || null
-        }
-
         try {
+            const fek = await generateFEK()
+            const encryptedFek = await encryptFekForUser(fek, user.public_key)
+
+            const body = {
+                name: fileNameWithExt,
+                extension: "txt",
+                content_type: "text/plain",
+                folder_id: props.parentFolderID || null,
+                encrypted_fek: encryptedFek
+            }
+
             const response = await customFetch(`http://${key}:18080/create_file`, {
                 method: "POST",
                 credentials: "include",
@@ -415,11 +461,9 @@ export default function AddFile(props) {
                 body: JSON.stringify(body)
             })
             
-            let data = await response.json()
-
             if (response.ok) {
                 setNewTextFileName("") 
-                setDisplayCreateText(false) // Închidem modalul la succes
+                setDisplayCreateText(false) 
                 if (props.onUploadSuccess) props.onUploadSuccess()
             }
         } catch (err) {

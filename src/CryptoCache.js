@@ -76,9 +76,7 @@ export async function loadCachedPrivateKey() {
         )
         
         return new Uint8Array(plainBuf)
-    } catch {
-        return null
-    }
+    } catch {return null}
 }
 
 export async function clearCachedPrivateKey() {

@@ -117,3 +117,27 @@ export async function decryptDataWithKey(encryptedData, keyUint8) {
 
     throw new Error("Format necunoscut pentru datele criptate")
 }
+
+export async function encryptFile(fileBytes, fek) {
+    await sodium.ready
+
+    const nonce = sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES)
+    const encrypted = sodium.crypto_secretbox_easy(fileBytes, nonce, fek)
+
+    const combined = new Uint8Array(nonce.length + encrypted.length)
+    combined.set(nonce)
+    combined.set(encrypted, nonce.length)
+
+    return combined 
+}
+
+export async function encryptFekForUser(fek, userPublicKeyB64) {
+    await sodium.ready
+
+    const sealed = sodium.crypto_box_seal(
+        fek,
+        sodium.from_base64(userPublicKeyB64)
+    )
+
+    return sodium.to_base64(sealed)
+}
