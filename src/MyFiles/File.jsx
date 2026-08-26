@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useContext } from "react"
-import { useLocation } from "react-router-dom"
+import { decryptFekForUser, encryptFekForUser, decryptFile } from "../CryptoUtils.js"
 import { FileIcon, defaultStyles } from 'react-file-icon'
 
 import { customFetch } from "../UserContext.jsx"
 import { FileContext } from "../GetFiles.jsx"
 import { UserContext } from "../UserContext.jsx"
+import { loadCachedPrivateKey } from "../CryptoCache.js"
 
 import MockUserImg from "../Assets/MockUserImg.jpg"
 
@@ -16,20 +17,18 @@ import Rename from "../assets/SVG/FileIcons/Rename.svg?react"
 import Trash from "../assets/SVG/FileIcons/Trash.svg?react"
 import StarFull from "../assets/SVG/StarFull.svg?react"
 import Group from "../assets/SVG/UserIcons/Group.svg?react"
-import ArrowDown from "../assets/SVG/ArrowDown.svg?react" 
+import ArrowDown from "../assets/SVG/ArrowDown.svg?react"
 
 export default function File(props) {
     const key = import.meta.env.VITE_HOST_ADDRESS
 
-    const { pathname } = useLocation()
     const isFolder = props.extension === "Folder"
-    const cleanExt = (props.extension || "").replace(/^\./, "").toLowerCase()
 
     const { refreshFiles } = useContext(FileContext)
     const { user } = useContext(UserContext)
 
     const [showMenu, setShowMenu] = useState(false)
-    const [isExpanded, setIsExpanded] = useState(false) 
+    const [isExpanded, setIsExpanded] = useState(false)
     const menuRef = useRef(null)
 
     const [displayRename, setDisplayRename] = useState(false)
@@ -48,7 +47,7 @@ export default function File(props) {
 
     useEffect(() => {
         const handleClickOutsideRename = (event) => {
-            if (renameRef.current && !renameRef.current.contains(event.target)) 
+            if (renameRef.current && !renameRef.current.contains(event.target))
                 setDisplayRename(false)
         }
 
@@ -72,7 +71,7 @@ export default function File(props) {
 
     useEffect(() => {
         const handleClickOutsideAccess = (event) => {
-            if (accessRef.current && !accessRef.current.contains(event.target)) 
+            if (accessRef.current && !accessRef.current.contains(event.target))
                 setDisplayAccess(false)
         }
 
@@ -164,7 +163,7 @@ export default function File(props) {
         e.stopPropagation()
         setShowMenu(false)
 
-        switch(action) {
+        switch (action) {
             case "rename": {
                 setNewName(props.name || "")
                 setNewFolderColor(props.color || "#000000")
@@ -186,36 +185,46 @@ export default function File(props) {
             }
 
             case "download": {
-                let response
+                try {
+                    const endpoint = isFolder ? "get_folder" : "get_file"
+                    const url = `http://${key}:18080/${endpoint}?${isFolder ? "folder_id" : "file_id"}=${props.id}`
 
-                if (props.extension === "Folder") 
-                    response = await customFetch(`http://${key}:18080/get_folder?folder_id=${props.id}`, {
-                        method: "GET",
-                        credentials: "include",
-                        headers: { 'Content-Type': 'application/json' },
-                    })
-                    
-                else 
-                    response = await customFetch(`http://${key}:18080/get_file?file_id=${props.id}`, {
+                    const response = await customFetch(url, {
                         method: "GET",
                         credentials: "include",
                         headers: { 'Content-Type': 'application/json' },
                     })
 
-                if (response.ok) {
+                    if (!response.ok) throw new Error("Download failed")
 
                     let buffer = await response.arrayBuffer()
-                    const url = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }))
+                    let downloadBytes = buffer
+
+                    if (!isFolder) {
+                        const privateKey = await loadCachedPrivateKey()
+                        if (!privateKey) throw new Error("Private key not found.")
+                        if (!props.fek) throw new Error("No FEK available for this file.")
+                        if (!user?.public_key) throw new Error("Missing user public key.")
+
+                        const fek = await decryptFekForUser(props.fek, user.public_key, privateKey)
+                        const encryptedBytes = new Uint8Array(buffer)
+                        downloadBytes = await decryptFile(encryptedBytes, fek)
+                    }
+
+                    const blobUrl = URL.createObjectURL(new Blob([downloadBytes], { type: 'application/octet-stream' }))
                     const a = document.createElement('a')
-                    a.href = url
-                    a.download = props.extension === "Folder" ? `${props.name}.zip` : props.name
+                    a.href = blobUrl
+                    a.download = isFolder ? `${props.name}.zip` : props.name
                     document.body.appendChild(a)
                     a.click()
 
                     document.body.removeChild(a)
-                    URL.revokeObjectURL(url)
+                    URL.revokeObjectURL(blobUrl)
+                } catch (err) {
+                    console.error("Download error:", err)
+                    alert(`Download error: ${err.message}`)
                 }
-                    
+
                 break
             }
 
@@ -226,7 +235,7 @@ export default function File(props) {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ favourite: props.favourite ? 0 : 1 })
                 })
-                
+
                 if (response.ok) await refreshFiles()
                 break
             }
@@ -245,7 +254,7 @@ export default function File(props) {
         if (!newName || (newName === props.name && newFolderColor === props.color)) return
 
         const type = isFolder ? "folder" : "file"
-        const body = isFolder 
+        const body = isFolder
             ? { name: newName, color: newFolderColor }
             : { name: newName }
 
@@ -298,12 +307,19 @@ export default function File(props) {
 
             if (keyRequest.ok) {
                 const keyJson = await keyRequest.json()
-                const public_key = keyJson.public_key
-                        
+                const receiverPublicKey = keyJson.public_key
+
+
+                const myPrivateKey = await loadCachedPrivateKey()
+                if (!myPrivateKey) throw new Error("Private key not found.")
+
+                const fek = await decryptFekForUser(props.fek, receiverPublicKey, myPrivateKey)
+                const fekForReceiver = await encryptFekForUser(fek, receiverPublicKey)
+
                 const response = await customFetch(`http://${key}:18080/grant_access`, {
                     method: "POST",
                     headers: { 'Content-Type': 'application/json' },
-                    body: isFolder ? JSON.stringify({ 
+                    body: isFolder ? JSON.stringify({
                         username: usernameToSend,
                         folder_id: props.id,
                         type: permissionsToSend,
@@ -313,7 +329,7 @@ export default function File(props) {
                         file_id: props.id,
                         type: permissionsToSend,
                         resource: "file",
-                        fek: public_key
+                        fek: fekForReceiver
                     })
                 })
 
@@ -342,33 +358,33 @@ export default function File(props) {
             }}>
                 <div id="createFolder" ref={renameRef} onClick={(e) => e.stopPropagation()}>
                     <h2>{isFolder ? "Edit folder" : "Rename file"}</h2>
-                    
-                    <input 
+
+                    <input
                         type="text" required
-                        name="newFileName" 
-                        placeholder="Name" 
+                        name="newFileName"
+                        placeholder="Name"
                         value={newName}
                         onChange={(e) => setNewName(e.target.value)}
                         onBeforeInput={(e) => {
-                            if (/[/]/.test(e.data)) e.preventDefault()     
-                        }} 
+                            if (/[/]/.test(e.data)) e.preventDefault()
+                        }}
                     />
 
                     {isFolder && (
                         <div id="newFolderColor">
-                            <h3>Color: {newFolderColor.includes("var") ? 
+                            <h3>Color: {newFolderColor.includes("var") ?
                                 window.getComputedStyle(document.documentElement).getPropertyValue('--hoverCol')
-                                    .trim().replace("light-dark(", "").replace(", ", " / ").replace(")", "") : 
-                                    newFolderColor}</h3>
-                            <input 
-                                type="color" 
-                                name="newFolderColor" 
+                                    .trim().replace("light-dark(", "").replace(", ", " / ").replace(")", "") :
+                                newFolderColor}</h3>
+                            <input
+                                type="color"
+                                name="newFolderColor"
                                 value={newFolderColor}
                                 onChange={(e) => setNewFolderColor(e.target.value)}
                             />
                         </div>
                     )}
-                    
+
                     <div className="createFolderActions">
                         <button onClick={(e) => {
                             e.stopPropagation()
@@ -395,17 +411,17 @@ export default function File(props) {
             }}>
                 <div id="createFolder" ref={accessRef} onClick={(e) => e.stopPropagation()}>
                     <h2>{isFolder ? "Share folder" : "Share file"}</h2>
-                    
+
                     <input
                         type="text" name="username" required
                         placeholder="Username" value={usernameToSend}
                         onChange={(e) => setUsernameToSend(e.target.value)}
                         onBeforeInput={(e) => {
-                            if (!/[a-zA-Z0-9]/.test(e.data)) e.preventDefault()    
+                            if (!/[a-zA-Z0-9]/.test(e.data)) e.preventDefault()
                         }}
                     />
 
-                    <div id="permissions">  
+                    <div id="permissions">
                         <h3>Permissions:</h3>
 
                         <select name="permissions" value={permissionsToSend} onChange={(e) => setPermissionsToSend(e.target.value)}>
@@ -413,7 +429,7 @@ export default function File(props) {
                             <option value="edit">Edit</option>
                         </select>
                     </div>
-                    
+
                     <div className="createFolderActions">
                         <button onClick={(e) => {
                             e.stopPropagation()
@@ -434,18 +450,18 @@ export default function File(props) {
                                 {localCollaborators.map((collab, index) => (
                                     <div key={`${collab}-${index}`} className="collaborator">
                                         {collaboratorPhotos[collab] && (
-                                            <img 
-                                                src={collaboratorPhotos[collab]} 
-                                                alt={collab} 
-                                                className="collaboratorAvatar" 
+                                            <img
+                                                src={collaboratorPhotos[collab]}
+                                                alt={collab}
+                                                className="collaboratorAvatar"
                                             />
                                         )}
 
                                         {!collaboratorPhotos[collab] && (
-                                            <img 
+                                            <img
                                                 src={MockUserImg}
-                                                alt={collab} 
-                                                className="collaboratorAvatar" 
+                                                alt={collab}
+                                                className="collaboratorAvatar"
                                             />
                                         )}
                                         <p>{collab}</p>
@@ -463,9 +479,9 @@ export default function File(props) {
     return (
         <div className={`fileRow ${isExpanded ? "expanded" : ""}`} onClick={handleRowClick}>
             <div className="fileNameCell">
-                <div className="mobileExpandBtn" onClick={(e) => { 
-                    e.stopPropagation() 
-                    setIsExpanded(p => !p) 
+                <div className="mobileExpandBtn" onClick={(e) => {
+                    e.stopPropagation()
+                    setIsExpanded(p => !p)
                 }}>
                     <ArrowDown className={`expandIcon ${isExpanded ? "rotated" : ""}`} />
                 </div>
@@ -478,16 +494,16 @@ export default function File(props) {
 
                 <h3 className="itemName">{props.name}</h3>
             </div>
-            
+
             <h3 className="fileDetail"><span className="mobileLabel">Type: </span>{isFolder ? "Folder" : props.extension}</h3>
             <h3 className="fileDetail"><span className="mobileLabel">Size: </span>{
-                props.size ? props.size > 1073741824 ? `${Number.parseFloat(props.size/1073741824.0).toFixed(2)} GB` : `${Number.parseFloat(props.size/1048576.0).toFixed(2)} MB` : "0 MB"
+                props.size ? props.size > 1073741824 ? `${Number.parseFloat(props.size / 1073741824.0).toFixed(2)} GB` : `${Number.parseFloat(props.size / 1048576.0).toFixed(2)} MB` : "0 MB"
             }</h3>
             <h3 className="fileDetail"><span className="mobileLabel">Created: </span>{props.created}</h3>
             <h3 className="fileDetail"><span className="mobileLabel">Modified: </span>{props.lastModified}</h3>
             <h3 className="fileDetail"><span className="mobileLabel">Owner: </span>{props.owner === user.username ? "You" : props.owner}</h3>
 
-            <div className="fileOptionsContainer" ref={menuRef} 
+            <div className="fileOptionsContainer" ref={menuRef}
                 onClick={(e) => {
                     e.stopPropagation()
                     setShowMenu(p => !p)

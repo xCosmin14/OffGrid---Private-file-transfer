@@ -5,7 +5,9 @@ import { useTitle } from "../UseTitle.js"
 import { FileContext } from "../GetFiles.jsx"
 import { getFileColor } from "./FileColors.js"
 import isMobile from "../IsMobile.js"
-import { customFetch } from "../UserContext.jsx"
+import { customFetch, UserContext } from "../UserContext.jsx" 
+import { loadCachedPrivateKey } from "../CryptoCache.js"
+import { decryptFekForUser, decryptFile } from "../CryptoUtils.js"
 
 import AddFile from "./AddFile.jsx"
 import Filters from "./Filters.jsx"
@@ -75,6 +77,8 @@ export default function Favourites() {
     const key = import.meta.env.VITE_HOST_ADDRESS
 
     useTitle("Favourites")
+
+    const { user } = useContext(UserContext)
 
     const { files, setFiles, folders, setFolders, isLoading, refreshFiles, searchQuery, setSearchQuery } = useContext(FileContext)
 
@@ -343,30 +347,50 @@ export default function Favourites() {
 
         switch (action) {
             case "download": {
-                const isTargetFolder = isFolder || openFile?.extension === "folder" || 'folder_id' in openFile
+                const targetObj = openFile || currentFolderObj
+                const isTargetFolder = isFolder || openFile?.extension === "folder" || (openFile && 'folder_id' in openFile)
 
                 const endpoint = isTargetFolder ? "get_folder" : "get_file"
                 const param = isTargetFolder ? `folder_id=${targetId}` : `file_id=${targetId}`
 
-                const response = await customFetch(`http://${key}:18080/${endpoint}?${param}`, {
-                    method: "GET",
-                    credentials: "include",
-                    headers: { 'Content-Type': 'application/json' },
-                })
+                try {
+                    const response = await customFetch(`http://${key}:18080/${endpoint}?${param}`, {
+                        method: "GET",
+                        credentials: "include",
+                        headers: { 'Content-Type': 'application/json' },
+                    })
 
-                if (response.ok) {
+                    if (!response.ok) throw new Error("Download failed")
+
                     let buffer = await response.arrayBuffer()
-                    const url = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }))
+                    let downloadBytes = buffer
+
+                    if (!isTargetFolder && targetObj) {
+                        const privateKey = await loadCachedPrivateKey()
+                        if (!privateKey) throw new Error("Private key not found.")
+                        if (!targetObj.fek) throw new Error("No FEK available for file.")
+                        if (!user?.public_key) throw new Error("Missing user public key.")
+
+                        const fek = await decryptFekForUser(targetObj.fek, user.public_key, privateKey)
+                        const encryptedBytes = new Uint8Array(buffer)
+                        downloadBytes = await decryptFile(encryptedBytes, fek)
+                    }
+
+                    const url = URL.createObjectURL(new Blob([downloadBytes], { type: 'application/octet-stream' }))
                     const a = document.createElement('a')
                     a.href = url
                     a.download = isTargetFolder 
-                        ? `${openFile?.name || "folder"}.zip` : openFile.name
+                        ? `${openFile?.name || currentFolderObj?.name || "folder"}.zip` 
+                        : (targetObj?.name || "file")
                     
                     document.body.appendChild(a)
                     a.click()
 
                     document.body.removeChild(a)
                     URL.revokeObjectURL(url)
+                } catch (err) {
+                    console.error("Download error:", err)
+                    alert(`Download error: ${err.message}`)
                 }
                 break
             }
@@ -430,29 +454,40 @@ export default function Favourites() {
     
         switch (action) {
             case "download": {
-                const isTargetFolder = isFolder || openFile?.extension === "folder" || 'folder_id' in openFile
+                try {
+                    const response = await customFetch(`http://${key}:18080/get_file?file_id=${targetId}`, {
+                        method: "GET",
+                        headers: { 'Content-Type': 'application/json' },
+                    })
 
-                const endpoint = isTargetFolder ? "get_folder" : "get_file"
-                const param = isTargetFolder ? `folder_id=${targetId}` : `file_id=${targetId}`
+                    if (!response.ok) throw new Error("Download failed")
 
-                const response = await customFetch(`http://${key}:18080/${endpoint}?${param}`, {
-                    method: "GET",
-                    credentials: "include",
-                    headers: { 'Content-Type': 'application/json' },
-                })
-
-                if (response.ok) {
                     let buffer = await response.arrayBuffer()
-                    const url = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }))
+                    let downloadBytes = buffer
+
+                    if (openFile?.fek) {
+                        const privateKey = await loadCachedPrivateKey()
+                        if (!privateKey) throw new Error("Private key not found.")
+                        if (!user?.public_key) throw new Error("Missing user public key.")
+
+                        const fek = await decryptFekForUser(openFile.fek, user.public_key, privateKey)
+                        const encryptedBytes = new Uint8Array(buffer)
+                        downloadBytes = await decryptFile(encryptedBytes, fek)
+                    }
+
+                    const url = URL.createObjectURL(new Blob([downloadBytes], { type: 'application/octet-stream' }))
                     const a = document.createElement('a')
+
                     a.href = url
-                    a.download = isTargetFolder ? `${openFile?.name || "folder"}.zip` : openFile.name
-                    
+                    a.download = openFile.name
                     document.body.appendChild(a)
                     a.click()
 
                     document.body.removeChild(a)
                     URL.revokeObjectURL(url)
+                } catch (err) {
+                    console.error("Download error:", err)
+                    alert(`Download error: ${err.message}`)
                 }
                 break
             }

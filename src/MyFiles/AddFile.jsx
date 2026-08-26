@@ -192,30 +192,30 @@ export default function AddFile(props) {
 
         let totalBytes = 0
         for (let i = 0; i < files.length; i++) totalBytes += files[i].size
+        const totalMB = (totalBytes / (1024 * 1024)).toFixed(1)
         
         const uploadId = generateUUID()
         activeUploads.set(uploadId, { xhr: null, transaction_id: null })
 
         let hasUploaded = false
+        let uploadedBytes = 0
 
         for (let i = 0; i < files.length; i++) {
-            const formData = new FormData()
-            const finalPath = props.currentPath ? `${props.currentPath}/${files[i].name}` : files[i].name            
+            let file = files[i]
+            const finalPath = props.currentPath ? `${props.currentPath}/${file.name}` : file.name            
             
             try {
-                const arrayBuffer = await files[i].arrayBuffer()
+                const arrayBuffer = await file.arrayBuffer()
                 const fileBytes = new Uint8Array(arrayBuffer)
                 
                 const fek = await generateFEK()
                 const encryptedBytes = await encryptFile(fileBytes, fek)
                 const encryptedFek = await encryptFekForUser(fek, user.public_key)
 
-                const encryptedBlob = new Blob([encryptedBytes], { type: files[i].type })
+                const encryptedBlob = new Blob([encryptedBytes], { type: file.type })
                 
+                const formData = new FormData()
                 formData.append("file", encryptedBlob, finalPath)
-                formData.append("owner_fek", encryptedFek)
-
-                console.log("[UPLOAD] Criptez FEK cu public_key:", user.public_key);
 
                 const fileData = await new Promise((resolve, reject) => {
                     const xhr = new XMLHttpRequest()
@@ -225,18 +225,19 @@ export default function AddFile(props) {
 
                     xhr.upload.addEventListener("progress", (event) => {
                         if (event.lengthComputable) {
-                            const percentage = Math.round((event.loaded / event.total) * 100)
-                            const loadedMB = (event.loaded / (1024 * 1024)).toFixed(1)
-                            const networkTotalMB = (event.total / (1024 * 1024)).toFixed(1)
+                            const currentFileProgress = event.loaded / event.total
+                            const scaledLoadedForCurrentFile = currentFileProgress * file.size
+                            const currentTotalLoaded = uploadedBytes + scaledLoadedForCurrentFile
+                            let percentage = Math.round((currentTotalLoaded / totalBytes) * 100)
 
                             window.dispatchEvent(new CustomEvent('upload-progress', { 
                                 detail: { 
                                     isUploading: true,
                                     uploadId: uploadId, 
                                     progress: Math.min(percentage, 100), 
-                                    loaded: loadedMB, 
-                                    total: networkTotalMB, 
-                                    currentFile: files[i].name,
+                                    loaded: (currentTotalLoaded / (1024 * 1024)).toFixed(1), 
+                                    total: totalMB, 
+                                    currentFile: file.name,
                                     fileIndex: i + 1, 
                                     totalFiles: files.length
                                 } 
@@ -246,12 +247,15 @@ export default function AddFile(props) {
 
                     xhr.addEventListener("load", () => {
                         if (xhr.status >= 200 && xhr.status < 300) {
+                            uploadedBytes += file.size
                             try {
                                 const responseJson = JSON.parse(xhr.responseText)
                                 resolve(responseJson)
-                            } catch (e) {resolve({})}
+                            } catch (e) {
+                                resolve({})
+                            }
                         } else {
-                            reject(new Error("Server error"))
+                            reject(new Error(`Server responded with status: ${xhr.status}`))
                         }
                     })
 
@@ -263,17 +267,21 @@ export default function AddFile(props) {
                     xhr.send(formData)
                 })
                 
-                const file_id = fileData.file_id || fileData.id
+                const file_id = fileData?.file_id || fileData?.id
                 if (file_id) {
-                    await customFetch(`http://${key}:18080/encrypted_fek`, {
-                        method: "POST",
-                        credentials: "include",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            file_id: file_id,
-                            fek: encryptedFek
+                    try {
+                        await customFetch(`http://${key}:18080/encrypted_fek`, {
+                            method: "POST",
+                            credentials: "include",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                file_id: file_id,
+                                fek: encryptedFek
+                            })
                         })
-                    })
+                    } catch (err) {
+                        console.warn(`Could not set FEK for file ${file_id}:`, err)
+                    }
                 }
 
                 hasUploaded = true
@@ -352,6 +360,7 @@ export default function AddFile(props) {
 
         const uploadId = generateUUID()
         activeUploads.set(uploadId, { xhr: null, transaction_id: null })
+        const fekPairs = []
 
         const paths = files.map(file => 
             props.currentPath ? `${props.currentPath}/${file.webkitRelativePath}` : file.webkitRelativePath
@@ -367,7 +376,6 @@ export default function AddFile(props) {
                 body: JSON.stringify({ fields: paths })
             })
             let data = await response.json()
-            
             
             if (!response.ok || !data.transaction_id) 
                 throw new Error(data.message || `upload_folder failed: ${response.status}`)
@@ -393,9 +401,8 @@ export default function AddFile(props) {
 
                 let formData = new FormData()
                 formData.append('file', encryptedBlob, currentPathForFile) 
-                formData.append('owner_fek', encryptedFek)
 
-                await new Promise((resolve, reject) => {
+                const fileData = await new Promise((resolve, reject) => {
                     const xhr = new XMLHttpRequest()
                     if (currentTask) currentTask.xhr = xhr
 
@@ -424,7 +431,12 @@ export default function AddFile(props) {
                     xhr.addEventListener("load", () => {
                         if (xhr.status >= 200 && xhr.status < 300) {
                             uploadedBytes += file.size
-                            resolve()
+                            try {
+                                const responseJson = JSON.parse(xhr.responseText)
+                                resolve(responseJson)
+                            } catch (e) {
+                                resolve({})
+                            }
                         } else reject(new Error(`Server responded with status: ${xhr.status}`))
                     })
 
@@ -434,6 +446,18 @@ export default function AddFile(props) {
                     xhr.open("POST", `http://${key}:18080/upload_file?transaction_id=${data.transaction_id}`)
                     xhr.withCredentials = true 
                     xhr.send(formData)
+                })
+
+                const file_id = fileData.file_id || fileData.id
+                if (file_id) fekPairs.push({ file_id, fek: encryptedFek })   // just remember it
+            }
+
+            for (const pair of fekPairs) {
+                await customFetch(`http://${key}:18080/encrypted_fek`, {
+                    method: "POST",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ file_id: pair.file_id, fek: pair.fek })
                 })
             }
 
@@ -482,11 +506,6 @@ export default function AddFile(props) {
             })
             
             if (response.ok) {
-                const fekBody = {
-                    file_id: file_id,
-                    fek: encryptedFek
-                }
-
                 setNewTextFileName("") 
                 setDisplayCreateText(false) 
                 if (props.onUploadSuccess) props.onUploadSuccess()

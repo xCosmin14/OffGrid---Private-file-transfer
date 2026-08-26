@@ -65,30 +65,15 @@ export default function FileViewer(props) {
 
             try {
                 const privateKey = await loadCachedPrivateKey()
+        
+
                 if (!privateKey) throw new Error("Private key not found.")
 
                 if (!props.file.fek) throw new Error("No file key available.")
                 if (!user?.public_key) throw new Error("Missing user public key.")
 
                 const fek = await decryptFekForUser(props.file.fek, user.public_key, privateKey)
-
-                console.log("1. FEK primit din backend:", props.file.fek);
-                console.log("2. Cheie privata (Base64):", user.private_key);
-
-                const cipherTextBuffer = sodium.from_base64(props.file.fek);
-                const publicKeyBuffer = sodium.from_base64(user.public_key);
-                const privateKeyBuffer = sodium.from_base64(user.private_key);
-
-                const fekRaw = sodium.crypto_box_seal_open(
-                    cipherTextBuffer, 
-                    publicKeyBuffer, 
-                    privateKeyBuffer
-                );
-                console.log("DECRIPTARE REUSITA! FEK:", fekRaw);
-
-                const derivedPublic = sodium.to_base64(sodium.crypto_scalarmult_base(privateKey));
-                console.log("[VIEW] Cheia publică derivată din privateKey este:", derivedPublic);
-                console.log("FEK PRIMIT PENTRU FISIER:", props.file.fek);
+                
 
                 const response = await customFetch(`http://${key}:18080/get_file?file_id=${fileId}`, {
                     method: "GET",
@@ -134,22 +119,52 @@ export default function FileViewer(props) {
     }
 
     const downloadFile = async () => {
-        const response = await customFetch(`http://${key}:18080/get_file?file_id=${fileId}`, {
-            method: "GET",
-            headers: { 'Content-Type': 'application/json' },
-        })
+        try {
+            if (fileUrl) {
+                const a = document.createElement('a')
+                a.href = fileUrl
+                a.download = props.file.name
+                document.body.appendChild(a)
+                a.click()
+                document.body.removeChild(a)
+                return
+            }
 
-        let buffer = await response.arrayBuffer()
-        const url = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }))
-        const a = document.createElement('a')
-        a.href = url
-        a.download = props.file.name
-        document.body.appendChild(a)
-        a.click()
+            const privateKey = await loadCachedPrivateKey()
+            if (!privateKey) throw new Error("Private key not found.")
 
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
-    }        
+            if (!props.file.fek) throw new Error("No file key available.")
+            if (!user?.public_key) throw new Error("Missing user public key.")
+
+            const fek = await decryptFekForUser(props.file.fek, user.public_key, privateKey)
+
+            const response = await customFetch(`http://${key}:18080/get_file?file_id=${fileId}`, {
+                method: "GET",
+                headers: { 'Content-Type': 'application/json' },
+            })
+
+            if (!response.ok) throw new Error("File content can't be loaded")
+
+            const encryptedBuffer = await response.arrayBuffer()
+            const encryptedBytes = new Uint8Array(encryptedBuffer)
+            const decryptedBytes = await decryptFile(encryptedBytes, fek)
+
+            const blob = new Blob([decryptedBytes], { type: 'application/octet-stream' })
+            const url = URL.createObjectURL(blob)
+
+            const a = document.createElement('a')
+            a.href = url
+            a.download = props.file.name
+            document.body.appendChild(a)
+            a.click()
+
+            document.body.removeChild(a)
+            URL.revokeObjectURL(url)
+        } catch (err) {
+            console.error("Download error:", err)
+            alert(`Download error: ${err.message}`)
+        }
+    }       
 
     const mobile = isMobile()
     const size = props.viewerSize || (mobile === 0 ? "small" : "full")

@@ -23,7 +23,7 @@ export const FileProvider = ({ children }) => {
                 })
             })
             const data = await response.json()
-            
+
             if (data.status === "success" && data.message !== "not found") {
                 setFiles(data.files || [])
                 setFolders(data.folders || [])

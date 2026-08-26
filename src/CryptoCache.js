@@ -1,3 +1,5 @@
+import sodium from 'libsodium-wrappers-sumo'
+
 const DB_NAME = 'e2ee-cache'
 const STORE = 'keys'
 
@@ -27,7 +29,7 @@ async function idbSet(key, value) {
     return new Promise((resolve, reject) => {
         const tx = db.transaction(STORE, 'readwrite')
         tx.objectStore(STORE).put(value, key)
-        
+        console.log(value, key);
         tx.oncomplete = () => {
             db.close()
             resolve()
@@ -86,7 +88,7 @@ export async function loadCachedPrivateKey() {
             deviceKey,
             entry.ciphertext
         )
-        
+    
         return new Uint8Array(plainBuf)
     } catch {return null}
 }

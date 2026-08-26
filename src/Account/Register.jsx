@@ -66,6 +66,7 @@ export default function Register() {
             dataObject.public_key = keyPair.publicKey
             dataObject.encrypted_private_key = encryptedPrivateKey
 
+
             let response = await customFetch(`http://${key}:18080/register`, {
                 method: "POST",
                 headers: { 'Content-Type': 'application/json' },
