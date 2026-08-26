@@ -39,7 +39,7 @@ Upload files, share and preview them, everything in the browser with the smalles
 - ✅ Every page has a diagram at the top that shows the size % of every present file type from the total file size. Very wide color coding support for most file types 
 - ✅ Lightspeed communication between the server and frontend/app
 - ✅ Supports various file formats for previewing in the browser (Listed down below)
-- ✅ Security first - solid security checks for all server connections / operations
+- ✅ Security first - solid security checks for all server connections / operations + encrypted files
 
 ## 🗺️ Roadmap
 
@@ -50,13 +50,13 @@ Upload files, share and preview them, everything in the browser with the smalles
 ### Website
 
 - ✅ Sharing files
-- [ ] Notifications
+- ✅ Notifications
 - ✅ Downloading folders as .ZIP archives
 - [ ] Editing .txt files dirrectly with the ability to collaborate with other users (Google Docs style)
 
 ### Server
 
-- [ ] Implementing more security checks and preventing network/request highjacking
+- ✅ Implementing more security checks and preventing network/request highjacking
 
 See the [open issues](https://github.com/xCosmin14/offgrid/issues) for proposed features and known issues.
 
